@@ -59,10 +59,10 @@ def test_server_instructs_the_model_not_to_do_the_arithmetic():
 
 
 @pytest.mark.parametrize("name,args", [
-    ("get_financial_profile", {"customer_id": "alex"}),
-    ("get_wallet", {"customer_id": "alex"}),
-    ("optimise_itinerary", {"customer_id": "alex"}),
-    ("optimise_wallet", {"customer_id": "alex"}),
+    ("get_financial_profile", {}),
+    ("get_wallet", {}),
+    ("optimise_itinerary", {}),
+    ("optimise_wallet", {}),
 ])
 def test_every_tool_returns_the_response_contract(name, args):
     payload = call(name, args)
@@ -72,21 +72,20 @@ def test_every_tool_returns_the_response_contract(name, args):
 
 
 def test_mcp_get_wallet():
-    payload = call("get_wallet", {"customer_id": "alex"})
+    payload = call("get_wallet", {})
     names = [c["display_name"] for c in payload["data"]["cards"]]
     assert "Citi Strata Premier Card" in names
     assert "Chase Sapphire Preferred" in names
 
 
 def test_mcp_optimise_itinerary():
-    payload = call("optimise_itinerary", {"customer_id": "alex"})
+    payload = call("optimise_itinerary", {})
     assert payload["data"]["incremental_guaranteed"] == "553.00"
     assert len(payload["data"]["recommendations"]) == 6
 
 
 def test_mcp_optimise_purchase_values_the_baggage_benefit():
     payload = call("optimise_purchase", {
-        "customer_id": "alex",
         "purchase": {
             "merchant": "American Airlines", "category": "airfare", "amount": "1650",
             "purchase_date": "2026-10-12",
@@ -99,7 +98,7 @@ def test_mcp_optimise_purchase_values_the_baggage_benefit():
 
 
 def test_mcp_evidence_round_trip():
-    call("optimise_itinerary", {"customer_id": "alex"})
+    call("optimise_itinerary", {})
     payload = call("get_recommendation_evidence",
                    {"recommendation_id": "disney_october_2026:hotel"})
     assert "Citi Travel" in payload["display_markdown"]
@@ -107,12 +106,54 @@ def test_mcp_evidence_round_trip():
 
 def test_money_crosses_the_boundary_as_strings_not_floats():
     """Decimal must survive JSON. A float here would reintroduce rounding error."""
-    payload = call("optimise_itinerary", {"customer_id": "alex"})
+    payload = call("optimise_itinerary", {})
     assert isinstance(payload["data"]["incremental_guaranteed"], str)
     for r in payload["data"]["recommendations"]:
         assert isinstance(r["guaranteed_savings"], str)
 
 
 def test_disclaimers_are_never_empty_on_an_optimisation():
-    payload = call("optimise_itinerary", {"customer_id": "alex"})
+    payload = call("optimise_itinerary", {})
     assert len(payload["disclaimers"]) >= 3
+
+
+def test_no_tool_asks_who_the_user_is():
+    """The consumer is implicit in the connection.
+
+    If any tool advertises a customer parameter, ChatGPT will try to fill it and
+    the user ends up having to name the persona out loud mid-demo.
+    """
+    async def run():
+        async with Client(mcp, raise_exceptions=True) as c:
+            return (await c.list_tools()).tools
+
+    # get_recommendation_evidence genuinely needs an id; it names a recommendation,
+    # not a person. Every other tool must be callable with no arguments at all.
+    callable_bare = {
+        "get_financial_profile", "get_wallet", "optimise_purchase",
+        "optimise_itinerary", "optimise_wallet",
+    }
+    for tool in anyio.run(run):
+        params = set((tool.input_schema or {}).get("properties", {}))
+        assert not {"customer_id", "customer", "user_id", "user"} & params, (
+            f"{tool.name} exposes an identity parameter"
+        )
+        if tool.name in callable_bare:
+            assert not (tool.input_schema or {}).get("required"), (
+                f"{tool.name} has required parameters, so it cannot be called bare"
+            )
+
+
+def test_stale_clients_sending_customer_id_still_work():
+    """A connector that cached the old schema must not break mid-demo."""
+    payload = call("get_wallet", {"customer_id": "alex"})
+    assert payload["data"]["cards"]
+
+
+def test_instructions_tell_the_model_not_to_ask_who():
+    async def run():
+        async with Client(mcp, raise_exceptions=True) as c:
+            return c.instructions or ""
+
+    text = anyio.run(run)
+    assert "never ask who the user means" in text

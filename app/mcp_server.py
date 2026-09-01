@@ -29,9 +29,15 @@ from app.services.smartpay import SmartPayService
 smartpay = SmartPayService()
 
 INSTRUCTIONS = """
-SmartPay is a deterministic payment-intelligence service. It reads a consumer's
-connected bank and card data, infers how they normally pay, and computes the
+SmartPay is a deterministic payment-intelligence service. It reads the connected
+consumer's bank and card data, infers how they normally pay, and computes the
 optimal way to pay for a purchase or an itinerary.
+
+WHOSE DATA: the consumer is already identified by the connection itself. There is
+no customer parameter and you must never ask who the user means, or ask them to
+name anyone, before calling a tool. Treat "me", "my", "I" and the consumer's own
+name as the same person. If the user says "plan me a trip and work out how I
+should pay", call the tools directly.
 
 CRITICAL PRESENTATION RULE: every tool returns a `display_markdown` field that has
 already been formatted. Present that field to the user verbatim. Do not recompute,
@@ -52,30 +58,30 @@ PRESENT_VERBATIM = " Present the `display_markdown` field verbatim."
 @mcp.tool(
     title="Get financial profile",
     description=(
-        "Read the consumer's connected bank and card data: accounts, 12 months of "
+        "Read the connected consumer's bank and card data: accounts, 12 months of "
         "transactions, spend by category, and which card they habitually use for "
         "each category." + PRESENT_VERBATIM
     ),
 )
-def get_financial_profile(customer_id: str = config.DEMO_CUSTOMER_ID) -> dict:
-    return smartpay.get_financial_profile(customer_id)
+def get_financial_profile() -> dict:
+    return smartpay.get_financial_profile(config.DEMO_CUSTOMER_ID)
 
 
 @mcp.tool(
     title="Get wallet",
     description=(
-        "List the payment cards the consumer holds, with network, annual fee and "
+        "List the payment cards the connected consumer holds, with network, annual fee and "
         "headline earn rate." + PRESENT_VERBATIM
     ),
 )
-def get_wallet(customer_id: str = config.DEMO_CUSTOMER_ID) -> dict:
-    return smartpay.get_wallet(customer_id)
+def get_wallet() -> dict:
+    return smartpay.get_wallet(config.DEMO_CUSTOMER_ID)
 
 
 @mcp.tool(
     title="Optimise a single purchase",
     description=(
-        "Work out the best way to pay for one purchase. Pass `purchase` with "
+        "Work out the best way for the connected consumer to pay for one purchase. Pass `purchase` with "
         "merchant, category, amount, and optionally purchase_date, "
         "purchase_channel and metadata (travellers, checked_bags, segments). "
         "Returns the consumer's likely habitual choice, the recommended card and "
@@ -83,16 +89,14 @@ def get_wallet(customer_id: str = config.DEMO_CUSTOMER_ID) -> dict:
         + PRESENT_VERBATIM
     ),
 )
-def optimise_purchase(
-    customer_id: str = config.DEMO_CUSTOMER_ID, purchase: dict | None = None
-) -> dict:
-    return smartpay.optimise_purchase(customer_id, purchase)
+def optimise_purchase(purchase: dict | None = None) -> dict:
+    return smartpay.optimise_purchase(config.DEMO_CUSTOMER_ID, purchase)
 
 
 @mcp.tool(
     title="Optimise an itinerary",
     description=(
-        "Work out the best way to pay for a whole trip. Pass `itinerary` as "
+        "Work out the best way for the connected consumer to pay for a whole trip. Pass `itinerary` as "
         "{title, start_date, items:[{label, merchant, category, amount, metadata}]}. "
         "Categories: airfare, hotel, attraction, car_rental, restaurant, rideshare, "
         "shopping, other. For flights include metadata {travellers, checked_bags, "
@@ -102,24 +106,23 @@ def optimise_purchase(
     ),
 )
 def optimise_itinerary(
-    customer_id: str = config.DEMO_CUSTOMER_ID,
     itinerary: dict | None = None,
     scenario_id: str | None = None,
 ) -> dict:
-    return smartpay.optimise_itinerary(customer_id, itinerary, scenario_id)
+    return smartpay.optimise_itinerary(config.DEMO_CUSTOMER_ID, itinerary, scenario_id)
 
 
 @mcp.tool(
     title="Optimise the wallet",
     description=(
-        "Forecast the consumer's next 12 months of spend and evaluate whether their "
+        "Forecast the connected consumer's next 12 months of spend and evaluate whether their "
         "current set of cards is the right one, net of annual fees. Returns a "
         "recommended change, the net annual incremental value, and the drivers."
         + PRESENT_VERBATIM
     ),
 )
-def optimise_wallet(customer_id: str = config.DEMO_CUSTOMER_ID) -> dict:
-    return smartpay.optimise_wallet(customer_id)
+def optimise_wallet() -> dict:
+    return smartpay.optimise_wallet(config.DEMO_CUSTOMER_ID)
 
 
 @mcp.tool(
