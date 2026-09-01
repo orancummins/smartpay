@@ -48,6 +48,11 @@ def _hosts(raw: str) -> list[str]:
 
 PUBLIC_HOSTS = _hosts(os.environ.get("SMARTPAY_PUBLIC_HOST", ""))
 
+# Watch app/ and restart on change. A long-running server quietly serving code from
+# before your last edit is hard to spot -- the tool answers correctly and only the
+# new behaviour is missing.
+RELOAD = os.environ.get("SMARTPAY_RELOAD", "") == "1"
+
 # Escape hatch for debugging a tunnel. Data is entirely synthetic, so this is not
 # a meaningful exposure, but it stays opt-in rather than the default.
 ALLOW_ANY_HOST = os.environ.get("SMARTPAY_ALLOW_ANY_HOST", "") == "1"

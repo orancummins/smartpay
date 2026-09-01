@@ -181,6 +181,17 @@ been asked is a small JSON file at `.runtime/queries.json` (gitignored, safe to
 delete) rather than memory. Writes are atomic; a missing or corrupt file reads as
 "nothing asked yet" and the page falls back to the frozen Disney scenario.
 
+Both servers reload on a change under `app/`, and `/health` reports whether the
+running process predates its own source:
+
+```bash
+curl -s http://127.0.0.1:9022/health   # {"stale": false, ...}
+```
+
+That check exists because it is very easy to edit the code, restart only one of the
+two servers, and lose an hour: the MCP server keeps answering ChatGPT correctly
+while silently lacking whatever you just added.
+
 Rendering the page does **not** count as asking a question — otherwise every poll
 would push a phantom entry to the top of your own history.
 

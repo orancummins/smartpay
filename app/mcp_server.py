@@ -23,7 +23,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
 
-from app import config
+from app import config, runtime
 from app.services.smartpay import SmartPayService
 
 smartpay = SmartPayService()
@@ -150,7 +150,9 @@ def get_recommendation_evidence(recommendation_id: str) -> dict:
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health(_: Request) -> JSONResponse:
-    return JSONResponse({"status": "ok", "service": "smartpay", "version": "0.1.0"})
+    return JSONResponse(
+        {"status": "ok", "service": "smartpay", "version": "0.1.0", **runtime.status()}
+    )
 
 
 @mcp.custom_route("/", methods=["GET"])
@@ -186,7 +188,16 @@ def build_app():
 
 def main() -> None:
     with contextlib.suppress(KeyboardInterrupt):
-        uvicorn.run(build_app(), host=config.HOST, port=config.PORT, log_level="info")
+        if config.RELOAD:
+            # reload_dirs is restricted to app/: the default watches the whole tree,
+            # and .runtime/queries.json changes on every query, which would restart
+            # the server in a loop.
+            uvicorn.run(
+                "app.mcp_server:build_app", factory=True, host=config.HOST,
+                port=config.PORT, log_level="info", reload=True, reload_dirs=["app"],
+            )
+        else:
+            uvicorn.run(build_app(), host=config.HOST, port=config.PORT, log_level="info")
 
 
 if __name__ == "__main__":

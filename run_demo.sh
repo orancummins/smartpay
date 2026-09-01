@@ -52,7 +52,15 @@ if [[ "${1:-}" != "--ngrok" ]]; then
 
       curl -s http://127.0.0.1:8080/readyz
 
+  Both servers report whether they are still serving the code on disk:
+
+      curl -s http://127.0.0.1:${PORT}/health
+
 BANNER
+  # Both servers reload on a change under app/. Without this it is very easy to
+  # edit the code, restart only one of them, and spend an hour wondering why the
+  # dashboard never updates -- the MCP server answers correctly the whole time.
+  export SMARTPAY_RELOAD="${SMARTPAY_RELOAD:-1}"
   $VENV -m app.dashboard_server &
   $VENV -m app.mcp_server &
   wait

@@ -11,7 +11,7 @@ from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import Route
 from starlette.staticfiles import StaticFiles
 
-from app import config, history
+from app import config, history, runtime
 from app.dashboard import render_alex_dashboard
 from app.providers.open_finance import SyntheticAlexProvider
 
@@ -46,8 +46,13 @@ async def query_history(_: Request) -> JSONResponse:
     )
 
 
+async def health(_: Request) -> JSONResponse:
+    return JSONResponse({"status": "ok", "service": "smartpay-dashboard", **runtime.status()})
+
+
 app = Starlette(
     routes=[
+        Route("/health", health),
         Route("/", demo_alex),
         Route("/history.json", query_history),
         Route("/demo/alex", demo_alex),
@@ -59,7 +64,13 @@ app.mount("/static", StaticFiles(directory=config.ROOT / "app" / "static"), name
 
 def main() -> None:
     with contextlib.suppress(KeyboardInterrupt):
-        uvicorn.run(app, host=config.HOST, port=config.DASHBOARD_PORT, log_level="info")
+        if config.RELOAD:
+            uvicorn.run(
+                "app.dashboard_server:app", host=config.HOST, port=config.DASHBOARD_PORT,
+                log_level="info", reload=True, reload_dirs=["app"],
+            )
+        else:
+            uvicorn.run(app, host=config.HOST, port=config.DASHBOARD_PORT, log_level="info")
 
 
 if __name__ == "__main__":
