@@ -230,3 +230,80 @@ def test_explicit_international_flag_blocks_a_domestic_benefit():
             travellers=4, checked_bags=4, segments=2, international=True)
     ids = {b.benefit_id for b in BENEFITS.evaluate_purchase(p, INST["citi_aa_platinum_select"])}
     assert "AA_FREE_CHECKED_BAG" not in ids
+
+
+# --- counterfactual and wallet economics (PLAN.MD section 37) ----------------
+
+
+def test_counterfactual_delta():
+    """The headline metric: optimal value minus what Alex would have done.
+
+    The delta is only meaningful if both sides are priced by the same engines, so
+    it measures the payment choice rather than our own inconsistency.
+    """
+    from app.engines.optimizer import ItineraryOptimizer
+    from app.scenarios import load_scenario
+
+    plan = ItineraryOptimizer(PROFILE).optimise(load_scenario("disney_october_2026"), "alex")
+
+    for r in plan.recommendations:
+        assert r.incremental_guaranteed == (
+            r.recommended.value.guaranteed_value - r.baseline.value.guaranteed_value
+        )
+        assert r.incremental_estimated == (
+            r.recommended.value.estimated_reward_value
+            - r.baseline.value.estimated_reward_value
+        )
+        # SmartPay must never recommend something worse than the habit.
+        assert r.recommended.score >= r.baseline.score
+
+    assert plan.incremental_guaranteed == sum(
+        (r.incremental_guaranteed for r in plan.recommendations), Decimal("0")
+    )
+    assert plan.incremental_guaranteed > Decimal("0")
+
+
+def test_wallet_annual_fee_deduction():
+    """Annual fees must reduce a wallet's value, including fees already paid.
+
+    PLAN.MD section 23 only subtracts the INCREMENTAL fee, which would make
+    dropping a $95 card look free rather than profitable.
+    """
+    from app.engines.wallet_optimizer import WalletOptimizer
+    from app.providers.future_spend import CommerceGPTMockProvider
+    from app.scenarios import load_scenario
+
+    itinerary = load_scenario("disney_october_2026")
+    forecast = CommerceGPTMockProvider().predict(PROFILE, 12, itinerary)
+    optimizer = WalletOptimizer(PROFILE)
+    wallet = [i for i in PROFILE.instruments if i.is_card]
+
+    fees = optimizer._annual_fees(wallet)
+    assert fees == Decimal("289.00")  # 95 Strata + 99 AAdvantage + 95 CSP
+
+    net, rewards, credits, _ = optimizer._value_of(wallet, forecast)
+    assert net == rewards + credits - fees, "annual fees are not deducted"
+
+    # Dropping a fee-paying card must recover its fee, less any earn it uniquely
+    # provided -- never more.
+    csp = next(i for i in wallet if i.instrument_id == "chase_sapphire_preferred")
+    trimmed = [i for i in wallet if i is not csp]
+    assert optimizer._annual_fees(trimmed) == fees - Decimal("95.00")
+
+    rec = optimizer.optimise(forecast, itinerary)
+    assert Decimal("0") < rec.net_annual_incremental_value <= Decimal("95.00")
+
+
+def test_a_genuinely_better_visa_still_wins():
+    """PLAN.MD's test_non_mastercard_can_win, kept in spirit.
+
+    The itinerary is tuned so Mastercards win, but the ENGINE must stay neutral:
+    where a Visa genuinely earns more, it must be recommended.
+    """
+    from app.engines.optimizer import PurchaseOptimizer
+
+    # Freedom Unlimited earns 3% on drugstores; no Mastercard in the wallet matches.
+    purchase = buy("cvs", Category.DRUGSTORE, "400")
+    winner = PurchaseOptimizer(PROFILE).options_for(purchase, "cvs")[0]
+    assert winner.instrument_id == "chase_freedom_unlimited"
+    assert not winner.is_mastercard
