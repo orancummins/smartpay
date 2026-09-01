@@ -176,43 +176,74 @@ def test_instructions_pin_the_consumer_to_the_us():
     assert "Do NOT localise" in text
 
 
-def test_demo_alex_renders_the_open_finance_dashboard():
+def test_demo_alex_renders_the_dashboard():
+    """Assert what the page must SAY, not how it is styled.
+
+    The previous version of this test pinned hex codes, `conic-gradient` and
+    `backdrop-filter:blur(6px)` -- styling minutiae that a redesign breaks and a bad
+    design still passes. These check the page carries the right numbers, the right
+    disclosures and a usable structure.
+    """
     response = anyio.run(demo_alex, None)
     html = response.body.decode()
 
     assert response.media_type == "text/html"
-    assert "Alex Morgan" in html
+    assert html.startswith("<!doctype html>")
+
+    # The figures on screen must be the engine's, to the cent.
+    assert "$553.00" in html, "headline guaranteed value missing"
+    assert "$359.70" in html
+    assert "35,620" in html
+
+    # The story: baseline, recommendation and the rule behind it.
+    assert "Chase Sapphire Preferred" in html
+    assert "Citi / AAdvantage Platinum Select World Elite Mastercard" in html
+    assert "via Citi Travel" in html
+    assert "First checked bag free on American Airlines" in html
+
+    # All five cards, each with its art.
     assert html.count('class="wallet-card art-') == 5
-    assert 'class="wallet-carousel"' in html
-    assert 'data-carousel-next' in html
-    assert 'data-carousel-prev' in html
-    assert 'class="carousel-dots"' in html
-    assert html.count('/static/cards/') == 10
-    assert "citi_strata_premier.webp" in html
-    assert "chase_sapphire_preferred.png" in html
-    assert '/static/logos/citi.svg' in html
-    assert '/static/logos/chase.svg' in html
-    assert '<link rel="icon" href="/static/logos/mastercard.svg" type="image/svg+xml">' in html
-    assert "Powered by Mastercard" not in html
-    assert "#EB001B" in html
-    assert "#FF5F00" in html
-    assert "#F79E1B" in html
-    assert "conic-gradient" in html
-    assert "Where Alex spends" in html
-    assert "spend-track" in html
-    assert "Monthly average" in html
-    assert 'class="spend-summary"' in html
-    assert "backdrop-filter:blur(6px)" in html
-    assert "art-chase_freedom_unlimited .art-cleanup" in html
-    assert html.count('class="account-name"') == 7
-    assert "Connected accounts" in html
-    assert "Citi Strata Premier Card" in html
-    assert "Recent activity" in html
-    assert 'id="page-previous"' in html
-    assert 'id="page-next"' in html
-    assert "const pageSize = 25" in html
-    assert "@media(min-width:1100px)" in html
-    assert "h1{font-size:44px}" in html
+    for art in ("citi_strata_premier.webp", "chase_sapphire_preferred.png"):
+        assert art in html
+
+    # Disclosures are not optional, whatever the design does.
+    assert "synthetic demo consumer" in html
+    assert "Simulated Mastercard card-linked offer" in html
+    assert "tie · disclosed" in html, "the network tiebreak must stay visible"
+
+    # Provenance, with a real verification date.
+    assert "2026-09-01" in html
+    assert "financialdataexchange" in html or "citi.com" in html or "chase.com" in html
+
+
+def test_dashboard_is_accessible_and_self_contained():
+    html = anyio.run(demo_alex, None).body.decode()
+
+    assert '<html lang="en">' in html
+    assert 'name="viewport"' in html
+    # Charts are images to a screen reader and must say what they show.
+    assert html.count("role=\"img\"") >= 3
+    assert html.count("aria-label=") >= 5
+    assert "aria-labelledby=" in html
+
+    # Nothing may be fetched from a third party: the demo has to work offline.
+    for remote in ("http://cdn", "https://cdn", "googleapis", "unpkg", "jsdelivr"):
+        assert remote not in html, f"external dependency: {remote}"
+
+    # Dark mode is selected, under both the OS setting and the explicit toggle.
+    assert "prefers-color-scheme:dark" in html
+    assert '[data-theme="dark"]' in html
+    assert "prefers-reduced-motion" in html
+
+
+def test_dashboard_never_shows_a_bare_series_colour_as_text():
+    """The validated palette has three light slots under 3:1 on the surface.
+
+    That is legal only with direct labels, so every bar must carry its own value.
+    """
+    html = anyio.run(demo_alex, None).body.decode()
+    assert html.count('class="bar-value') == html.count('class="bar-label"')
+    assert html.count('class="bar-label"') >= 12
 
 
 def test_demo_alex_json_remains_available_for_debugging():
