@@ -132,6 +132,20 @@ python scripts/seed_banksym.py          # creates Citi + Chase, imports 644 tran
 SMARTPAY_PROVIDER=banksym ./run_demo.sh
 ```
 
+Alex is seeded with online-banking credentials at both institutions, so the PSU
+consent journey works as well as the aggregation one:
+
+| | |
+|---|---|
+| username | `alex.morgan@example.com` |
+| password | `foobar!` |
+
+A demo credential for a synthetic customer in a test bank — it guards nothing real.
+`example.com` is reserved for documentation (RFC 2606), so the address cannot
+collide with a real mailbox. Both banks enable **Open Finance** (what SmartPay
+reads) and **Berlin Group XS2A** (the PSU login → consent → OAuth authorise →
+account access journey).
+
 Both sources produce **identical** recommendations — $553.00 guaranteed, $359.70
 estimated, 35,620 points, same card on every line. That equivalence is asserted by
 `tests/test_banksym_provider.py`, which skips when BankSym is not running.

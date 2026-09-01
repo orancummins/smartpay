@@ -34,6 +34,15 @@ ACCOUNT_TYPE = {"checking": "current", "credit_card": "credit_card"}
 
 CUSTOMER_NAME = "Alex Morgan"
 
+# example.com is reserved for documentation (RFC 2606), so a synthetic persona's
+# address can never collide with, or be mistaken for, a real mailbox.
+CUSTOMER_EMAIL = "alex.morgan@example.com"
+
+# BankSym issues online-banking credentials with every customer; the username
+# defaults to the email. This is a demo credential for a synthetic customer in a
+# test bank -- it guards nothing real.
+CUSTOMER_PASSWORD = "foobar!"
+
 
 def load_dataset() -> dict:
     path = config.DATA / "alex" / "transactions.json"
@@ -63,7 +72,10 @@ def create_bank(client: httpx.Client, institution: str) -> str:
             "supported_languages": ["en"],
             "open_banking_enabled": True,
             "primary_color": spec["primary_color"],
-            "enabled_protocols": ["open_finance"],
+            # Both surfaces: Open Finance for SmartPay's aggregation, and Berlin
+            # Group XS2A so the PSU consent/OAuth journey works against these banks
+            # the same way it does for every other BankSym tenant.
+            "enabled_protocols": ["open_finance", "berlin_group"],
             "capabilities": {"api": "open_finance"},
         },
     )
@@ -99,7 +111,13 @@ def main() -> None:
         for institution, bank_id in bank_ids.items():
             customer = client.post(
                 f"/banks/{bank_id}/customers",
-                json={"full_name": CUSTOMER_NAME, "country": "US"},
+                json={
+                    "full_name": CUSTOMER_NAME,
+                    "email": CUSTOMER_EMAIL,
+                    "country": "US",
+                    "username": CUSTOMER_EMAIL,
+                    "password": CUSTOMER_PASSWORD,
+                },
             )
             customer.raise_for_status()
             customer_ids[institution] = customer.json()["id"]
@@ -123,6 +141,7 @@ def main() -> None:
                 created.raise_for_status()
                 account_map[account["account_id"]] = (bank_id, created.json()["id"])
             print(f"  {institution:6} customer {customer_ids[institution]}  "
+                  f"login {customer.json()['username']}  "
                   f"accounts {sum(1 for a in accounts if a['institution'] == institution)}")
 
         print("Importing transactions:")
@@ -159,6 +178,8 @@ def main() -> None:
         handles = {
             "base_url": args.base_url,
             "customer_name": CUSTOMER_NAME,
+            "customer_email": CUSTOMER_EMAIL,
+            "login": {"username": CUSTOMER_EMAIL, "password": CUSTOMER_PASSWORD},
             "institutions": {
                 name: {"bank_id": bank_ids[name], "customer_id": customer_ids[name]}
                 for name in bank_ids
@@ -168,6 +189,9 @@ def main() -> None:
         }
         Path(args.out).write_text(json.dumps(handles, indent=2) + "\n")
         print(f"\nWrote handles to {args.out}")
+        print("\nOpen Banking login for Alex, at both institutions:")
+        print(f"  username  {CUSTOMER_EMAIL}")
+        print(f"  password  {CUSTOMER_PASSWORD}")
 
 
 if __name__ == "__main__":
