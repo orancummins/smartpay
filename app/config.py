@@ -48,6 +48,13 @@ def _hosts(raw: str) -> list[str]:
 
 PUBLIC_HOSTS = _hosts(os.environ.get("SMARTPAY_PUBLIC_HOST", ""))
 
+# Mimetype for the embedded UI resource. The docs are inconsistent here: the field
+# reference says "text/html", the current code example uses "text/html;profile=mcp-app",
+# and hosts in the wild have long expected "text/html+skybridge". A plain "text/html"
+# resource is not recognised as a component by ChatGPT, so this is switchable rather
+# than guessed -- try the alternatives if the component does not render.
+WIDGET_MIME = os.environ.get("SMARTPAY_WIDGET_MIME", "text/html+skybridge")
+
 # Watch app/ and restart on change. A long-running server quietly serving code from
 # before your last edit is hard to spot -- the tool answers correctly and only the
 # new behaviour is missing.

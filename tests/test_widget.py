@@ -30,7 +30,12 @@ def test_the_component_is_registered_as_a_ui_resource():
     resources = _client_call(lambda c: c.list_resources())
     uris = {str(r.uri): r for r in resources.resources}
     assert widget.WIDGET_URI in uris
-    assert uris[widget.WIDGET_URI].mime_type == "text/html"
+    # Not plain "text/html": a generic HTML resource is not recognised as a
+    # component. The exact value is switchable because the docs disagree with each
+    # other, so assert the shape rather than one string.
+    mime = uris[widget.WIDGET_URI].mime_type
+    assert mime.startswith("text/html")
+    assert mime != "text/html", "a bare text/html resource does not render as UI"
 
 
 def test_plan_tools_point_at_the_component():

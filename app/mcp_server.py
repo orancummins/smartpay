@@ -80,7 +80,7 @@ WIDGET_META: dict[str, Any] = {
     name="SmartPay payment plan",
     title="SmartPay payment plan",
     description="Baseline versus recommended payment for each item of a trip.",
-    mime_type="text/html",
+    mime_type=config.WIDGET_MIME,
     meta={
         "ui.prefersBorder": True,
         "openai/widgetDescription": (
