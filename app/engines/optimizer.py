@@ -345,5 +345,5 @@ class ItineraryOptimizer:
         if best.tiebreak_note:
             bits.append(best.tiebreak_note)
         if best.instrument_id == base.instrument_id and best.channel is base.channel:
-            bits.append("This already matches Alex's usual choice.")
+            bits.append("This already matches your usual choice.")
         return " ".join(bits)

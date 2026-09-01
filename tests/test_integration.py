@@ -21,7 +21,7 @@ def service():
 
 def test_alex_profile_builds(service):
     result = service.get_financial_profile("alex")
-    assert result["display_markdown"].startswith("## Financial profile")
+    assert result["display_markdown"].startswith("## Your financial profile")
     assert result["data"]["account_count"] == 7
     assert "Chase, Citi" in result["data"]["institutions"]
     assert result["disclaimers"], "synthetic data must always be disclosed"
@@ -245,3 +245,36 @@ def test_tiebreak_never_overrides_a_better_non_mastercard_option():
     assert winner.instrument_id == "chase_freedom_unlimited"
     assert not winner.is_mastercard
     assert winner.tiebreak_note is None
+
+
+def test_output_addresses_the_user_directly(service):
+    """The demo is narrated as the viewer's own money, so the copy must match.
+
+    A stray third-person 'Alex' beside ChatGPT saying 'you' reads as a bug on a
+    projector.
+    """
+    surfaces = [
+        service.optimise_itinerary()["display_markdown"],
+        service.optimise_wallet()["display_markdown"],
+        service.get_financial_profile("alex")["display_markdown"],
+        service.get_wallet("alex")["display_markdown"],
+        service.get_recommendation_evidence("disney_october_2026:hotel")["display_markdown"],
+    ]
+    for markdown in surfaces:
+        assert "Alex" not in markdown, f"third-person leak: {markdown[:80]}"
+
+    plan = service.optimise_itinerary()["display_markdown"]
+    assert "You would normally pay with" in plan
+
+
+def test_synthetic_disclosure_survives_the_second_person(service):
+    """Presenting generated data as 'yours' makes this disclosure more important.
+
+    Whatever the voice, the output must never imply this is real financial data.
+    """
+    for result in (service.optimise_itinerary(), service.optimise_wallet(),
+                   service.get_financial_profile("alex")):
+        assert any(
+            "synthetic demo profile" in d and "not real financial data" in d
+            for d in result["disclaimers"]
+        ), "synthetic-data disclosure missing or weakened"

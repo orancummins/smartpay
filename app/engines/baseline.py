@@ -131,7 +131,7 @@ class BaselineEngine:
                 support=support,
                 counts=dict(counts),
                 rationale=(
-                    f"Based on {support} historical {label}, Alex used "
+                    f"Based on {support} historical {label}, you used "
                     f"{{instrument}} {top[1]:.0%} of the time."
                 ),
                 )

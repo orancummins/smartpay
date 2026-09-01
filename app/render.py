@@ -13,7 +13,7 @@ from app.money import fmt, fmt_points
 
 VALUATION_FOOTNOTE = (
     "Points and cash back are valued at 1.0 cent per point. Guaranteed value is "
-    "money Alex verifiably does not pay: statement credits, discounts and waived "
+    "money you verifiably do not pay: statement credits, discounts and waived "
     "fees. Reward value is an estimate and is reported separately, never merged "
     "into the guaranteed figure."
 )
@@ -29,7 +29,7 @@ def payment_plan_markdown(plan: PaymentPlan) -> str:
         "",
         f"**Itinerary total:** {fmt(plan.itinerary_total)}",
         "",
-        "| Item | Amount | Alex would normally pay with | SmartPay recommends | Guaranteed | Est. rewards |",
+        "| Item | Amount | You would normally pay with | SmartPay recommends | Guaranteed | Est. rewards |",
         "|---|---:|---|---|---:|---:|",
     ]
 
@@ -124,7 +124,7 @@ def wallet_markdown(rec: WalletRecommendation) -> str:
 
 def profile_markdown(customer_id: str, summary: dict) -> str:
     lines = [
-        f"## Financial profile — {customer_id}",
+        "## Your financial profile",
         "",
         f"- Connected institutions: {summary['institutions']}",
         f"- Accounts: {summary['account_count']}",
@@ -141,7 +141,7 @@ def profile_markdown(customer_id: str, summary: dict) -> str:
         lines.append(f"| {category} | {amount} |")
     lines += [
         "",
-        "### How Alex currently pays",
+        "### How you currently pay",
         "",
         "| Category | Most-used card | Share |",
         "|---|---|---:|",
@@ -153,7 +153,7 @@ def profile_markdown(customer_id: str, summary: dict) -> str:
 
 def wallet_list_markdown(customer_id: str, cards: list[dict]) -> str:
     lines = [
-        f"## Cards in {customer_id}'s wallet",
+        "## Your wallet",
         "",
         "| Card | Network | Annual fee | Headline earn |",
         "|---|---|---:|---|",

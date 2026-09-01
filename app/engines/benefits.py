@@ -115,7 +115,7 @@ class BenefitsEngine:
                     display_name=rule.display_name,
                     value=rule.value,
                     explanation=(
-                        f"{rule.description}. Alex met the threshold in "
+                        f"{rule.description}. You met the threshold in "
                         f"{len(qualifying)} of {len(months)} observed months "
                         f"({share:.0%}), so this credit is expected to apply."
                     ),
