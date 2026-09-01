@@ -1178,7 +1178,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00607"
+      "transaction_id": "txn_00608"
     },
     {
       "account_id": "acct_chase_checking",
@@ -1190,7 +1190,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00618"
+      "transaction_id": "txn_00619"
     },
     {
       "account_id": "acct_citi_checking",
@@ -1202,7 +1202,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00630"
+      "transaction_id": "txn_00631"
     },
     {
       "account_id": "acct_citi_checking",
@@ -1214,7 +1214,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_strata",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00641"
+      "transaction_id": "txn_00642"
     },
     {
       "account_id": "acct_chase_cfu",
@@ -1766,7 +1766,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00608"
+      "transaction_id": "txn_00609"
     },
     {
       "account_id": "acct_chase_checking",
@@ -1778,7 +1778,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00619"
+      "transaction_id": "txn_00620"
     },
     {
       "account_id": "acct_citi_checking",
@@ -1790,7 +1790,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_aa",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00629"
+      "transaction_id": "txn_00630"
     },
     {
       "account_id": "acct_citi_checking",
@@ -1802,7 +1802,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00631"
+      "transaction_id": "txn_00632"
     },
     {
       "account_id": "acct_chase_csp",
@@ -2450,7 +2450,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00609"
+      "transaction_id": "txn_00610"
     },
     {
       "account_id": "acct_chase_checking",
@@ -2462,7 +2462,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00620"
+      "transaction_id": "txn_00621"
     },
     {
       "account_id": "acct_citi_checking",
@@ -2474,7 +2474,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00632"
+      "transaction_id": "txn_00633"
     },
     {
       "account_id": "acct_citi_checking",
@@ -2486,7 +2486,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_strata",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00642"
+      "transaction_id": "txn_00643"
     },
     {
       "account_id": "acct_chase_csp",
@@ -3086,7 +3086,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00610"
+      "transaction_id": "txn_00611"
     },
     {
       "account_id": "acct_chase_checking",
@@ -3098,7 +3098,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00621"
+      "transaction_id": "txn_00622"
     },
     {
       "account_id": "acct_citi_checking",
@@ -3110,7 +3110,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00633"
+      "transaction_id": "txn_00634"
     },
     {
       "account_id": "acct_chase_cfu",
@@ -3770,7 +3770,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00611"
+      "transaction_id": "txn_00612"
     },
     {
       "account_id": "acct_chase_checking",
@@ -3782,7 +3782,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00622"
+      "transaction_id": "txn_00623"
     },
     {
       "account_id": "acct_citi_checking",
@@ -3794,7 +3794,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00634"
+      "transaction_id": "txn_00635"
     },
     {
       "account_id": "acct_chase_csp",
@@ -4286,7 +4286,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00612"
+      "transaction_id": "txn_00613"
     },
     {
       "account_id": "acct_chase_checking",
@@ -4298,7 +4298,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00623"
+      "transaction_id": "txn_00624"
     },
     {
       "account_id": "acct_citi_checking",
@@ -4310,7 +4310,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00635"
+      "transaction_id": "txn_00636"
     },
     {
       "account_id": "acct_citi_checking",
@@ -4322,7 +4322,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_strata",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00643"
+      "transaction_id": "txn_00644"
     },
     {
       "account_id": "acct_citi_double_cash",
@@ -4455,6 +4455,18 @@
       "transaction_type": "purchase",
       "counterparty_account_id": null,
       "transaction_id": "txn_00327"
+    },
+    {
+      "account_id": "acct_chase_cfu",
+      "posted_at": "2026-03-22",
+      "merchant": "chase",
+      "description": "LATE PAYMENT FEE",
+      "amount": "40.00",
+      "category": "other",
+      "transaction_type": "fee",
+      "channel": "merchant_direct",
+      "counterparty_account_id": null,
+      "transaction_id": "txn_00607"
     },
     {
       "account_id": "acct_citi_double_cash",
@@ -4970,7 +4982,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00613"
+      "transaction_id": "txn_00614"
     },
     {
       "account_id": "acct_chase_checking",
@@ -4982,7 +4994,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00624"
+      "transaction_id": "txn_00625"
     },
     {
       "account_id": "acct_citi_checking",
@@ -4994,7 +5006,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00636"
+      "transaction_id": "txn_00637"
     },
     {
       "account_id": "acct_chase_cfu",
@@ -5594,7 +5606,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00614"
+      "transaction_id": "txn_00615"
     },
     {
       "account_id": "acct_chase_checking",
@@ -5606,7 +5618,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00625"
+      "transaction_id": "txn_00626"
     },
     {
       "account_id": "acct_citi_checking",
@@ -5618,7 +5630,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00637"
+      "transaction_id": "txn_00638"
     },
     {
       "account_id": "acct_chase_cfu",
@@ -6266,7 +6278,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00615"
+      "transaction_id": "txn_00616"
     },
     {
       "account_id": "acct_chase_checking",
@@ -6278,7 +6290,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00626"
+      "transaction_id": "txn_00627"
     },
     {
       "account_id": "acct_citi_checking",
@@ -6290,7 +6302,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00638"
+      "transaction_id": "txn_00639"
     },
     {
       "account_id": "acct_chase_csp",
@@ -6902,7 +6914,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00616"
+      "transaction_id": "txn_00617"
     },
     {
       "account_id": "acct_chase_checking",
@@ -6914,7 +6926,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00627"
+      "transaction_id": "txn_00628"
     },
     {
       "account_id": "acct_citi_checking",
@@ -6926,7 +6938,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00639"
+      "transaction_id": "txn_00640"
     },
     {
       "account_id": "acct_chase_cfu",
@@ -7610,7 +7622,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_cfu",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00617"
+      "transaction_id": "txn_00618"
     },
     {
       "account_id": "acct_chase_checking",
@@ -7622,7 +7634,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_chase_csp",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00628"
+      "transaction_id": "txn_00629"
     },
     {
       "account_id": "acct_citi_checking",
@@ -7634,7 +7646,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_double_cash",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00640"
+      "transaction_id": "txn_00641"
     },
     {
       "account_id": "acct_citi_checking",
@@ -7646,7 +7658,7 @@
       "transaction_type": "card_payment",
       "counterparty_account_id": "acct_citi_strata",
       "channel": "merchant_direct",
-      "transaction_id": "txn_00644"
+      "transaction_id": "txn_00645"
     },
     {
       "account_id": "acct_citi_double_cash",

@@ -112,6 +112,17 @@ def test_planted_signals_exist_for_every_inference_the_demo_makes():
         "the Mastercard 'take 3 rides, get $5' benefit must qualify in most months"
     )
 
+    late_fees = [
+        t for t in PROFILE.transactions if t.transaction_type.value == "fee"
+    ]
+    assert late_fees, (
+        "the risk engine's late-fee disclosure and payoff recommendation must have "
+        "a real fee to point at, not an assumption"
+    )
+    assert all(t.is_consumer_spend for t in late_fees), (
+        "a fee counts as spend per PLAN.MD section 7"
+    )
+
 
 def test_baseline_categories_have_enough_support():
     """Categories the demo narrates must not rest on one or two transactions."""

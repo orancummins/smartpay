@@ -24,6 +24,7 @@ import httpx
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app import config  # noqa: E402
+from app.providers.open_finance import CREDIT_LIMITS  # noqa: E402
 
 # Logos are served by BankSym itself (see ui/logos/) rather than hot-linked, so the
 # demo still renders with no network. Both marks are published on Wikimedia Commons
@@ -116,6 +117,7 @@ def main() -> None:
     data = load_dataset()
     accounts = data["accounts"]
     transactions = data["transactions"]
+    card_products_by_account = data["card_accounts"]
 
     with httpx.Client(base_url=args.base_url, timeout=120.0) as client:
         client.get("/health").raise_for_status()
@@ -145,6 +147,17 @@ def main() -> None:
             customer_ids[institution] = customer.json()["id"]
 
             for account in (a for a in accounts if a["institution"] == institution):
+                metadata = {
+                    "mask": account["mask"],
+                    "smartpay_account_id": account["account_id"],
+                }
+                # Credit limit is underwriting data for this specific card, not a
+                # published product term (see app.providers.open_finance for why),
+                # so the same assigned figures are threaded through here rather
+                # than invented separately for the BankSym path.
+                product_id = card_products_by_account.get(account["account_id"])
+                if product_id and product_id in CREDIT_LIMITS:
+                    metadata["credit_limit"] = str(CREDIT_LIMITS[product_id])
                 created = client.post(
                     f"/banks/{bank_id}/accounts",
                     json={
@@ -154,10 +167,7 @@ def main() -> None:
                         "name": account["display_name"],
                         # Carried so the Open Finance mask matches the real card, and
                         # so SmartPay can map an aggregated account back to its product.
-                        "metadata": {
-                            "mask": account["mask"],
-                            "smartpay_account_id": account["account_id"],
-                        },
+                        "metadata": metadata,
                     },
                 )
                 created.raise_for_status()
@@ -188,6 +198,32 @@ def main() -> None:
                 "channel": txn["channel"],
                 "location": "US",
             })
+
+            # A card_payment row in SmartPay's ledger lives ONLY on the checking
+            # side -- counterparty_account_id is a reference field for the ledger
+            # validator, not a second posting. BankSym is a real single-entry-per-row
+            # ledger, so importing only the checking debit leaves every card account
+            # accumulating purchases with no repayment ever applied: a full year of
+            # spend with no autopay, reporting balances several times the real
+            # outstanding amount. The credit below is the second leg.
+            if txn["transaction_type"] == "card_payment" and txn.get("counterparty_account_id"):
+                card_target = account_map.get(txn["counterparty_account_id"])
+                if card_target is not None:
+                    card_bank_id, card_banksym_account = card_target
+                    by_bank[card_bank_id].append({
+                        "account_id": card_banksym_account,
+                        "amount": f"{abs(amount):.2f}",
+                        "side": "credit",
+                        "booked_at": f"{txn['posted_at']}T00:00:00Z",
+                        # Must start with "AUTOPAY" so BankSymProvider.classify()
+                        # recognises it as a CARD_PAYMENT leg, not real income --
+                        # this row exists purely to net the card's balance and was
+                        # never a transaction in the original synthetic dataset.
+                        "description": f"AUTOPAY CREDIT — {txn['description']}",
+                        "reference": f"{txn['transaction_id']}_creditleg",
+                        "category": "other",
+                        "location": "US",
+                    })
 
         for institution, bank_id in bank_ids.items():
             batch = by_bank[bank_id]

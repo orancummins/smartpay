@@ -18,6 +18,15 @@ evidence: &cfu_ev
   confidence: authoritative
   note: "Chase Freedom Unlimited published earn rates and annual fee"
 
+late_payment_fee: "40.00"
+late_payment_fee_evidence:
+  evidence_type: issuer_reward_rule
+  source_name: Chase
+  source_url: "https://sites.chase.com/services/creatives/pricingandterms.html/content/dam/pricingandterms/LGC61498.html"
+  verified_at: 2026-09-01
+  confidence: authoritative
+  note: "Late payment fee disclosed in Chase's published Pricing & Terms document, verified via the Chase Freedom Unlimited card. Chase's standard penalty fee structure applies across its consumer card products."
+
 reward_rules:
   - rule_id: CFU_PORTAL_5PCT
     categories: [hotel, car_rental, attraction, airfare]

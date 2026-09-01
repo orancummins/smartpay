@@ -26,7 +26,7 @@ from pathlib import Path
 
 from app import config
 from app.engines.optimizer import PurchaseOptimizer
-from app.models.financial import FinancialProfile
+from app.models.financial import FinancialProfile, TransactionType
 from app.models.planning import PurchaseIntent
 from app.money import ZERO, quantize
 
@@ -62,7 +62,14 @@ def accumulated_savings(profile: FinancialProfile) -> dict:
     estimated = ZERO
     by_card: dict[str, Decimal] = {}
 
-    for txn in profile.spend_transactions:
+    # Fees are excluded from the comparison: a late payment fee is assessed on
+    # whatever card was already in use, not a decision a different card choice
+    # could have changed, and real issuers do not pay rewards on fee assessments.
+    purchases = [
+        t for t in profile.spend_transactions if t.transaction_type is TransactionType.PURCHASE
+    ]
+
+    for txn in purchases:
         actual_instrument = instruments.get(txn.account_id)
         if actual_instrument is None:
             continue  # paid from checking; no card comparison is possible
@@ -86,7 +93,7 @@ def accumulated_savings(profile: FinancialProfile) -> dict:
         "guaranteed": quantize(guaranteed),
         "estimated": quantize(estimated),
         "top_driver": max(by_card.items(), key=lambda kv: kv[1])[0] if by_card else None,
-        "transaction_count": len(profile.spend_transactions),
+        "transaction_count": len(purchases),
     }
     _CACHE[profile.customer_id] = result
     return result

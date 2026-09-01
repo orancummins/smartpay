@@ -14,8 +14,25 @@ def test_accumulated_savings_is_computed_not_asserted():
     profile = SyntheticAlexProvider().get_profile("alex")
     result = analytics.accumulated_savings(profile)
     assert result["guaranteed"] > Decimal("0")
-    assert result["transaction_count"] == len(profile.spend_transactions)
     assert result["top_driver"]
+
+
+def test_accumulated_savings_excludes_fees_from_the_transaction_count():
+    """spend_transactions includes fees (PLAN.MD section 7 counts a fee as
+    consumer spend); this comparison must not, since a late fee is assessed on
+    whatever card was already in use -- it is not a "which card should I use"
+    decision a different choice could have changed.
+    """
+    from app.models.financial import TransactionType
+
+    profile = SyntheticAlexProvider().get_profile("alex")
+    result = analytics.accumulated_savings(profile)
+    purchases_only = sum(
+        1 for t in profile.spend_transactions
+        if t.transaction_type is TransactionType.PURCHASE
+    )
+    assert result["transaction_count"] == purchases_only
+    assert result["transaction_count"] < len(profile.spend_transactions)
 
 
 def test_accumulated_savings_is_deterministic():

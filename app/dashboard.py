@@ -256,6 +256,10 @@ def _plan_rows(plan: dict) -> tuple[str, Decimal]:
         ) + "".join(
             f'<li>{_t(o["label"])} — {_money(o["value"])}</li>' for o in r["offers"]
         )
+        risk_items = [
+            note for note in (r.get("late_fee_warning"), r.get("payoff_recommendation")) if note
+        ]
+        risk_notes = "".join(f'<li>{_t(note)}</li>' for note in risk_items)
         rows.append(f"""
         <article class="plan-row{' has-gain' if gained > 0 else ''}">
           <div class="plan-item">
@@ -281,6 +285,7 @@ def _plan_rows(plan: dict) -> tuple[str, Decimal]:
             {_gain_bar(gained, peak)}
           </div>
           {f'<ul class="plan-why">{why}</ul>' if why else ''}
+          {f'<ul class="plan-risk">{risk_notes}</ul>' if risk_notes else ''}
         </article>""")
     return "".join(rows), peak
 
@@ -719,6 +724,7 @@ CSS = """
   --ink:#111110; --ink-2:#52514e; --ink-3:#86847e;
   --brand:#EB001B; --brand-2:#F79E1B; --brand-3:#FF5F00; --brand-ink:#C60016;
   --good:#046c4e; --good-bg:#e8f5ef;
+  --warn:#9a5b00; --warn-bg:#fdf1de;
   --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a; --series-4:#eda100;
   --series-5:#e87ba4; --series-6:#008300; --series-7:#4a3aa7; --series-8:#e34948;
   --radius:16px; --shadow:0 1px 2px rgba(17,17,16,.05),0 8px 24px -12px rgba(17,17,16,.15);
@@ -731,6 +737,7 @@ CSS = """
     --ink:#f7f7f5; --ink-2:#c3c2b7; --ink-3:#8e8c84;
     --brand-ink:#FF8A73;
     --good:#5fd0a4; --good-bg:#12281f;
+    --warn:#e0a341; --warn-bg:#2b2210;
     --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70; --series-4:#c98500;
     --series-5:#d55181; --series-6:#008300; --series-7:#9085e9; --series-8:#e66767;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px -14px rgba(0,0,0,.7);
@@ -741,6 +748,7 @@ CSS = """
   --bg:#111110; --surface:#1a1a19; --surface-2:#212120; --line:#302f2c;
   --ink:#f7f7f5; --ink-2:#c3c2b7; --ink-3:#8e8c84;
   --good:#5fd0a4; --good-bg:#12281f;
+  --warn:#e0a341; --warn-bg:#2b2210;
   --series-1:#3987e5; --series-2:#d95926; --series-3:#199e70; --series-4:#c98500;
   --series-5:#d55181; --series-6:#008300; --series-7:#9085e9; --series-8:#e66767;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px -14px rgba(0,0,0,.7);
@@ -855,6 +863,10 @@ a{color:inherit}
   list-style:none;display:flex;gap:8px;flex-wrap:wrap}
 .plan-why li{font-size:12.5px;color:var(--good);background:var(--good-bg);
   padding:4px 10px;border-radius:999px}
+.plan-risk{grid-column:1/-1;margin:0;padding:8px 0 0;list-style:none;
+  display:flex;flex-direction:column;gap:6px}
+.plan-risk li{font-size:12.5px;color:var(--warn);background:var(--warn-bg);
+  padding:6px 10px;border-radius:10px}
 
 /* enquiries list */
 .enquiry-block{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}

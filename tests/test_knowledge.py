@@ -102,3 +102,14 @@ def test_sapphire_preferred_does_not_earn_3x_on_physical_supermarkets():
     for rule in csp.reward_rules:
         if Category.SUPERMARKET in rule.categories:
             pytest.fail(f"{rule.rule_id} grants CSP a supermarket rate")
+
+
+def test_every_card_discloses_a_late_payment_fee_with_authoritative_evidence():
+    """Verified against a live issuer pricing/terms disclosure, same discipline as
+    every reward rate in this file -- never a guessed or rounded figure."""
+    for product in card_products().values():
+        assert product.late_payment_fee > 0, f"{product.product_id} has no late fee"
+        assert product.late_payment_fee_evidence is not None
+        assert product.late_payment_fee_evidence.confidence is Confidence.AUTHORITATIVE
+        assert product.late_payment_fee_evidence.source_url
+        assert product.late_payment_fee_evidence.verified_at

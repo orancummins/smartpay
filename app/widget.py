@@ -74,6 +74,7 @@ CSS = """
   --ink:#111110; --ink-2:#52514e; --ink-3:#86847e;
   --brand:#EB001B; --brand-2:#F79E1B; --brand-ink:#C60016;
   --good:#046c4e; --good-bg:#e8f5ef;
+  --warn:#9a5b00; --warn-bg:#fdf1de;
   --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
 }
 :root[data-theme="dark"]{
@@ -81,6 +82,7 @@ CSS = """
   --surface:#1a1a19; --surface-2:#212120; --line:#302f2c;
   --ink:#f7f7f5; --ink-2:#c3c2b7; --ink-3:#8e8c84;
   --brand-ink:#FF8A73; --good:#5fd0a4; --good-bg:#12281f;
+  --warn:#e0a341; --warn-bg:#2b2210;
   --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
 }
 html,body{margin:0;background:var(--bg)}
@@ -124,6 +126,8 @@ p{margin:0}
   border:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));color:var(--brand-ink);
   margin-left:5px}
 .tag.tie{border-style:dashed;color:var(--ink-3);border-color:var(--line)}
+.risk-note{margin-top:6px;font-size:11px;color:var(--warn);background:var(--warn-bg);
+  padding:5px 9px;border-radius:8px}
 
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 button{font:inherit;font-size:12.5px;font-weight:600;border-radius:9px;cursor:pointer;
@@ -192,12 +196,15 @@ function renderRows(plan) {
     const portal = r.recommended_channel && r.recommended_channel !== 'booked direct'
       ? `<span class="tag">${esc(r.recommended_channel)}</span>` : '';
     const tie = r.tiebreak_note ? '<span class="tag tie">tie · disclosed</span>' : '';
+    const riskNotes = [r.late_fee_warning, r.payoff_recommendation].filter(Boolean)
+      .map((note) => `<div class="risk-note">${esc(note)}</div>`).join('');
     return `
       <div class="row${gain > 0 ? ' win' : ''}">
         <div>
           <div class="item">${esc(r.item)}</div>
           <div class="swap"><b>${esc(r.baseline_payment)}</b> &rarr;
             <span class="to">${esc(r.recommended_payment)}</span>${portal}${tie}</div>
+          ${riskNotes}
         </div>
         <div class="val">
           <span class="gain">${money(gain)}</span>

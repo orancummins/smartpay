@@ -119,6 +119,15 @@ class CardProduct(BaseModel):
     reward_rules: list[RewardRule] = Field(default_factory=list)
     #: Free-text perks we can name but deliberately do not price.
     soft_benefits: list[str] = Field(default_factory=list)
+    #: Published penalty fee for a missed minimum payment. Evidence-backed like
+    #: every other rule here -- verified against a live issuer pricing disclosure,
+    #: not assumed. Used to make the cost of a late payment concrete rather than a
+    #: vague warning, and to size the guaranteed value of actually avoiding one.
+    #: Its own Evidence, separate from the product's, because the two claims come
+    #: from different pages (a product page states the rewards; the penalty fee
+    #: comes from the issuer's pricing/terms disclosure).
+    late_payment_fee: Decimal = ZERO
+    late_payment_fee_evidence: Evidence | None = None
     evidence: Evidence
 
     @property
@@ -134,6 +143,12 @@ class CardInstance(BaseModel):
     account_id: str
     mask: str
     opened_at: date
+    #: The cardholder's credit line. Unlike reward rates or fees, a credit limit is
+    #: an underwriting outcome for this specific account, not a published product
+    #: term -- so it carries no issuer evidence and lives on the instance, sourced
+    #: from Open Finance (retrieved from BankSym/FDX, or inferred from the ledger
+    #: for the frozen fixture) rather than the curated knowledge base.
+    credit_limit: Decimal | None = None
 
     @property
     def display_name(self) -> str:

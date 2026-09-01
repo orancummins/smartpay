@@ -309,6 +309,83 @@ def test_a_genuinely_better_visa_still_wins():
     assert not winner.is_mastercard
 
 
+def test_available_credit_excludes_an_unaffordable_card_from_candidacy():
+    """A hard constraint, not a preference: a card cannot actually be charged
+    more than its available credit, so it must not even appear as an option.
+
+    Chase Freedom Unlimited has ~$8,946.59 available in the frozen fixture; a
+    purchase larger than that must drop it entirely rather than rank it low.
+    """
+    from app.engines.optimizer import PurchaseOptimizer
+
+    purchase = buy("amazon", Category.OTHER, "9500")
+    options = PurchaseOptimizer(PROFILE).options_for(purchase, "amazon")
+    assert not any(o.instrument_id == "chase_freedom_unlimited" for o in options)
+    # A small purchase on the same card is untouched by the filter.
+    small = buy("amazon", Category.OTHER, "100")
+    options = PurchaseOptimizer(PROFILE).options_for(purchase=small, merchant_key="amazon")
+    assert any(o.instrument_id == "chase_freedom_unlimited" for o in options)
+
+
+def test_late_fee_warning_rides_alongside_the_winning_option_without_touching_its_score():
+    """The disclosed rider from app.engines.risk, not a scoring penalty.
+
+    Chase Freedom Unlimited carries a real planted $40 late fee. Recommending it
+    must still surface that history -- and must not change the dollar value the
+    recommendation is ranked on.
+    """
+    from app.engines.optimizer import PurchaseOptimizer
+
+    purchase = buy("amazon", Category.OTHER, "100")
+    options = PurchaseOptimizer(PROFILE).options_for(purchase, "amazon")
+    cfu = next(o for o in options if o.instrument_id == "chase_freedom_unlimited")
+    assert cfu.late_fee_warning is not None
+    assert "$40.00" in cfu.late_fee_warning
+    assert "March 2026" in cfu.late_fee_warning
+    # A card with no fee history in the ledger discloses nothing.
+    double_cash = next(o for o in options if o.instrument_id == "citi_double_cash")
+    assert double_cash.late_fee_warning is None
+
+
+def test_payoff_recommendation_fires_only_when_checking_can_actually_cover_it():
+    """Silence over false reassurance: the recommendation only appears when the
+    linked checking account genuinely has enough to pay the resulting balance
+    down, never as a generic nudge.
+    """
+    from app.engines.optimizer import PurchaseOptimizer
+
+    optimizer = PurchaseOptimizer(PROFILE)
+
+    # Large enough to push Freedom Unlimited over the utilisation threshold, and
+    # Chase Total Checking has the headroom to cover the payoff.
+    big = buy("amazon", Category.OTHER, "4000")
+    cfu = next(
+        o for o in optimizer.options_for(big, "amazon")
+        if o.instrument_id == "chase_freedom_unlimited"
+    )
+    assert cfu.payoff_recommendation is not None
+    assert "Chase Total Checking" in cfu.payoff_recommendation
+
+    # A small purchase never crosses the utilisation threshold.
+    small = buy("amazon", Category.OTHER, "100")
+    cfu_small = next(
+        o for o in optimizer.options_for(small, "amazon")
+        if o.instrument_id == "chase_freedom_unlimited"
+    )
+    assert cfu_small.payoff_recommendation is None
+
+    # Citi Checking is persistently negative in this dataset, so Citi cards must
+    # never recommend a payoff they cannot actually make.
+    citi_big = buy("amazon", Category.OTHER, "9000")
+    strata = next(
+        (o for o in optimizer.options_for(citi_big, "amazon")
+         if o.instrument_id == "citi_strata_premier"),
+        None,
+    )
+    assert strata is not None
+    assert strata.payoff_recommendation is None
+
+
 def test_merchant_scoped_benefit_does_not_leak_to_the_same_category_elsewhere():
     """A benefit naming both a merchant and a category requires BOTH to match.
 

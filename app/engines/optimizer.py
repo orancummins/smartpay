@@ -27,6 +27,7 @@ from app.engines.categorizer import categorise
 from app.engines.counterfactual import CounterfactualEngine
 from app.engines.offers import OffersEngine
 from app.engines.rewards import RewardsEngine, available_channels
+from app.engines import risk
 from app.knowledge import benefits as all_benefits
 from app.models.common import Evidence, PurchaseChannel, ValueBreakdown
 from app.models.financial import FinancialProfile, PaymentInstrument
@@ -120,6 +121,10 @@ class PurchaseOptimizer:
             offers=offers,
             benefits=benefits,
             evidence=evidence,
+            late_fee_warning=risk.late_fee_warning(instrument, self.profile),
+            payoff_recommendation=risk.payoff_recommendation(
+                instrument, self.profile, purchase.amount
+            ),
         )
 
     def options_for(
@@ -133,6 +138,12 @@ class PurchaseOptimizer:
         for instrument in self.profile.instruments:
             if not instrument.is_card:
                 continue  # demo scope: card-only comparison
+            # A hard constraint, not a preference: a card cannot actually be
+            # charged more than its available credit. Excluded before scoring
+            # rather than ranked down, so an unaffordable card can never win no
+            # matter how good its rewards look on paper.
+            if not risk.can_afford(instrument, self.profile, purchase.amount):
+                continue
             for channel in available_channels(purchase.category, instrument):
                 out.append(
                     self.build_option(purchase, instrument, channel, merchant_key, blocked, on)

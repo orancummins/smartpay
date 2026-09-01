@@ -47,7 +47,19 @@ def test_seeded_accounts_and_transactions_all_arrive(live, fixture_profile):
     live_masks = {a.mask for a in profile.accounts}
     assert seeded <= live_masks, f"seeded accounts missing over FDX: {seeded - live_masks}"
 
-    assert len(profile.transactions) == len(fixture_profile.transactions)
+    # BankSym is a real double-entry-per-account ledger, so a card payment needs
+    # two legs to net out correctly: the checking debit (present in the fixture
+    # too) and a credit on the card account itself (which the fixture's ledger
+    # model has no need for -- SmartPay excludes card payments from spend by type,
+    # not by balancing them). BankSym therefore carries exactly one extra row per
+    # card_payment in the fixture. Spend, the number that actually matters, must
+    # still match exactly.
+    from app.models.financial import TransactionType
+    fixture_payments = sum(
+        1 for t in fixture_profile.transactions
+        if t.transaction_type is TransactionType.CARD_PAYMENT
+    )
+    assert len(profile.transactions) == len(fixture_profile.transactions) + fixture_payments
     assert len(profile.spend_transactions) == len(fixture_profile.spend_transactions)
 
 
@@ -67,7 +79,17 @@ def test_transaction_types_are_reconstructed_from_raw_postings(live, fixture_pro
             out[t.transaction_type] = out.get(t.transaction_type, 0) + 1
         return out
 
-    assert counts(profile) == counts(fixture_profile)
+    fixture_counts = counts(fixture_profile)
+    live_counts = counts(profile)
+    # Every type matches exactly except CARD_PAYMENT, which is doubled by design:
+    # BankSym needs a credit leg on the card account to net its balance, on top of
+    # the checking debit the fixture already models. See
+    # test_seeded_accounts_and_transactions_all_arrive for the full explanation.
+    for txn_type, fixture_count in fixture_counts.items():
+        if txn_type is TransactionType.CARD_PAYMENT:
+            assert live_counts[txn_type] == fixture_count * 2
+        else:
+            assert live_counts[txn_type] == fixture_count, txn_type
 
     payments = [t for t in profile.transactions
                 if t.transaction_type is TransactionType.CARD_PAYMENT]
@@ -149,6 +171,8 @@ def test_classifier_rules():
         TransactionType.INCOME
     )
     assert classify("PUBLIX", "publix", Decimal("85.20")) is TransactionType.PURCHASE
+    assert classify("LATE PAYMENT FEE", "chase", Decimal("40.00")) is TransactionType.FEE
+    assert classify("Returned Payment Fee", "citi", Decimal("40.00")) is TransactionType.FEE
 
 
 # --- FDX wire format --------------------------------------------------------
@@ -194,9 +218,121 @@ def test_fdx_polymorphic_accounts_are_both_read(live):
 
 
 def test_card_liability_balances_are_read_as_positive_amounts_owed(live):
+    """Amounts owed are never negative, but can be exactly zero.
+
+    Citi/AAdvantage genuinely has no new purchases in Alex's final billing cycle,
+    so a correctly netted ledger reports $0 owed on it -- that is the fix working,
+    not a defect. The invariant to hold is "never negative", and separately that
+    the cards Alex actually used still show a real balance.
+    """
     from app.models.financial import AccountType
 
     profile = live.get_profile("alex")
     cards = [a for a in profile.accounts if a.account_type is AccountType.CREDIT_CARD]
     assert cards
-    assert all(a.current_balance > 0 for a in cards), "card balances should be amounts owed"
+    assert all(a.current_balance >= 0 for a in cards), "a card balance went negative"
+    assert any(a.current_balance > 0 for a in cards), "no card shows any balance owed"
+
+
+def test_card_payments_actually_reduce_the_card_balance(live, fixture_profile):
+    """Regression test for a real bug: importing only the checking-side debit of a
+    card_payment left every card accumulating a full year of purchases with no
+    repayment ever applied, reporting balances several times the true amount owed
+    (Chase Freedom Unlimited showed $24,772.75 -- its entire year of spend).
+
+    The correct outstanding balance is independently computable from the fixture's
+    own ledger: total purchases in the account's final billing cycle, since every
+    earlier month is fully reconciled by the following month's payment.
+    """
+    from decimal import Decimal
+
+    from app.models.financial import TransactionType
+
+    from app.models.financial import AccountType
+
+    card_account_ids = {
+        a.account_id for a in fixture_profile.accounts
+        if a.account_type is AccountType.CREDIT_CARD
+    }
+
+    fixture_totals: dict[str, Decimal] = {}
+    fixture_paid: dict[str, Decimal] = {}
+    for t in fixture_profile.transactions:
+        # Utilities and subscriptions post PURCHASE rows straight to checking too,
+        # so this must be scoped to card accounts specifically -- otherwise a
+        # checking account's whole year of direct-debit purchases gets treated as
+        # an "outstanding card balance" with no payment ever netting it. FEE is
+        # included alongside PURCHASE: a late payment fee genuinely adds to what
+        # is owed on the card it was assessed against.
+        if (
+            t.transaction_type in (TransactionType.PURCHASE, TransactionType.FEE)
+            and t.account_id in card_account_ids
+        ):
+            fixture_totals[t.account_id] = fixture_totals.get(t.account_id, Decimal(0)) + t.amount
+        if t.transaction_type is TransactionType.CARD_PAYMENT and t.counterparty_account_id:
+            fixture_paid[t.counterparty_account_id] = (
+                fixture_paid.get(t.counterparty_account_id, Decimal(0)) + t.amount
+            )
+
+    expected_outstanding = {
+        acc: fixture_totals.get(acc, Decimal(0)) - fixture_paid.get(acc, Decimal(0))
+        for acc in fixture_totals
+    }
+
+    profile = live.get_profile("alex")
+    fixture_by_id = {a.account_id: a for a in fixture_profile.accounts}
+    live_by_mask = {a.mask: a for a in profile.accounts}
+
+    checked = 0
+    for account_id, expected in expected_outstanding.items():
+        mask = fixture_by_id[account_id].mask
+        live_account = live_by_mask.get(mask)
+        if live_account is None:
+            continue
+        assert live_account.current_balance == expected, (
+            f"{live_account.display_name}: expected ${expected} outstanding, "
+            f"got ${live_account.current_balance} -- a missing payment leg would "
+            f"show something close to the full annual total instead"
+        )
+        checked += 1
+    assert checked == 5, "expected to check all five cards"
+
+
+def test_credit_limits_agree_between_fixture_and_banksym(live, fixture_profile):
+    """Both are "retrieved or inferred through Open Banking": the fixture path
+    assigns a limit per product (app.providers.open_finance.CREDIT_LIMITS) and the
+    BankSym path reconstructs it from FDX's availableCredit + currentBalance. They
+    must describe the same cardholder the same way regardless of source.
+    """
+    fixture_limits = {
+        i.instrument_id: i.card.credit_limit
+        for i in fixture_profile.instruments if i.is_card
+    }
+    live_limits = {
+        i.instrument_id: i.card.credit_limit
+        for i in live.get_profile("alex").instruments if i.is_card
+    }
+    assert fixture_limits.keys() == live_limits.keys()
+    for instrument_id, expected in fixture_limits.items():
+        assert live_limits[instrument_id] == expected, instrument_id
+
+
+def test_late_fee_is_read_back_as_a_fee_not_an_ordinary_purchase(live, fixture_profile):
+    """Regression test for a real gap: classify() had no case for FEE at all, so
+    a late payment fee read back through FDX was silently relabelled PURCHASE. It
+    would then earn rewards in the accumulated-savings comparison -- real issuers
+    never pay rewards on a fee -- and be invisible to the risk engine's late-fee
+    disclosure, which depends on finding it.
+    """
+    from app.models.financial import TransactionType
+
+    fixture_fees = [
+        t for t in fixture_profile.transactions if t.transaction_type is TransactionType.FEE
+    ]
+    assert fixture_fees, "the fixture must actually contain a fee to test this"
+
+    profile = live.get_profile("alex")
+    live_fees = [t for t in profile.transactions if t.transaction_type is TransactionType.FEE]
+    assert len(live_fees) == len(fixture_fees)
+    assert live_fees[0].amount == fixture_fees[0].amount
+    assert live_fees[0].description.upper() == fixture_fees[0].description.upper()

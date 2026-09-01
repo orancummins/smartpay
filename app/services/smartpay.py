@@ -207,6 +207,8 @@ class SmartPayService:
                     "recommended_payment": r.recommended.instrument_name,
                     "recommended_channel": r.recommended.channel_label,
                     "tiebreak_note": r.recommended.tiebreak_note,
+                    "late_fee_warning": r.recommended.late_fee_warning,
+                    "payoff_recommendation": r.recommended.payoff_recommendation,
                     "is_mastercard": r.recommended.is_mastercard,
                     "guaranteed_savings": str(r.incremental_guaranteed),
                     "estimated_reward_value_delta": str(r.incremental_estimated),

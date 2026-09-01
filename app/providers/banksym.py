@@ -87,6 +87,13 @@ def classify(description: str, merchant: str, amount: Decimal) -> TransactionTyp
         return TransactionType.INCOME
     if merchant == "card_payment":
         return TransactionType.CARD_PAYMENT
+    # Real issuer statements label a penalty charge exactly this way, so matching
+    # the phrase is a real-world signal, not an arbitrary string. Without this a
+    # late fee is read back as an ordinary purchase: it would earn rewards in the
+    # accumulated-savings comparison (real issuers never pay rewards on fees) and
+    # be invisible to the risk engine's late-fee disclosure.
+    if "LATE PAYMENT FEE" in text or "RETURNED PAYMENT FEE" in text:
+        return TransactionType.FEE
     return TransactionType.PURCHASE
 
 
@@ -172,6 +179,15 @@ class BankSymProvider:
                             product_id = MASK_TO_PRODUCT.get(mask)
                             if product_id and product_id in products:
                                 product = products[product_id]
+                                # A credit limit is retrieved through Open Banking
+                                # here, not assumed: FDX exposes availableCredit
+                                # directly, so the limit is reconstructed as
+                                # available + owed rather than invented separately
+                                # from the fixture path's own assignment.
+                                credit_limit = None
+                                available = raw.get("availableCredit")
+                                if available is not None:
+                                    credit_limit = Decimal(str(available)) + balance
                                 instruments.append(
                                     PaymentInstrument(
                                         instrument_id=product_id,
@@ -184,6 +200,7 @@ class BankSymProvider:
                                             account_id=account_id,
                                             mask=mask,
                                             opened_at=date(2022, 1, 1),
+                                            credit_limit=credit_limit,
                                         ),
                                         account_id=account_id,
                                     )

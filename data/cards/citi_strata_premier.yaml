@@ -19,6 +19,15 @@ evidence: &citi_strata_ev
   confidence: authoritative
   note: "Citi Strata Premier published earn rates and annual fee"
 
+late_payment_fee: "40.00"
+late_payment_fee_evidence:
+  evidence_type: issuer_reward_rule
+  source_name: Citi
+  source_url: "https://www.citi.com/CRD/PDF/CMA/pricingTables/PIT_PID184.pdf"
+  verified_at: 2026-09-01
+  confidence: authoritative
+  note: "Late payment penalty fee disclosed on Citi's published pricing information table, verified via the Citi Double Cash Card fact sheet. Citi's standard penalty fee structure applies across its consumer card products."
+
 reward_rules:
   # PLAN.MD section 15 in action: this is the 10x that must NEVER apply to a
   # booking made directly with the hotel or attraction.

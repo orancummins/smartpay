@@ -8,42 +8,42 @@
   },
   "institutions": {
     "citi": {
-      "bank_id": "bank_d00d09d51ef14aa7870633dcd1f9cab6",
-      "customer_id": "cus_bb1b6c43c5814708ad9c235cd9429971"
+      "bank_id": "bank_50d40b67e9e64672aa0d12624a36c90a",
+      "customer_id": "cus_1ef898c0880e4908970a8e5734bc4c69"
     },
     "chase": {
-      "bank_id": "bank_ad18bb310c954c58b53c197153afa76d",
-      "customer_id": "cus_1089c5bad2ab4a3dad1cb572a7af00d5"
+      "bank_id": "bank_6b0c6beaeb304601bd70b24aae0e4cb1",
+      "customer_id": "cus_364e97b08edc41178b0a83437b16ce39"
     }
   },
   "account_map": {
     "acct_citi_checking": {
-      "bank_id": "bank_d00d09d51ef14aa7870633dcd1f9cab6",
-      "account_id": "acc_ff580d2ac7e44767a35fa78e866da82d"
+      "bank_id": "bank_50d40b67e9e64672aa0d12624a36c90a",
+      "account_id": "acc_6c4019b627a040a2a142d477bf05dd87"
     },
     "acct_citi_strata": {
-      "bank_id": "bank_d00d09d51ef14aa7870633dcd1f9cab6",
-      "account_id": "acc_112612be41744e40a4a4f03f3389a1bf"
+      "bank_id": "bank_50d40b67e9e64672aa0d12624a36c90a",
+      "account_id": "acc_717107c8a13a4e7db2ce04c8464542c9"
     },
     "acct_citi_double_cash": {
-      "bank_id": "bank_d00d09d51ef14aa7870633dcd1f9cab6",
-      "account_id": "acc_ba441a1ddc714a4dac63df1952bccaa1"
+      "bank_id": "bank_50d40b67e9e64672aa0d12624a36c90a",
+      "account_id": "acc_b6297a16097a46938b8c62cd387987dd"
     },
     "acct_citi_aa": {
-      "bank_id": "bank_d00d09d51ef14aa7870633dcd1f9cab6",
-      "account_id": "acc_68b4ca01d4984f238ebb2a34c3d5eb28"
+      "bank_id": "bank_50d40b67e9e64672aa0d12624a36c90a",
+      "account_id": "acc_7f5f1a1fb3b746349351a9adbd22561b"
     },
     "acct_chase_checking": {
-      "bank_id": "bank_ad18bb310c954c58b53c197153afa76d",
-      "account_id": "acc_31fbc289b01248e09e6ee9422a1941c0"
+      "bank_id": "bank_6b0c6beaeb304601bd70b24aae0e4cb1",
+      "account_id": "acc_1eef3377d4a544848e4fd94f5f863ae6"
     },
     "acct_chase_csp": {
-      "bank_id": "bank_ad18bb310c954c58b53c197153afa76d",
-      "account_id": "acc_dfc09b1f0e314624bcaba3f74a0076b1"
+      "bank_id": "bank_6b0c6beaeb304601bd70b24aae0e4cb1",
+      "account_id": "acc_02b41ecb3d6d4399abcaf85caa014993"
     },
     "acct_chase_cfu": {
-      "bank_id": "bank_ad18bb310c954c58b53c197153afa76d",
-      "account_id": "acc_cbde81d554b94886810c6f6d4a98fd8a"
+      "bank_id": "bank_6b0c6beaeb304601bd70b24aae0e4cb1",
+      "account_id": "acc_886414b64f2442b3b3e01bfb99686b09"
     }
   }
 }

@@ -203,6 +203,7 @@ class Generator:
             self._atm(month)
             self._everyday(month)
         self._travel(months)
+        self._late_fee(months)
         self._card_payments(months)
         self.rows.sort(key=lambda r: (r["posted_at"], r["transaction_id"]))
         return self.rows
@@ -230,6 +231,22 @@ class Generator:
                 merchant=key, description=name.upper(), amount=usd(amt), category=cat,
                 channel=PurchaseChannel.ONLINE,
             )
+
+    def _late_fee(self, months: list[date]) -> None:
+        """PLAN.MD section 6: Alex has predictable but imperfect habits -- this is
+        the concrete imperfection. One missed minimum payment on the everyday,
+        lowest-attention card, verified against Chase's own published penalty fee
+        (see data/cards/chase_freedom_unlimited.yaml). Plants the signal the risk
+        engine's late-fee disclosure and payoff recommendation are meant to act on;
+        without a real row here that behaviour would have nothing to point at.
+        """
+        month = months[6]
+        self.add(
+            account_id="acct_chase_cfu", posted_at=month.replace(day=22),
+            merchant="chase", description="LATE PAYMENT FEE",
+            amount=usd("40.00"), category=Category.OTHER,
+            transaction_type=TransactionType.FEE,
+        )
 
     def _atm(self, month: date) -> None:
         # PLAN.MD section 7: cash out is visible, but we never fabricate merchant

@@ -75,6 +75,24 @@ def payment_plan_markdown(plan: PaymentPlan) -> str:
         if details:
             lines.append(f"- **{r.item_label}** — " + "; ".join(details))
 
+    risk_notes: list[str] = []
+    for r in plan.recommendations:
+        if r.recommended.late_fee_warning:
+            risk_notes.append(f"- **{r.item_label}** — {r.recommended.late_fee_warning}")
+        if r.recommended.payoff_recommendation:
+            risk_notes.append(f"- **{r.item_label}** — {r.recommended.payoff_recommendation}")
+    if risk_notes:
+        lines += [
+            "",
+            "### Other factors considered",
+            "",
+            "_Available credit is checked before a card is ever recommended -- an "
+            "unaffordable card is never proposed. The notes below are disclosed "
+            "advice, not a change to any figure above._",
+            "",
+        ]
+        lines += risk_notes
+
     if plan.priceless:
         lines += ["", "### Additional experience value", ""]
         for experience in plan.priceless:

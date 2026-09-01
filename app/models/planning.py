@@ -135,6 +135,12 @@ class PaymentOption(BaseModel):
     #: Set when this option only won because of the network tiebreak. Disclosed in
     #: the output rather than applied silently.
     tiebreak_note: str | None = None
+    #: Disclosed riders from app.engines.risk -- informational, never folded into
+    #: `value` or `score`. Available credit is enforced as a hard filter before an
+    #: option is ever built (see PurchaseOptimizer.options_for); these two are
+    #: advisory and ride alongside whichever option is chosen.
+    late_fee_warning: str | None = None
+    payoff_recommendation: str | None = None
 
     @property
     def score(self) -> Decimal:
