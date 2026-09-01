@@ -41,26 +41,30 @@ LEDGER_PATH = config.ROOT / ".runtime" / "identified_ledger.json"
 #: every argument is hashed to build the cache key.
 _CACHE: dict[str, dict] = {}
 
+#: The scored pass behind both accumulated_savings and retrospective_history.
+#: Cached separately from _CACHE (which holds the reduced summary) so the two
+#: views are built from literally the same numbers and can never disagree.
+_RECORDS_CACHE: dict[str, list[dict]] = {}
 
-def accumulated_savings(profile: FinancialProfile) -> dict:
-    """Guaranteed value SmartPay's rules find across Alex's real 12-month ledger.
 
-    For every past spend transaction: score it on the card that was actually used,
-    score it on the best card available, and take the guaranteed difference. Offers
-    are deliberately excluded -- they carry itinerary-level redemption caps (one
-    $75 credit across a whole trip) that do not map onto scoring arbitrary daily
-    transactions in isolation, and folding them in without that reconciliation
-    would overstate the total.
+def _purchase_records(profile: FinancialProfile) -> list[dict]:
+    """Score every real past purchase on the card actually used and on the best
+    card available, once. Both accumulated_savings and retrospective_history
+    reduce this same list rather than re-running the optimiser, which is what
+    keeps the header figure and the "what could you have saved" panel honest
+    about being two views of one computation, not two computations that happen
+    to agree.
+
+    Offers are deliberately excluded -- they carry itinerary-level redemption
+    caps (one $75 credit across a whole trip) that do not map onto scoring
+    arbitrary daily transactions in isolation, and folding them in without that
+    reconciliation would overstate the total.
     """
-    if profile.customer_id in _CACHE:
-        return _CACHE[profile.customer_id]
+    if profile.customer_id in _RECORDS_CACHE:
+        return _RECORDS_CACHE[profile.customer_id]
 
     optimizer = PurchaseOptimizer(profile)
     instruments = {i.account_id: i for i in profile.instruments if i.is_card}
-
-    guaranteed = ZERO
-    estimated = ZERO
-    by_card: dict[str, Decimal] = {}
 
     # Fees are excluded from the comparison: a late payment fee is assessed on
     # whatever card was already in use, not a decision a different card choice
@@ -69,6 +73,7 @@ def accumulated_savings(profile: FinancialProfile) -> dict:
         t for t in profile.spend_transactions if t.transaction_type is TransactionType.PURCHASE
     ]
 
+    records: list[dict] = []
     for txn in purchases:
         actual_instrument = instruments.get(txn.account_id)
         if actual_instrument is None:
@@ -83,20 +88,165 @@ def accumulated_savings(profile: FinancialProfile) -> dict:
         )
         best = optimizer.options_for(purchase, txn.merchant, on=txn.posted_at)[0]
 
-        delta = best.value.guaranteed_value - actual.value.guaranteed_value
-        if delta > ZERO:
-            guaranteed += delta
-            by_card[best.instrument_name] = by_card.get(best.instrument_name, ZERO) + delta
-        estimated += best.value.estimated_reward_value - actual.value.estimated_reward_value
+        records.append({
+            "date": txn.posted_at,
+            "month": txn.posted_at.strftime("%Y-%m"),
+            "merchant": txn.merchant,
+            "description": txn.description,
+            "category": txn.category.value,
+            "amount": txn.amount,
+            "actual_card": actual_instrument.display_name,
+            "best_card": best.instrument_name,
+            # A guaranteed gap can come from the channel alone -- the same card
+            # booked through its own issuer portal instead of direct earns Alex a
+            # bonus it never paid out on the historical merchant-direct purchase.
+            # Recording both channels lets the habit-change summary say "book via
+            # Citi Travel" rather than falsely claiming a card switch happened.
+            "actual_channel": txn.channel.value,
+            "best_channel": best.channel.value,
+            "guaranteed_delta": best.value.guaranteed_value - actual.value.guaranteed_value,
+            "estimated_delta": best.value.estimated_reward_value - actual.value.estimated_reward_value,
+        })
+
+    _RECORDS_CACHE[profile.customer_id] = records
+    return records
+
+
+def accumulated_savings(profile: FinancialProfile) -> dict:
+    """Guaranteed value SmartPay's rules find across Alex's real 12-month ledger.
+
+    For every past spend transaction: score it on the card that was actually used,
+    score it on the best card available, and take the guaranteed difference.
+    """
+    if profile.customer_id in _CACHE:
+        return _CACHE[profile.customer_id]
+
+    guaranteed = ZERO
+    estimated = ZERO
+    by_card: dict[str, Decimal] = {}
+    for r in _purchase_records(profile):
+        if r["guaranteed_delta"] > ZERO:
+            guaranteed += r["guaranteed_delta"]
+            by_card[r["best_card"]] = by_card.get(r["best_card"], ZERO) + r["guaranteed_delta"]
+        estimated += r["estimated_delta"]
+
+    # transaction_count deliberately counts every purchase, including the ones
+    # paid from checking that _purchase_records has no card comparison for --
+    # this is "how many transactions were considered," not "how many scored".
+    purchase_count = sum(
+        1 for t in profile.spend_transactions if t.transaction_type is TransactionType.PURCHASE
+    )
 
     result = {
         "guaranteed": quantize(guaranteed),
         "estimated": quantize(estimated),
         "top_driver": max(by_card.items(), key=lambda kv: kv[1])[0] if by_card else None,
-        "transaction_count": len(purchases),
+        "transaction_count": purchase_count,
     }
     _CACHE[profile.customer_id] = result
     return result
+
+
+#: Human phrasing for a booking channel. Covers every PurchaseChannel value,
+#: unlike PaymentOption.channel_label which only names the three that matter for
+#: the itinerary table.
+_CHANNEL_PHRASE = {
+    "merchant_direct": "booking direct",
+    "citi_travel": "booking via Citi Travel",
+    "chase_travel": "booking via Chase Travel",
+    "online": "buying online",
+    "in_store": "buying in store",
+}
+
+
+def _habit_change_label(category: str, from_card: str, to_card: str, from_ch: str, to_ch: str) -> str:
+    """Describe what actually has to change, honestly.
+
+    A guaranteed gap can come from the channel alone -- the same card earns a
+    portal bonus it never got on a merchant-direct purchase. Saying "switch to
+    card X" when the card never needed to change would be a claim the ledger
+    does not support.
+    """
+    if to_card != from_card:
+        return f"Use {to_card} instead of {from_card}"
+    phrase = _CHANNEL_PHRASE.get(to_ch, to_ch.replace("_", " "))
+    return f"Keep {to_card}, but try {phrase} instead"
+
+
+def retrospective_history(profile: FinancialProfile) -> dict:
+    """Per-transaction and per-month detail behind accumulated_savings.
+
+    Powers the dashboard's "what could you have saved" panel: a slider over
+    trailing months, an annotated transaction list, and the specific habit
+    changes (grouped by category, from-card/channel, to-card/channel) that
+    would produce whatever total the slider lands on.
+
+    Every value here is JSON-safe (Decimals and dates as strings) since this is
+    embedded directly into the rendered page for client-side slider math --
+    there is no server round-trip as the user drags.
+    """
+    records = _purchase_records(profile)
+    months = sorted({r["month"] for r in records})
+
+    transactions: list[dict] = []
+    habit_totals: dict[tuple[str, str, str, str, str], dict] = {}
+    for r in records:
+        guaranteed_delta = r["guaranteed_delta"]
+        estimated_delta = r["estimated_delta"]
+        improved = guaranteed_delta > ZERO
+        # habit_label is computed once here and carried on the transaction so the
+        # dashboard's slider can regroup habit changes for an arbitrary trailing
+        # window purely by grouping on this string -- the "same card, different
+        # channel" honesty check in _habit_change_label lives in exactly one
+        # place, not duplicated in client-side JS.
+        habit_label = (
+            _habit_change_label(
+                r["category"], r["actual_card"], r["best_card"],
+                r["actual_channel"], r["best_channel"],
+            )
+            if improved else None
+        )
+        transactions.append({
+            "date": r["date"].isoformat(),
+            "month": r["month"],
+            "merchant": r["merchant"],
+            "description": r["description"],
+            "category": r["category"],
+            "amount": str(quantize(r["amount"])),
+            "actual_card": r["actual_card"],
+            "best_card": r["best_card"],
+            "guaranteed_delta": str(quantize(guaranteed_delta if improved else ZERO)),
+            "estimated_delta": str(quantize(estimated_delta)),
+            "improved": improved,
+            "habit_label": habit_label,
+        })
+        if improved:
+            key = (
+                r["category"], r["actual_card"], r["best_card"],
+                r["actual_channel"], r["best_channel"],
+            )
+            bucket = habit_totals.setdefault(
+                key, {"count": 0, "guaranteed": ZERO, "estimated": ZERO}
+            )
+            bucket["count"] += 1
+            bucket["guaranteed"] += guaranteed_delta
+            bucket["estimated"] += estimated_delta
+
+    habit_changes = sorted(
+        (
+            {
+                "category": category,
+                "label": _habit_change_label(category, from_card, to_card, from_ch, to_ch),
+                "count": v["count"],
+                "guaranteed": str(quantize(v["guaranteed"])),
+                "estimated": str(quantize(v["estimated"])),
+            }
+            for (category, from_card, to_card, from_ch, to_ch), v in habit_totals.items()
+        ),
+        key=lambda h: -Decimal(h["guaranteed"]),
+    )
+
+    return {"months": months, "transactions": transactions, "habit_changes": habit_changes}
 
 
 def _load_ledger() -> dict[str, dict]:

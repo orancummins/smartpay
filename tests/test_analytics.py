@@ -88,3 +88,50 @@ def test_missing_ledger_file_reads_as_no_enquiries_yet():
     result = analytics.potential_future_savings(Decimal("42.00"))
     assert result["enquiry_count"] == 0
     assert result["total"] == Decimal("42.00")
+
+
+def test_retrospective_history_agrees_with_accumulated_savings():
+    """The dashboard slider and the header figure must be two views of the exact
+    same scored pass, not two separately-computed numbers that happen to match.
+    """
+    profile = SyntheticAlexProvider().get_profile("alex")
+    accumulated = analytics.accumulated_savings(profile)
+    history = analytics.retrospective_history(profile)
+
+    total = sum(
+        (Decimal(t["guaranteed_delta"]) for t in history["transactions"]), Decimal(0)
+    )
+    assert total == accumulated["guaranteed"]
+    assert len(history["months"]) == 12
+    assert history["months"] == sorted(history["months"])
+
+
+def test_habit_changes_never_claim_a_card_switch_that_did_not_happen():
+    """A guaranteed gap can come from the booking channel alone (the same card,
+    booked through its own issuer portal instead of direct). The label must say
+    so honestly rather than claiming a card switch that never happened.
+    """
+    profile = SyntheticAlexProvider().get_profile("alex")
+    history = analytics.retrospective_history(profile)
+    assert history["habit_changes"], "expected at least one real habit change"
+    for h in history["habit_changes"]:
+        assert Decimal(h["guaranteed"]) > Decimal("0")
+        assert h["count"] > 0
+        assert "instead" in h["label"]
+
+    # Sorted by guaranteed value, most impactful first.
+    values = [Decimal(h["guaranteed"]) for h in history["habit_changes"]]
+    assert values == sorted(values, reverse=True)
+
+
+def test_habit_change_channel_only_switch_is_labelled_as_a_channel_change():
+    """A specific, known instance in the frozen dataset: two Marriott stays booked
+    merchant-direct that would have earned a portal bonus on the exact same card.
+    """
+    profile = SyntheticAlexProvider().get_profile("alex")
+    history = analytics.retrospective_history(profile)
+    channel_only = [
+        h for h in history["habit_changes"]
+        if h["label"].startswith("Keep ") and "booking via" in h["label"]
+    ]
+    assert channel_only, "expected a same-card, channel-only habit change"

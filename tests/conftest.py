@@ -18,5 +18,7 @@ def isolated_query_history(tmp_path, monkeypatch):
     monkeypatch.setattr(history, "HISTORY_PATH", tmp_path / "queries.json")
     monkeypatch.setattr(analytics, "LEDGER_PATH", tmp_path / "identified_ledger.json")
     analytics._CACHE.clear()
+    analytics._RECORDS_CACHE.clear()
     yield
     analytics._CACHE.clear()
+    analytics._RECORDS_CACHE.clear()

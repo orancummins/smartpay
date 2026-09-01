@@ -18,6 +18,7 @@ slots -- hence labels on every bar rather than a legend-only chart.
 from __future__ import annotations
 
 import html
+import json
 from collections import defaultdict
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -54,6 +55,11 @@ CATEGORY_LABEL = {
 }
 
 ACCOUNT_TYPE_LABEL = {"checking": "Checking", "credit_card": "Credit card"}
+
+TXN_TYPE_LABEL = {
+    "purchase": "Purchase", "fee": "Fee", "card_payment": "Card payment",
+    "atm_withdrawal": "ATM withdrawal", "income": "Income",
+}
 
 #: The Open Finance domain model carries a customer_id, not a human name -- this is
 #: presentation-layer knowledge for the one demo persona, matching the name already
@@ -225,6 +231,99 @@ def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
         </div>
       </div>
     </section>"""
+
+
+# ---------------------------------------------------------------------------
+# Retrospective slider -- "what could you have saved?" -- expandable, just
+# under the header. Everything under .retro-body is computed and rendered by
+# JS from the embedded JSON: one source of truth (analytics.retrospective_history)
+# instead of a server-rendered default that client-side math could drift from.
+# ---------------------------------------------------------------------------
+
+def _retrospective_section(history: dict, accumulated: dict) -> str:
+    months = history["months"]
+    n_months = len(months) or 1
+    # Most recent first, matching the recent-activity convention elsewhere on the
+    # page. Both the rendered rows and the JSON payload below iterate this same
+    # sorted list, in the same order, so the Nth <li> always corresponds to the
+    # Nth entry in the JS array -- the slider toggles visibility by index alone.
+    txns = sorted(history["transactions"], key=lambda t: t["date"], reverse=True)
+
+    txn_rows = "".join(f"""
+      <li class="retro-txn{' improved' if t['improved'] else ''}" data-month="{_t(t['month'])}"
+          data-guaranteed="{t['guaranteed_delta']}">
+        <span class="rt-date">{_t(t['date'][5:])}</span>
+        <span class="rt-merchant">{_t(t['description'].title())}</span>
+        <span class="rt-category">{_label(t['category'])}</span>
+        <span class="rt-card">{_t(t['actual_card'])}</span>
+        <span class="rt-delta">{_money(t['guaranteed_delta']) if t['improved'] else '—'}</span>
+      </li>""" for t in txns)
+
+    payload = json.dumps({
+        "months": months,
+        "transactions": [
+            {
+                "month": t["month"],
+                "guaranteed_delta": t["guaranteed_delta"],
+                "estimated_delta": t["estimated_delta"],
+                "category": t["category"],
+                "improved": t["improved"],
+                "habit_label": t["habit_label"],
+            }
+            for t in txns
+        ],
+    })
+    # A merchant/description string ending up containing "</script>" would close
+    # the tag early; escaping the slash is the standard guard for JSON embedded
+    # in a script tag.
+    payload = payload.replace("</", "<\\/")
+
+    return f"""
+    <section class="panel retro" aria-labelledby="retro-h">
+      <button class="retro-toggle" id="retro-toggle" type="button" aria-expanded="false"
+              aria-controls="retro-body">
+        <div class="retro-toggle-text">
+          <h2 id="retro-h">What could you have saved?</h2>
+          <p>Drag back through the last {_t(n_months)} months to see the total, and
+             exactly which habits would have to change to reach it.</p>
+        </div>
+        <span class="retro-headline-figure">{_money(accumulated['guaranteed'])}</span>
+        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="retro-body" id="retro-body" hidden>
+        <noscript><p class="sub-lede">Enable JavaScript to use the savings slider.</p></noscript>
+
+        <div class="retro-slider-row">
+          <label for="retro-slider" class="retro-slider-label">
+            Months of adoption: <b id="retro-slider-value">{_t(n_months)}</b> of {_t(n_months)}
+          </label>
+          <input type="range" min="1" max="{_t(n_months)}" value="{_t(n_months)}"
+                 id="retro-slider" class="retro-slider">
+        </div>
+
+        <div class="retro-summary" id="retro-summary">
+          <div class="retro-summary-figure">
+            <span class="figure" id="retro-total">{_money(accumulated['guaranteed'])}</span>
+            <small>guaranteed, across <span id="retro-txn-count">0</span> transactions in this
+               window</small>
+          </div>
+          <div>
+            <h3 class="sub-h" style="margin-top:0">Spending habits that would need to change</h3>
+            <ul class="habit-list" id="habit-list"></ul>
+          </div>
+        </div>
+
+        <h3 class="sub-h">Annotated transaction history</h3>
+        <p class="sub-lede">Every scored purchase from the window above. Highlighted rows are
+           where a different card or channel would have earned more; dimmed rows are outside
+           the selected window or were already on the best option.</p>
+        <ul class="retro-txn-list" id="retro-txn-list">{txn_rows}</ul>
+      </div>
+    </section>
+    <script type="application/json" id="retro-data">{payload}</script>"""
 
 
 # ---------------------------------------------------------------------------
@@ -491,12 +590,18 @@ def _shared_data_section(profile: FinancialProfile) -> str:
       </tr>""" for a in sorted(profile.accounts, key=lambda a: (a.institution, a.display_name)))
 
     account_lookup = {a.account_id: a for a in profile.accounts}
-    txns = sorted(profile.spend_transactions, key=lambda t: t.posted_at, reverse=True)
+    # Every raw ledger entry, not just consumer spend -- card payments, ATM cash
+    # out and income are real information Open Finance shared too, and hiding
+    # them here would make "here's all the information you've shared" untrue.
+    # The Type column is what lets a reader tell them apart from spend at a
+    # glance, since is_consumer_spend already dims the row.
+    txns = sorted(profile.transactions, key=lambda t: t.posted_at, reverse=True)
     txn_rows = "".join(f"""
-      <tr>
+      <tr{'' if t.is_consumer_spend else ' class="non-spend"'}>
         <td>{t.posted_at.isoformat()}</td>
         <td>{_t(t.description.title())}</td>
         <td>{_label(t.category.value)}</td>
+        <td>{_t(TXN_TYPE_LABEL.get(t.transaction_type.value, t.transaction_type.value.title()))}</td>
         <td>{_t(account_lookup[t.account_id].display_name) if t.account_id in account_lookup else '—'}</td>
         <td class="num">{_money(t.amount)}</td>
       </tr>""" for t in txns)
@@ -527,14 +632,16 @@ def _shared_data_section(profile: FinancialProfile) -> str:
         </table>
       </div>
 
-      <h3 class="sub-h">Every consumer transaction shared ({_t(len(txns))})</h3>
-      <p class="sub-lede">{_t(len(profile.transactions))} raw ledger entries in total;
-         card payments, ATM withdrawals and internal transfers are excluded here so
-         nothing is counted as spend twice.</p>
+      <h3 class="sub-h">Every transaction shared ({_t(len(txns))})</h3>
+      <p class="sub-lede">Every raw ledger entry Open Finance returned, nothing
+         held back. Rows dimmed and marked <b>Card payment</b>,
+         <b>ATM withdrawal</b> or <b>Income</b> are not counted as spend anywhere
+         on this page -- counting a card repayment as a purchase would double-count
+         money already counted when it was first spent.</p>
       <div class="table-wrap scroll">
         <table class="data-table">
-          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Account</th>
-            <th>Amount</th></tr></thead>
+          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th>
+            <th>Account</th><th>Amount</th></tr></thead>
           <tbody>{txn_rows}</tbody>
         </table>
       </div>
@@ -820,6 +927,60 @@ a{color:inherit}
 .mini-stats span{display:block;font-size:21px;font-weight:660;letter-spacing:-.02em}
 .mini-stats small{color:var(--ink-3);font-size:12.5px}
 
+/* retrospective slider ("what could you have saved?") */
+.retro{padding:0;overflow:hidden}
+.retro-toggle{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:20px;
+  width:100%;padding:26px 28px;cursor:pointer}
+.retro-toggle:hover{background:color-mix(in srgb,var(--brand) 4%,transparent)}
+.retro-toggle:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+.retro-toggle-text{flex:1 1 auto;min-width:0}
+.retro-toggle-text h2{font-size:23px;font-weight:680}
+.retro-toggle-text p{color:var(--ink-2);font-size:14.5px;margin-top:5px;max-width:56ch}
+.retro-headline-figure{font-size:26px;font-weight:700;letter-spacing:-.02em;flex:none;
+  background:linear-gradient(96deg,var(--brand),var(--brand-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.retro .chevron{width:20px;height:20px;flex:none;color:var(--ink-3);transition:transform .22s}
+.retro.open .chevron{transform:rotate(180deg)}
+.retro-body{padding:0 28px 28px}
+.retro-slider-row{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.retro-slider-label{font-size:14px;color:var(--ink-2);font-weight:600}
+.retro-slider-label b{color:var(--ink);font-weight:700}
+.retro-slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;
+  background:var(--line);outline:none;cursor:pointer}
+.retro-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;
+  height:20px;border-radius:50%;background:var(--brand);border:3px solid var(--surface);
+  box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer}
+.retro-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--brand);
+  border:3px solid var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:pointer}
+.retro-summary{display:grid;grid-template-columns:1fr 1.4fr;gap:24px;align-items:start;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:20px 22px;
+  margin-bottom:22px}
+.retro-summary-figure .figure{display:block;font-size:38px;font-weight:700;letter-spacing:-.03em;
+  background:linear-gradient(96deg,var(--brand),var(--brand-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.retro-summary-figure small{color:var(--ink-3);font-size:13px;line-height:1.5;display:block;
+  margin-top:6px}
+.habit-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.habit-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+  font-size:13.5px;padding:7px 10px;border-radius:9px;background:var(--surface)}
+.habit-row.empty{grid-template-columns:1fr;color:var(--ink-3);font-style:italic}
+.habit-label{color:var(--ink-2)}
+.habit-count{color:var(--ink-3);font-size:12.5px}
+.habit-value{font-weight:660;letter-spacing:-.01em;color:var(--good)}
+.retro-txn-list{list-style:none;margin:0;padding:0;display:grid;gap:2px;max-height:420px;
+  overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:4px}
+.retro-txn{display:grid;grid-template-columns:56px 1.6fr 1fr 1.4fr auto;gap:12px;
+  align-items:center;padding:9px 10px;border-radius:8px;font-size:13.5px;
+  transition:opacity .15s,background-color .15s}
+.retro-txn.improved{background:var(--good-bg)}
+.retro-txn.improved .rt-delta{color:var(--good);font-weight:660}
+.retro-txn .rt-date{color:var(--ink-3);font-weight:600}
+.retro-txn .rt-category{color:var(--ink-3)}
+.retro-txn .rt-card{color:var(--ink-3);font-size:12.5px}
+.retro-txn .rt-delta{text-align:right;color:var(--ink-3)}
+.retro-txn.out-of-window{opacity:.32}
+.retro-txn.out-of-window.improved{background:transparent}
+
 /* stat chip row (section 2) */
 .chips-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px}
 .kv{border:1px solid var(--line);border-radius:14px;padding:12px 16px;background:var(--surface-2);
@@ -938,6 +1099,8 @@ a{color:inherit}
   padding:9px 12px;font-weight:650;border-bottom:1px solid var(--line)}
 .data-table td{padding:9px 12px;border-top:1px solid var(--line);color:var(--ink-2)}
 .data-table td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.data-table tr.non-spend td{color:var(--ink-3)}
+.data-table tr.non-spend td:nth-child(4){font-style:italic}
 
 /* wallet (section 6) */
 .wallet-carousel{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(268px,1fr);
@@ -1018,6 +1181,14 @@ footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:13px;display:grid;g
   .activity-row{grid-template-columns:56px 1fr auto;grid-template-areas:
     "date merchant amount" ". category card"}
   .act-category,.act-card{grid-column:2/4}
+  .retro-toggle{padding:20px}
+  .retro-body{padding:0 20px 20px}
+  .retro-summary{grid-template-columns:1fr}
+  .retro-txn{grid-template-columns:1fr auto;grid-template-areas:"merchant delta" "category delta"}
+  .retro-txn .rt-date,.retro-txn .rt-card{display:none}
+  .retro-txn .rt-merchant{grid-area:merchant}
+  .retro-txn .rt-category{grid-area:category;font-size:12px}
+  .retro-txn .rt-delta{grid-area:delta}
 }
 @media (max-width:560px){
   .wrap{padding:0 16px}
@@ -1027,11 +1198,33 @@ footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:13px;display:grid;g
   .plan-swap{grid-template-columns:1fr;gap:8px}
   .arrow{transform:rotate(90deg);width:min-content}
   .mini-stats{gap:14px}
+  /* Three flex children (text, figure, chevron) in one row leaves the text
+     block only a sliver of width on a phone, wrapping its heading to one word
+     per line. Wrapping the row lets the figure and chevron drop to their own
+     line instead of starving the text next to them. */
+  .retro-toggle{flex-wrap:wrap;row-gap:12px}
+  .retro-toggle-text{flex:1 1 100%}
+  .retro-headline-figure{font-size:21px}
+  .retro-summary{padding:16px}
+  .habit-row{grid-template-columns:1fr auto;row-gap:2px}
+  .habit-label{grid-column:1/-1}
+  .habit-count{justify-self:start}
+  .habit-value{justify-self:end}
 }
 """
 
 SCRIPT = """
 (function(){
+  function money(v){
+    var n = Number(v || 0);
+    return (n < 0 ? '-$' : '$') + Math.abs(n).toLocaleString('en-US',
+      {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"]/g,
+      function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; });
+  }
+
   var root=document.documentElement, KEY='smartpay.theme';
   try{var saved=localStorage.getItem(KEY); if(saved) root.dataset.theme=saved;}catch(e){}
   var btn=document.getElementById('theme');
@@ -1099,6 +1292,68 @@ SCRIPT = """
       rail.addEventListener('scroll',sync,{passive:true}); sync();
     }
   }
+
+  // Retrospective slider ("what could you have saved?")
+  var retroSection=document.querySelector('.retro');
+  if(retroSection){
+    var toggle=document.getElementById('retro-toggle');
+    var body=document.getElementById('retro-body');
+    var dataEl=document.getElementById('retro-data');
+    var DATA = dataEl ? JSON.parse(dataEl.textContent) : {months:[],transactions:[]};
+    var slider=document.getElementById('retro-slider');
+    var rows=document.querySelectorAll('#retro-txn-list .retro-txn');
+
+    toggle.addEventListener('click', function(){
+      var open = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!open));
+      body.hidden = open;
+      retroSection.classList.toggle('open', !open);
+    });
+
+    function update(monthsBack){
+      var months = DATA.months;
+      var cutoff = Math.max(months.length - monthsBack, 0);
+      var windowMonths = {};
+      months.slice(cutoff).forEach(function(m){ windowMonths[m] = true; });
+
+      var total = 0, count = 0;
+      var habits = {}; // label -> {count, total}
+      DATA.transactions.forEach(function(t, i){
+        var inWindow = !!windowMonths[t.month];
+        var row = rows[i];
+        if(row) row.classList.toggle('out-of-window', !inWindow);
+        if(!inWindow) return;
+        count++;
+        total += parseFloat(t.guaranteed_delta || 0);
+        if(t.improved && t.habit_label){
+          var h = habits[t.habit_label] || {count:0, total:0, category:t.category};
+          h.count++; h.total += parseFloat(t.guaranteed_delta || 0);
+          habits[t.habit_label] = h;
+        }
+      });
+
+      document.getElementById('retro-slider-value').textContent = monthsBack;
+      document.getElementById('retro-txn-count').textContent = count;
+      document.getElementById('retro-total').textContent = money(total);
+
+      var list = document.getElementById('habit-list');
+      var ranked = Object.keys(habits).map(function(label){
+        return {label:label, count:habits[label].count, total:habits[label].total,
+                category:habits[label].category};
+      }).sort(function(a,b){ return b.total - a.total; }).slice(0, 8);
+      list.innerHTML = ranked.length ? ranked.map(function(h){
+        return '<li class="habit-row">'
+          + '<span class="habit-label">'+esc(h.label)+'</span>'
+          + '<span class="habit-count">'+h.count+'&times;</span>'
+          + '<span class="habit-value">'+money(h.total)+'</span>'
+          + '</li>';
+      }).join('') : '<li class="habit-row empty">No habit change needed in this window --'
+        + ' every purchase was already on its best card.</li>';
+    }
+
+    slider.addEventListener('input', function(){ update(parseInt(slider.value, 10)); });
+    update(parseInt(slider.value, 10));
+  }
 })();
 """
 
@@ -1135,6 +1390,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
     active_key = latest.get("key", "")
 
     accumulated = analytics.accumulated_savings(profile)
+    retrospective = analytics.retrospective_history(profile)
     potential = analytics.potential_future_savings(
         Decimal(wallet["recommendation"]["net_annual_incremental_value"])
     )
@@ -1174,6 +1430,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 </header>
 <main class="wrap">
   {_header(full_name, accumulated, potential["total"])}
+  {_retrospective_section(retrospective, accumulated)}
   {_potential_section(potential, plan, title, latest.get('asked_at'), active_key, entries)}
   {_institutions_section(profile)}
   {_recent_activity_section(profile)}

@@ -242,7 +242,20 @@ def test_demo_alex_renders_the_dashboard():
     # Section 4/5: real transaction activity, not just SmartPay enquiries.
     assert 'class="activity-row"' in html
     assert 'class="data-table"' in html
-    assert "Every consumer transaction shared" in html
+    assert "Every transaction shared" in html
+    # Section 5 shows the full raw ledger now, not just consumer spend -- a card
+    # payment or ATM withdrawal is real shared information too.
+    assert "Card payment" in html
+    assert "ATM withdrawal" in html
+
+    # The retrospective savings slider: expandable, right under the header, and
+    # built from the same guaranteed figure as the hero stat.
+    retro_pos = html.index("What could you have saved?")
+    assert positions[0] < retro_pos < positions[1], (
+        "the retrospective panel must sit just under the header, before section 2"
+    )
+    assert 'id="retro-slider"' in html
+    assert 'id="retro-data"' in html
 
     # "And one more thing..." must be the LAST panel, right before the disclaimers.
     assert html.index("And one more thing…") > max(
