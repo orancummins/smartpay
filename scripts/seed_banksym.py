@@ -56,6 +56,13 @@ CUSTOMER_EMAIL = "alex.morgan@example.com"
 # test bank -- it guards nothing real.
 CUSTOMER_PASSWORD = "foobar!"
 
+# Alex's whole transaction history assumes Boston -- MBTA fares, Logan Airport
+# parking, a City of Boston Water bill, and every flight departing BOS -- so the
+# BankSym profile must say so explicitly. Without an address override BankSym
+# generates a random US city per bank, which put Alex in Denver at Citi and Austin
+# at Chase: harmless to the numbers, but visibly wrong the moment anyone looks.
+CUSTOMER_ADDRESS = "22 Beacon Street\nBoston, MA 02108\nUnited States"
+
 
 def load_dataset() -> dict:
     path = config.DATA / "alex" / "transactions.json"
@@ -129,6 +136,7 @@ def main() -> None:
                     "full_name": CUSTOMER_NAME,
                     "email": CUSTOMER_EMAIL,
                     "country": "US",
+                    "address": CUSTOMER_ADDRESS,
                     "username": CUSTOMER_EMAIL,
                     "password": CUSTOMER_PASSWORD,
                 },
