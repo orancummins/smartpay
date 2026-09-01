@@ -86,11 +86,11 @@ def create_bank(client: httpx.Client, institution: str) -> str:
             "open_banking_enabled": True,
             "primary_color": spec["primary_color"],
             "logo_url": spec["logo_url"],
-            # Both surfaces: Open Finance for SmartPay's aggregation, and Berlin
-            # Group XS2A so the PSU consent/OAuth journey works against these banks
-            # the same way it does for every other BankSym tenant.
-            "enabled_protocols": ["open_finance", "berlin_group"],
-            "capabilities": {"api": "open_finance"},
+            # FDX is the US open banking standard and is what SmartPay reads from
+            # these banks. Berlin Group stays enabled so the PSU consent/OAuth
+            # journey works against them like every other BankSym tenant.
+            "enabled_protocols": ["fdx", "berlin_group"],
+            "capabilities": {"api": "fdx"},
         },
     )
     response.raise_for_status()

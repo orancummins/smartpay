@@ -1,4 +1,7 @@
-"""Open Finance provider backed by BankSym.
+"""Open Finance provider backed by BankSym, speaking FDX.
+
+Reads over **FDX** (Financial Data Exchange), the US open banking standard, which
+is what the Citi and Chase tenants expose.
 
 PLAN.MD section 8 asks that the optimisation engine be insulated from where the
 data comes from. This is the proof: the same engines, reading Alex's profile from
@@ -53,7 +56,14 @@ MASK_TO_PRODUCT = {
     "2094": "chase_freedom_unlimited",
 }
 
-_ACCOUNT_TYPE = {"checking": AccountType.CHECKING, "creditCard": AccountType.CREDIT_CARD}
+#: FDX accountType -> SmartPay account type.
+_ACCOUNT_TYPE = {
+    "CHECKING": AccountType.CHECKING,
+    "SAVINGS": AccountType.CHECKING,
+    "CREDITCARD": AccountType.CREDIT_CARD,
+}
+
+FDX_VERSION = "v6"
 
 
 class BankSymUnavailable(RuntimeError):
@@ -123,29 +133,42 @@ class BankSymProvider:
             with self._client() as client:
                 for institution, inst in handles["institutions"].items():
                     bank_id, customer_id = inst["bank_id"], inst["customer_id"]
-                    base = f"/openfinance/{bank_id}/v1"
+                    base = f"/fdx/{bank_id}/{FDX_VERSION}"
 
-                    response = client.get(f"{base}/customers/{customer_id}/accounts")
+                    response = client.get(
+                        f"{base}/accounts", params={"customerId": customer_id}
+                    )
                     response.raise_for_status()
 
-                    for raw in response.json()["accounts"]:
+                    for entry in response.json()["accounts"]:
+                        # FDX is polymorphic: exactly one typed account is populated,
+                        # and a credit card arrives as a line of credit rather than a
+                        # deposit account.
+                        raw = entry.get("depositAccount") or entry.get("locAccount")
+                        if raw is None:
+                            continue
+                        is_card = entry.get("locAccount") is not None
+
                         account_id = raw["accountId"]
-                        mask = raw["accountNumberMask"]
+                        mask = (raw.get("accountNumberDisplay") or "")[-4:]
                         account_type = _ACCOUNT_TYPE.get(
-                            raw["accountType"], AccountType.CHECKING
+                            raw.get("accountType", ""), AccountType.CHECKING
                         )
+                        balance = Decimal(str(raw.get("currentBalance") or 0))
                         accounts.append(
                             Account(
                                 account_id=account_id,
                                 institution=institution,
-                                display_name=raw["name"],
+                                display_name=raw.get("productName")
+                                or raw.get("nickname")
+                                or account_id,
                                 account_type=account_type,
                                 mask=mask,
-                                current_balance=Decimal(raw["balances"][0]["amount"]),
+                                current_balance=balance,
                             )
                         )
 
-                        if account_type is AccountType.CREDIT_CARD:
+                        if is_card:
                             product_id = MASK_TO_PRODUCT.get(mask)
                             if product_id and product_id in products:
                                 product = products[product_id]
@@ -169,7 +192,7 @@ class BankSymProvider:
                             instruments.append(
                                 PaymentInstrument(
                                     instrument_id=f"debit_{institution}",
-                                    display_name=f"{raw['name']} (debit)",
+                                    display_name=f"{raw.get('productName') or account_id} (debit)",
                                     issuer=institution,
                                     is_card=False,
                                     account_id=account_id,
@@ -179,7 +202,11 @@ class BankSymProvider:
                         txn_response = client.get(f"{base}/accounts/{account_id}/transactions")
                         txn_response.raise_for_status()
                         for row in txn_response.json()["transactions"]:
-                            transactions.append(self._to_transaction(account_id, row))
+                            raw_txn = row.get("depositTransaction") or row.get("locTransaction")
+                            if raw_txn:
+                                transactions.append(
+                                    self._to_transaction(account_id, raw_txn)
+                                )
         except httpx.HTTPError as exc:
             raise BankSymUnavailable(
                 f"Could not read from BankSym at {handles['base_url']}: {exc}"
@@ -190,26 +217,31 @@ class BankSymProvider:
 
     @staticmethod
     def _to_transaction(account_id: str, row: dict) -> Transaction:
-        # BankSym signs money-out negative; SmartPay signs money-out positive.
-        amount = -Decimal(row["amount"])
-        merchant = row.get("merchantName") or ""
+        # FDX always reports a positive amount and carries direction separately in
+        # debitCreditMemo. SmartPay signs money-out positive, so DEBIT keeps its
+        # sign and CREDIT flips -- reading the amount alone would make every
+        # payroll deposit look like spending.
+        magnitude = Decimal(str(row.get("amount") or 0))
+        amount = magnitude if row.get("debitCreditMemo") == "DEBIT" else -magnitude
+
+        merchant = row.get("payee") or ""
         description = row.get("description") or ""
         category = row.get("category") or Category.OTHER.value
-        channel = row.get("channel") or PurchaseChannel.MERCHANT_DIRECT.value
+        posted = str(row["postedTimestamp"])[:10]
         return Transaction(
             transaction_id=row["transactionId"],
             account_id=account_id,
-            posted_at=date.fromisoformat(row["postedDate"]),
+            posted_at=date.fromisoformat(posted),
             merchant=merchant,
             description=description,
             amount=amount,
-            category=Category(category) if category in Category._value2member_map_ else Category.OTHER,
-            transaction_type=classify(description, merchant, amount),
-            channel=(
-                PurchaseChannel(channel)
-                if channel in PurchaseChannel._value2member_map_
-                else PurchaseChannel.MERCHANT_DIRECT
+            category=(
+                Category(category)
+                if category in Category._value2member_map_
+                else Category.OTHER
             ),
+            transaction_type=classify(description, merchant, amount),
+            channel=PurchaseChannel.MERCHANT_DIRECT,
         )
 
     # -- OpenFinanceProvider -------------------------------------------------

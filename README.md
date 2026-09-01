@@ -117,11 +117,11 @@ changes the headline number. Two things guard against that:
 - Omitting `itinerary` uses the frozen BOS→MCO scenario, which is the safest
   option for a rehearsed run.
 
-## Open Finance via BankSym
+## Open Finance via BankSym (FDX)
 
 By default SmartPay reads Alex from the frozen fixture. It can equally read the same
 profile from [BankSym](../banksym), where Citi and Chase exist as two separate bank
-tenants serving a US-style Open Finance API:
+tenants serving **FDX**, the US open banking standard:
 
 ```bash
 # in the banksym repo
@@ -150,11 +150,18 @@ Both sources produce **identical** recommendations — $553.00 guaranteed, $359.
 estimated, 35,620 points, same card on every line. That equivalence is asserted by
 `tests/test_banksym_provider.py`, which skips when BankSym is not running.
 
-Two things the BankSym path does that a real aggregation integration must:
+Three things the BankSym path does that a real FDX integration must:
+
+- **Decodes direction from `debitCreditMemo`.** FDX amounts are always positive and
+  direction is a separate field. Reading the amount alone would make every payroll
+  deposit look like spending and invert the entire profile.
+- **Dispatches on polymorphic envelopes.** Deposits arrive as `depositAccount` /
+  `depositTransaction`, credit cards as `locAccount` / `locTransaction`. Handling
+  only one silently drops five of Alex's seven accounts.
 
 - **Aggregates across institutions.** Citi and Chase are separate tenants with
   separate customer ids; one financial picture is reassembled from both.
-- **Classifies raw postings.** Open Finance returns money movements, not meaning.
+- **Classifies raw postings.** FDX returns money movements, not meaning.
   Nothing in the payload says "this is a card repayment, exclude it from spend" —
   SmartPay derives that, and getting it wrong would double-count everything Alex
   repays.

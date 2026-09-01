@@ -1,4 +1,4 @@
-"""SmartPay reading Alex's profile from BankSym over Open Finance.
+"""SmartPay reading Alex's profile from BankSym over FDX.
 
 The point of PLAN.MD section 8's provider abstraction is that swapping the data
 source changes nothing downstream. These tests are the evidence: identical
@@ -138,3 +138,54 @@ def test_classifier_rules():
         TransactionType.INCOME
     )
     assert classify("PUBLIX", "publix", Decimal("85.20")) is TransactionType.PURCHASE
+
+
+# --- FDX wire format --------------------------------------------------------
+
+
+def test_fdx_direction_is_decoded_from_debit_credit_memo():
+    """The subtlest part of the FDX mapping, unit-tested without needing BankSym.
+
+    FDX always reports a positive amount and says which way it went in
+    debitCreditMemo. SmartPay signs money-out positive. Reading the amount alone
+    would make every payroll deposit look like spending and invert the whole
+    profile.
+    """
+    from decimal import Decimal
+
+    to_txn = banksym.BankSymProvider._to_transaction
+
+    spend = to_txn("acc_1", {
+        "transactionId": "t1", "postedTimestamp": "2025-11-04T00:00:00Z",
+        "description": "PUBLIX", "payee": "publix", "category": "supermarket",
+        "debitCreditMemo": "DEBIT", "amount": 85.20,
+    })
+    assert spend.amount == Decimal("85.20"), "a debit is money out, positive to SmartPay"
+
+    income = to_txn("acc_2", {
+        "transactionId": "t2", "postedTimestamp": "2025-11-01T00:00:00Z",
+        "description": "NORTHWIND HEALTH PAYROLL", "payee": "employer",
+        "debitCreditMemo": "CREDIT", "amount": 4180.00,
+    })
+    assert income.amount == Decimal("-4180.00"), "a credit is money in, negative to SmartPay"
+    assert not income.is_consumer_spend
+
+
+def test_fdx_polymorphic_accounts_are_both_read(live):
+    """FDX splits deposits and cards into different envelopes; both must arrive."""
+    from app.models.financial import AccountType
+
+    profile = live.get_profile("alex")
+    types = {a.account_type for a in profile.accounts}
+    assert AccountType.CHECKING in types, "depositAccount entries were dropped"
+    assert AccountType.CREDIT_CARD in types, "locAccount entries were dropped"
+    assert sum(1 for a in profile.accounts if a.account_type is AccountType.CREDIT_CARD) == 5
+
+
+def test_card_liability_balances_are_read_as_positive_amounts_owed(live):
+    from app.models.financial import AccountType
+
+    profile = live.get_profile("alex")
+    cards = [a for a in profile.accounts if a.account_type is AccountType.CREDIT_CARD]
+    assert cards
+    assert all(a.current_balance > 0 for a in cards), "card balances should be amounts owed"
