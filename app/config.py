@@ -13,6 +13,13 @@ DATA = ROOT / "data"
 RANDOM_SEED = 20261001
 
 DEMO_CUSTOMER_ID = "alex"
+
+# Which Open Finance source to read from.
+#   "synthetic"  frozen committed fixture -- the default, and what the rehearsed
+#                demo numbers are pinned to
+#   "banksym"    live BankSym tenants over its Open Finance API
+# The engines are identical either way; that is the point of PLAN.MD section 8.
+PROVIDER = os.environ.get("SMARTPAY_PROVIDER", "synthetic").strip().lower()
 DEMO_SCENARIO_ID = "disney_october_2026"
 
 HOST = os.environ.get("SMARTPAY_HOST", "127.0.0.1")

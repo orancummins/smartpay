@@ -22,7 +22,7 @@ from app.models.common import Category, RewardCurrency
 from app.models.planning import Itinerary, ItineraryItem, PaymentPlan, PurchaseIntent
 from app.money import ZERO, fmt, quantize
 from app.providers.future_spend import CommerceGPTMockProvider
-from app.providers.open_finance import SyntheticAlexProvider
+from app.providers.open_finance import OpenFinanceProvider, default_provider
 from app.scenarios import load_scenario
 
 SYNTHETIC_DATA_NOTE = (
@@ -49,8 +49,8 @@ def _envelope(markdown: str, data: dict, disclaimers: list[str]) -> dict:
 
 
 class SmartPayService:
-    def __init__(self) -> None:
-        self.provider = SyntheticAlexProvider()
+    def __init__(self, provider: OpenFinanceProvider | None = None) -> None:
+        self.provider = provider or default_provider()
         self.forecaster = CommerceGPTMockProvider()
         self._recommendations: dict[str, dict] = {}
 

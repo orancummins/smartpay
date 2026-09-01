@@ -117,6 +117,34 @@ changes the headline number. Two things guard against that:
 - Omitting `itinerary` uses the frozen BOS→MCO scenario, which is the safest
   option for a rehearsed run.
 
+## Open Finance via BankSym
+
+By default SmartPay reads Alex from the frozen fixture. It can equally read the same
+profile from [BankSym](../banksym), where Citi and Chase exist as two separate bank
+tenants serving a US-style Open Finance API:
+
+```bash
+# in the banksym repo
+./run.sh start
+
+# in this repo, once
+python scripts/seed_banksym.py          # creates Citi + Chase, imports 644 transactions
+SMARTPAY_PROVIDER=banksym ./run_demo.sh
+```
+
+Both sources produce **identical** recommendations — $553.00 guaranteed, $359.70
+estimated, 35,620 points, same card on every line. That equivalence is asserted by
+`tests/test_banksym_provider.py`, which skips when BankSym is not running.
+
+Two things the BankSym path does that a real aggregation integration must:
+
+- **Aggregates across institutions.** Citi and Chase are separate tenants with
+  separate customer ids; one financial picture is reassembled from both.
+- **Classifies raw postings.** Open Finance returns money movements, not meaning.
+  Nothing in the payload says "this is a card repayment, exclude it from spend" —
+  SmartPay derives that, and getting it wrong would double-count everything Alex
+  repays.
+
 ## Architecture
 
 ```
@@ -142,7 +170,8 @@ app/
   render.py           deterministic markdown (this is what enforces "no LLM maths")
   engines/            categorizer, rewards, offers, benefits, baseline,
                       counterfactual, optimizer (two-pass), wallet_optimizer
-  providers/          open_finance (Protocol + synthetic), future_spend
+  providers/          open_finance (Protocol + synthetic + selection),
+                      banksym (live Open Finance), future_spend
 data/
   alex/               frozen, committed transaction history
   cards/              five card products, with evidence on every rule

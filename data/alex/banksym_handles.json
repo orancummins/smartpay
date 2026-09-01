@@ -1,0 +1,44 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  "customer_name": "Alex Morgan",
+  "institutions": {
+    "citi": {
+      "bank_id": "bank_a3d3672b1b434227adb589bd12d42230",
+      "customer_id": "cus_f41f8ed338fb469bb196c3318f03bd91"
+    },
+    "chase": {
+      "bank_id": "bank_e6996efb45d84a09a952103bc7d74dee",
+      "customer_id": "cus_8b622bf2e25b4ee28a62d89a9095bb96"
+    }
+  },
+  "account_map": {
+    "acct_citi_checking": {
+      "bank_id": "bank_a3d3672b1b434227adb589bd12d42230",
+      "account_id": "acc_f77f0640af1341148cd355ed9046b60e"
+    },
+    "acct_citi_strata": {
+      "bank_id": "bank_a3d3672b1b434227adb589bd12d42230",
+      "account_id": "acc_d8eef4fa93bc4dd392ac45c3595b282d"
+    },
+    "acct_citi_double_cash": {
+      "bank_id": "bank_a3d3672b1b434227adb589bd12d42230",
+      "account_id": "acc_520f01c125174852b0858cc333a69f96"
+    },
+    "acct_citi_aa": {
+      "bank_id": "bank_a3d3672b1b434227adb589bd12d42230",
+      "account_id": "acc_ed86b8f340824b9680046ea7c1e138b3"
+    },
+    "acct_chase_checking": {
+      "bank_id": "bank_e6996efb45d84a09a952103bc7d74dee",
+      "account_id": "acc_ae73bc0470304defaba9f9683fae8fdd"
+    },
+    "acct_chase_csp": {
+      "bank_id": "bank_e6996efb45d84a09a952103bc7d74dee",
+      "account_id": "acc_ac2cf9c9b0884e98b77aaddc176d769f"
+    },
+    "acct_chase_cfu": {
+      "bank_id": "bank_e6996efb45d84a09a952103bc7d74dee",
+      "account_id": "acc_b05900a988c441ccaa1ec91d3494c7cd"
+    }
+  }
+}

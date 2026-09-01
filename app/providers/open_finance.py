@@ -101,5 +101,21 @@ class SyntheticAlexProvider:
         )
 
 
-def default_provider() -> OpenFinanceProvider:
-    return SyntheticAlexProvider()
+def default_provider(name: str | None = None) -> OpenFinanceProvider:
+    """Resolve the configured Open Finance source.
+
+    PLAN.MD section 8 asks that a different provider be pluggable without touching
+    the optimisation engine. That only means anything if something actually selects
+    one, so this is what the service calls -- switching source is configuration,
+    not a code change.
+    """
+    choice = (name or config.PROVIDER).strip().lower()
+    if choice in {"synthetic", "alex", "fixture"}:
+        return SyntheticAlexProvider()
+    if choice == "banksym":
+        from app.providers.banksym import BankSymProvider
+
+        return BankSymProvider()
+    raise ValueError(
+        f"Unknown SMARTPAY_PROVIDER {choice!r}. Expected 'synthetic' or 'banksym'."
+    )
