@@ -23,7 +23,9 @@ from mcp.server.transport_security import TransportSecuritySettings
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
 
-from app import config, runtime
+from typing import Any
+
+from app import config, runtime, widget
 from app.services.smartpay import SmartPayService
 
 smartpay = SmartPayService()
@@ -63,6 +65,36 @@ mcp = MCPServer(
 
 PRESENT_VERBATIM = " Present the `display_markdown` field verbatim."
 
+#: Binds a tool to the UI component. `ui.resourceUri` is the MCP Apps standard;
+#: `openai/outputTemplate` is the alias ChatGPT also honours, so both are sent.
+WIDGET_META: dict[str, Any] = {
+    "ui.resourceUri": widget.WIDGET_URI,
+    "openai/outputTemplate": widget.WIDGET_URI,
+    "openai/toolInvocation/invoking": "Working out how to pay",
+    "openai/toolInvocation/invoked": "Payment plan ready",
+}
+
+
+@mcp.resource(
+    widget.WIDGET_URI,
+    name="SmartPay payment plan",
+    title="SmartPay payment plan",
+    description="Baseline versus recommended payment for each item of a trip.",
+    mime_type="text/html",
+    meta={
+        "ui.prefersBorder": True,
+        "openai/widgetDescription": (
+            "Shows how the consumer would normally pay for each item against how "
+            "SmartPay recommends they pay, with the guaranteed value of the change."
+        ),
+        # Everything is inlined as a data URI, so the component needs no network at
+        # all. Declaring empty lists says so explicitly rather than by omission.
+        "ui.csp": {"connectDomains": [], "resourceDomains": []},
+    },
+)
+def payment_plan_widget() -> str:
+    return widget.widget_html()
+
 
 @mcp.tool(
     title="Get financial profile",
@@ -72,7 +104,7 @@ PRESENT_VERBATIM = " Present the `display_markdown` field verbatim."
         "each category." + PRESENT_VERBATIM
     ),
 )
-def get_financial_profile() -> dict:
+def get_financial_profile() -> dict[str, Any]:
     return smartpay.get_financial_profile(config.DEMO_CUSTOMER_ID)
 
 
@@ -83,7 +115,7 @@ def get_financial_profile() -> dict:
         "headline earn rate." + PRESENT_VERBATIM
     ),
 )
-def get_wallet() -> dict:
+def get_wallet() -> dict[str, Any]:
     return smartpay.get_wallet(config.DEMO_CUSTOMER_ID)
 
 
@@ -97,8 +129,9 @@ def get_wallet() -> dict:
         "booking channel, guaranteed savings and estimated reward value."
         + PRESENT_VERBATIM
     ),
+    meta=WIDGET_META,
 )
-def optimise_purchase(purchase: dict | None = None) -> dict:
+def optimise_purchase(purchase: dict | None = None) -> dict[str, Any]:
     return smartpay.optimise_purchase(config.DEMO_CUSTOMER_ID, purchase)
 
 
@@ -114,11 +147,12 @@ def optimise_purchase(purchase: dict | None = None) -> dict:
         "frozen demo itinerary. Returns per-item baseline versus recommendation, "
         "guaranteed savings, estimated reward value and evidence." + PRESENT_VERBATIM
     ),
+    meta=WIDGET_META,
 )
 def optimise_itinerary(
     itinerary: dict | None = None,
     scenario_id: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     return smartpay.optimise_itinerary(config.DEMO_CUSTOMER_ID, itinerary, scenario_id)
 
 
@@ -131,7 +165,7 @@ def optimise_itinerary(
         + PRESENT_VERBATIM
     ),
 )
-def optimise_wallet() -> dict:
+def optimise_wallet() -> dict[str, Any]:
     return smartpay.optimise_wallet(config.DEMO_CUSTOMER_ID)
 
 
@@ -144,7 +178,7 @@ def optimise_wallet() -> dict:
         "sources, their confidence, and when they were verified." + PRESENT_VERBATIM
     ),
 )
-def get_recommendation_evidence(recommendation_id: str) -> dict:
+def get_recommendation_evidence(recommendation_id: str) -> dict[str, Any]:
     return smartpay.get_recommendation_evidence(recommendation_id)
 
 

@@ -166,6 +166,32 @@ Three things the BankSym path does that a real FDX integration must:
   SmartPay derives that, and getting it wrong would double-count everything Alex
   repays.
 
+## Embedded in ChatGPT
+
+The plan renders as a component inside the conversation, not just as text. It is
+registered as an MCP resource and bound to the tools that produce a plan:
+
+| | |
+|---|---|
+| Resource | `ui://widget/smartpay-plan.html`, mimetype `text/html` |
+| Tool `_meta` | `ui.resourceUri` (MCP Apps) and `openai/outputTemplate` (ChatGPT alias) |
+| Bound to | `optimise_itinerary`, `optimise_purchase` |
+
+Nothing needs deploying beyond what already runs: turn on Developer mode in
+ChatGPT, connect the tunnel's `/mcp` URL, and the component renders when one of
+those tools returns.
+
+The component hydrates from `window.openai.toolOutput` — which is why the tools
+return `dict[str, Any]` rather than a bare `dict`, since a bare dict produces no
+structured content for it to read. It shows a compact summary inline and moves the
+detail behind `requestDisplayMode('fullscreen')`, follows the host's theme, and
+reports its own height with `notifyIntrinsicHeight`.
+
+Every image is inlined as a data URI. The iframe is sandboxed and cannot reach the
+dashboard server, so a remote reference would simply be a broken image; inlining
+also means no CSP configuration and no network dependency at all. A test asserts
+the component fetches nothing.
+
 ## The dashboard
 
 ```bash
