@@ -13,7 +13,7 @@ import re
 from datetime import date
 from decimal import Decimal
 
-from app import config, history, render
+from app import analytics, config, history, render
 from app.engines.baseline import BaselineEngine
 from app.engines.optimizer import ItineraryOptimizer, PurchaseOptimizer
 from app.engines.categorizer import categorise
@@ -237,6 +237,10 @@ class SmartPayService:
                     "priceless": plan.priceless,
                     "disclaimers": plan.disclaimers,
                 }
+            )
+            analytics.record_identified(
+                plan.itinerary_id, plan.itinerary_title,
+                plan.incremental_guaranteed, plan.incremental_estimated,
             )
 
         for r in plan.recommendations:

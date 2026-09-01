@@ -307,3 +307,30 @@ def test_a_genuinely_better_visa_still_wins():
     winner = PurchaseOptimizer(PROFILE).options_for(purchase, "cvs")[0]
     assert winner.instrument_id == "chase_freedom_unlimited"
     assert not winner.is_mastercard
+
+
+def test_merchant_scoped_benefit_does_not_leak_to_the_same_category_elsewhere():
+    """A benefit naming both a merchant and a category requires BOTH to match.
+
+    OR-ing them let the AA checked-bag credit fire on a JetBlue flight and the
+    Peacock credit fire on a Netflix subscription -- same bug class fixed earlier
+    in offers.py for the Walt Disney World offer leaking onto any hotel.
+    """
+    jetblue = buy("jetblue", Category.AIRFARE, "600",
+                  travellers=2, checked_bags=2, segments=2)
+    ids = {b.benefit_id for b in BENEFITS.evaluate_purchase(jetblue, INST["citi_aa_platinum_select"])}
+    assert "AA_FREE_CHECKED_BAG" not in ids, "checked-bag credit leaked onto a non-AA airline"
+
+    netflix = buy("netflix", Category.STREAMING, "18")
+    ids = {b.benefit_id for b in BENEFITS.evaluate_purchase(netflix, INST["citi_aa_platinum_select"])}
+    assert "MC_WE_PEACOCK_3" not in ids, "Peacock credit leaked onto a different streaming service"
+
+    uber = buy("uber", Category.RIDESHARE, "22")
+    ids = {b.benefit_id for b in BENEFITS.evaluate_purchase(uber, INST["citi_aa_platinum_select"])}
+    assert "MC_LYFT_TAKE3_GET5" not in ids, "Lyft credit leaked onto a different rideshare app"
+
+    # The genuine match must still fire.
+    aa = buy("american_airlines", Category.AIRFARE, "600",
+             travellers=2, checked_bags=2, segments=2)
+    ids = {b.benefit_id for b in BENEFITS.evaluate_purchase(aa, INST["citi_aa_platinum_select"])}
+    assert "AA_FREE_CHECKED_BAG" in ids

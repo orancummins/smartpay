@@ -215,6 +215,41 @@ def test_demo_alex_renders_the_dashboard():
     assert "2026-09-01" in html
     assert "financialdataexchange" in html or "citi.com" in html or "chase.com" in html
 
+    # The six numbered sections the user asked for, in order, plus the closing beat.
+    headings = [
+        "Accumulated savings",
+        "2. Potential future savings identified",
+        "3. Financial institutions &amp; accounts connected",
+        "4. Recent activity",
+        "5. Here's all the information you've shared",
+        "6. Card benefits, rewards, offers &amp; terms",
+        "And one more thing…",
+    ]
+    positions = [html.index(h) for h in headings]
+    assert positions == sorted(positions), "the six sections are out of the requested order"
+
+    # Accumulated savings is computed from real transaction history, never asserted.
+    assert "Alex Morgan" in html
+    assert "based on payments Mastercard has already seen" in html or (
+        "payments Mastercard has already seen" in html
+    )
+
+    # Section 3: bank logos are present and prominent (not the small topbar mark).
+    assert 'class="inst-logo"' in html
+    assert "/static/logos/citi.svg" in html
+    assert "/static/logos/chase.svg" in html
+
+    # Section 4/5: real transaction activity, not just SmartPay enquiries.
+    assert 'class="activity-row"' in html
+    assert 'class="data-table"' in html
+    assert "Every consumer transaction shared" in html
+
+    # "And one more thing..." must be the LAST panel, right before the disclaimers.
+    assert html.index("And one more thing…") > max(
+        p for h, p in zip(headings[:-1], positions[:-1])
+    )
+    assert html.index("And one more thing…") < html.index("synthetic demo consumer")
+
 
 def test_dashboard_is_accessible_and_self_contained():
     html = anyio.run(demo_alex, None).body.decode()

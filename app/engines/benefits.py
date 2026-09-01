@@ -47,11 +47,15 @@ class BenefitsEngine:
                 continue
             if rule.domestic_only and not purchase.is_domestic_us:
                 continue
-            matches = (
-                (rule.merchants and merchant_key in rule.merchants)
-                or (rule.categories and purchase.category in rule.categories)
-            )
-            if not matches:
+            # A merchant-scoped benefit REQUIRES that merchant. OR-ing merchant and
+            # category let the AA checked-bag credit fire on a JetBlue flight, and
+            # the Peacock credit fire on a Netflix subscription -- same bug class as
+            # the offer/merchant leak fixed in offers.py, mirrored here.
+            if rule.merchants and merchant_key not in rule.merchants:
+                continue
+            if rule.categories and purchase.category not in rule.categories:
+                continue
+            if not rule.merchants and not rule.categories:
                 continue
             # Behavioural benefits are handled by evaluate_monthly_behaviour, which
             # can see the history this single purchase cannot.

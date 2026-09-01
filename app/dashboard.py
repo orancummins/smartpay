@@ -1,9 +1,14 @@
 """Server-rendered SmartPay dashboard.
 
-The point of this page is not to show Alex's bank data -- an aggregator does that.
-It is to show SmartPay's *answer*: what Alex would pay, what they should pay, and
-the money between the two. So the page leads with the number and works back to the
-evidence, rather than opening with a table of transactions.
+Organised as a presentation surface, not a data viewer:
+
+  1. Name, accumulated savings, further potential savings (the header).
+  2. Potential future savings identified -- the breakdown behind that number.
+  3. Financial institutions and accounts connected, logos prominent.
+  4. Recent activity.
+  5. Everything Open Finance has shared -- the full accounts and transactions.
+  6. Card benefits, rewards, offers and terms.
+  7. "And one more thing..." -- the wallet recommendation, always last.
 
 Charts are inline SVG with direct labels. Colours come from the validated
 categorical palette, which fails the 3:1 contrast check for three light-mode
@@ -18,7 +23,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.knowledge import benefits
-from app.models.financial import FinancialProfile, PaymentInstrument
+from app.models.financial import Account, FinancialProfile, PaymentInstrument
 from app.money import fmt
 
 CARD_ART = {
@@ -30,6 +35,7 @@ CARD_ART = {
 }
 
 ISSUER_LOGO = {"citi": "/static/logos/citi.svg", "chase": "/static/logos/chase.svg"}
+ISSUER_NAME = {"citi": "Citi", "chase": "Chase"}
 
 #: Validated categorical palette (see the dataviz reference). Adjacent-pair safe in
 #: both modes; three light slots sit under 3:1, so every bar carries a direct label.
@@ -46,6 +52,13 @@ CATEGORY_LABEL = {
     "entertainment": "Entertainment", "streaming": "Streaming", "golf": "Golf",
     "utilities": "Utilities", "housing": "Housing", "other": "Other",
 }
+
+ACCOUNT_TYPE_LABEL = {"checking": "Checking", "credit_card": "Credit card"}
+
+#: The Open Finance domain model carries a customer_id, not a human name -- this is
+#: presentation-layer knowledge for the one demo persona, matching the name already
+#: used in scripts/seed_banksym.py and the page <title>.
+DEMO_CUSTOMER_NAME = "Alex Morgan"
 
 
 def _t(value: object) -> str:
@@ -103,7 +116,7 @@ def _truncate(text: str, budget: int) -> str:
     run under the bars -- which is exactly what they did before this existed.
     """
     text = str(text)
-    return text if len(text) <= budget else text[: budget - 1].rstrip() + "\u2026"
+    return text if len(text) <= budget else text[: budget - 1].rstrip() + "…"
 
 
 def _bar_chart(
@@ -121,7 +134,7 @@ def _bar_chart(
     if not rows:
         return ""
     peak = max(v for _, v in rows) or Decimal(1)
-    bar_h, gap, width_total = 32, 12, 660
+    bar_h, gap, width_total = 34, 13, 660
     plot_w = width_total - label_w - 8
     height = len(rows) * (bar_h + gap)
     out = [
@@ -132,13 +145,13 @@ def _bar_chart(
         y = i * (bar_h + gap)
         w = max(float(value) / float(peak) * plot_w, 4)
         amount = fmt(value)
-        # ~7.2px per character at 12.5px; keep the value inside only with room to spare.
-        inside = w > len(amount) * 7.2 + 22
+        # ~7.6px per character at 14px; keep the value inside only with room to spare.
+        inside = w > len(amount) * 7.6 + 22
         vx = label_w + w - 10 if inside else label_w + w + 9
         out.append(
             f'<g class="bar-row" tabindex="0" role="listitem" '
             f'aria-label="{_t(name)}: {_t(amount)}">'
-            f"<title>{_t(name)} \u2014 {_t(amount)}</title>"
+            f"<title>{_t(name)} — {_t(amount)}</title>"
             f'<text class="bar-label" x="0" y="{y + bar_h / 2 + 5}">'
             f"{_t(_truncate(name, budget))}</text>"
             f'<rect class="bar-track" x="{label_w}" y="{y}" width="{plot_w}" '
@@ -158,8 +171,7 @@ def _gain_bar(gain: Decimal, peak: Decimal) -> str:
     """This line's share of the total value found.
 
     A single mark, not a two-bar comparison: the per-item baseline value is not in
-    the plan payload, so a second bar would have had nothing real to plot -- which
-    is what it did before, drawing a 2px stub and calling it "your habit".
+    the plan payload, so a second bar would have had nothing real to plot.
     """
     w = max(float(gain) / (float(peak) or 1.0) * 200, 2) if gain > 0 else 0
     if w == 0:
@@ -188,43 +200,38 @@ def _ring(pct: float, label: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Sections
+# Section 1 -- header: name, accumulated savings, further potential savings
 # ---------------------------------------------------------------------------
 
-def _hero(plan: dict, title: str, asked: object) -> str:
-    guaranteed = Decimal(plan["incremental_guaranteed"])
-    estimated = Decimal(plan["incremental_estimated"])
-    points = plan["incremental_points"]
-    total = Decimal(plan["itinerary_total"])
+def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
     return f"""
     <section class="hero" aria-labelledby="hero-h">
-      <div class="hero-copy">
-        <p class="eyebrow">Latest question · {_t(title)} · {_t(_ago(asked))}</p>
-        <h1 id="hero-h">SmartPay found
-          <span class="figure" data-count="{guaranteed}">{_money(guaranteed)}</span>
-          you would otherwise leave behind.</h1>
-        <p class="lede">On a {_money(total)} trip, paying the way you normally do
-          costs you real money. Here is the difference, line by line, with the
-          issuer rule behind every number.</p>
-      </div>
-      <dl class="hero-stats">
+      <p class="eyebrow">SmartPay · Open Finance profile</p>
+      <h1 id="hero-h" class="name">{_t(full_name)} <span class="demo-badge">DEMO</span></h1>
+      <div class="hero-stats">
         <div class="stat accent">
-          <dt>Guaranteed savings</dt><dd>{_money(guaranteed)}</dd>
-          <p>Credits, discounts and waived fees</p>
+          <dt>Accumulated savings</dt>
+          <dd class="figure" data-count="{accumulated['guaranteed']}">
+            {_money(accumulated['guaranteed'])}</dd>
+          <p>Guaranteed value SmartPay's rules have identified across the last 12
+             months of payments Mastercard has already seen for
+             {_t(accumulated['transaction_count'])} transactions.</p>
         </div>
-        <div class="stat">
-          <dt>Estimated rewards</dt><dd>{_money(estimated)}</dd>
-          <p>Valued at 1.0¢ per point</p>
+        <div class="stat accent2">
+          <dt>Further potential savings</dt>
+          <dd class="figure" data-count="{potential_total}">{_money(potential_total)}</dd>
+          <p>Identified from upcoming trips and purchases you've asked SmartPay
+             about, plus a recurring wallet opportunity. See the breakdown below.</p>
         </div>
-        <div class="stat">
-          <dt>Extra points</dt><dd>{points:,}</dd>
-          <p>Above your usual cards</p>
-        </div>
-      </dl>
+      </div>
     </section>"""
 
 
-def _plan_section(plan: dict) -> str:
+# ---------------------------------------------------------------------------
+# Section 2 -- potential future savings identified
+# ---------------------------------------------------------------------------
+
+def _plan_rows(plan: dict) -> tuple[str, Decimal]:
     recs = plan["recommendations"]
     peak = max(
         [Decimal(r["guaranteed_savings"]) + Decimal(r["estimated_reward_value_delta"])
@@ -275,23 +282,10 @@ def _plan_section(plan: dict) -> str:
           </div>
           {f'<ul class="plan-why">{why}</ul>' if why else ''}
         </article>""")
-
-    return f"""
-    <section class="panel" aria-labelledby="plan-h">
-      <header class="panel-head">
-        <div>
-          <h2 id="plan-h">How you would pay, versus how you should</h2>
-          <p>Baseline is inferred from 12 months of your own transactions, not assumed.</p>
-        </div>
-        <div class="legend" role="note">
-          <span><i class="sw opt"></i>Value found, relative to the largest line</span>
-        </div>
-      </header>
-      <div class="plan">{''.join(rows)}</div>
-    </section>"""
+    return "".join(rows), peak
 
 
-def _sources_section(plan: dict) -> str:
+def _sources_for(plan: dict) -> list[tuple[str, Decimal]]:
     sources: list[tuple[str, Decimal]] = []
     for r in plan["recommendations"]:
         for b in r["benefits"]:
@@ -303,46 +297,250 @@ def _sources_section(plan: dict) -> str:
             remainder = Decimal(r["guaranteed_savings"]) - Decimal(o["value"])
             if remainder > 0 and r["benefits"]:
                 sources.append((r["benefits"][0], remainder))
-    sources = sorted(sources, key=lambda kv: -kv[1])
+    return sorted(sources, key=lambda kv: -kv[1])
+
+
+def _enquiry_list(entries: list[dict], active_key: str) -> str:
+    """Every distinct question SmartPay has been asked, most recent first."""
+    if not entries:
+        return ""
+    cards = []
+    for e in entries:
+        is_active = e.get("key") == active_key
+        guaranteed = Decimal(str(e.get("guaranteed", "0")))
+        cards.append(f"""
+        <li class="q{' on' if is_active else ''}">
+          <span class="q-when">{_t(_ago(e.get("asked_at")))}</span>
+          <h3>{_t(e.get("title", "Untitled"))}</h3>
+          <p class="q-figures">
+            <b>{_money(guaranteed)}</b>
+            <span>{_t(e.get("items", 0))} items · {_money(e.get("total", "0"))}</span>
+          </p>
+          {'<span class="q-tag">Showing now</span>' if is_active else ''}
+        </li>""")
     return f"""
-    <section class="panel" aria-labelledby="src-h">
+    <div class="enquiry-block">
+      <h3 class="sub-h">Every distinct enquiry counted toward this total</h3>
+      <ul class="qlist">{''.join(cards)}</ul>
+    </div>"""
+
+
+def _potential_section(
+    potential: dict, plan: dict, title: str, asked: object,
+    active_key: str, entries: list[dict],
+) -> str:
+    plan_rows, peak = _plan_rows(plan)
+    sources = _sources_for(plan)
+    plan_guaranteed = Decimal(plan["incremental_guaranteed"])
+    plan_estimated = Decimal(plan["incremental_estimated"])
+    plan_points = plan["incremental_points"]
+    return f"""
+    <section class="panel" aria-labelledby="future-h">
       <header class="panel-head">
         <div>
-          <h2 id="src-h">Where the guaranteed value comes from</h2>
-          <p>Every figure is a published issuer or network rule, not an estimate.</p>
+          <h2 id="future-h">2. Potential future savings identified</h2>
+          <p>Calculated from upcoming suggestions, and added to every time you ask
+             SmartPay a new, distinct question.</p>
         </div>
       </header>
+
+      <div class="chips-row">
+        <span class="kv"><b>{_money(potential['wallet_annual'])}</b>
+          <small>Recurring wallet opportunity</small></span>
+        <span class="kv"><b>{_t(potential['enquiry_count'])}</b>
+          <small>Distinct enquiries asked</small></span>
+        <span class="kv"><b>{_money(potential['enquiries_guaranteed'])}</b>
+          <small>Guaranteed, across all enquiries</small></span>
+        <span class="kv"><b>{_money(potential['enquiries_estimated'])}</b>
+          <small>Estimated rewards, across all enquiries</small></span>
+      </div>
+
+      <h3 class="sub-h">Latest enquiry — {_t(title)} · {_t(_ago(asked))}</h3>
+      <p class="sub-lede">Baseline is inferred from 12 months of your own
+         transactions, not assumed.</p>
+      <div class="chips-row">
+        <span class="kv"><b>{_money(plan_guaranteed)}</b>
+          <small>Guaranteed on this enquiry</small></span>
+        <span class="kv"><b>{_money(plan_estimated)}</b>
+          <small>Estimated rewards on this enquiry</small></span>
+        <span class="kv"><b>{plan_points:,}</b>
+          <small>Extra points on this enquiry</small></span>
+      </div>
+      <div class="plan">{plan_rows}</div>
+
+      {f'''<h3 class="sub-h">Where this enquiry's guaranteed value comes from</h3>
       <div class="chart-wrap" role="list">{_bar_chart(sources, label_w=210, budget=32)}</div>
+      ''' if sources else ''}
+
+      {_enquiry_list(entries, active_key)}
     </section>"""
 
 
-def _spend_section(profile: FinancialProfile) -> str:
+# ---------------------------------------------------------------------------
+# Section 3 -- financial institutions and accounts, logos prominent
+# ---------------------------------------------------------------------------
+
+def _institutions_section(profile: FinancialProfile) -> str:
+    by_institution: dict[str, list[Account]] = defaultdict(list)
+    for a in profile.accounts:
+        by_institution[a.institution].append(a)
+
+    blocks = []
+    for institution, accounts in sorted(by_institution.items()):
+        logo = ISSUER_LOGO.get(institution, "")
+        name = ISSUER_NAME.get(institution, institution.title())
+        rows = "".join(f"""
+          <li class="acct-row">
+            <span class="acct-name">{_t(a.display_name)}</span>
+            <span class="acct-type">{_t(ACCOUNT_TYPE_LABEL.get(a.account_type.value, a.account_type.value))}
+              · ····{_t(a.mask)}</span>
+            <span class="acct-balance">{_money(a.current_balance)}</span>
+          </li>""" for a in sorted(accounts, key=lambda a: a.display_name))
+        blocks.append(f"""
+        <article class="inst-card">
+          <header class="inst-head">
+            {f'<span class="inst-logo-plate"><img src="{_t(logo)}" alt="{_t(name)}" '
+             f'class="inst-logo"></span>' if logo else ''}
+            <div>
+              <h3>{_t(name)}</h3>
+              <p>{_t(len(accounts))} account{'s' if len(accounts) != 1 else ''} connected</p>
+            </div>
+          </header>
+          <ul class="acct-list">{rows}</ul>
+        </article>""")
+
+    return f"""
+    <section class="panel" aria-labelledby="inst-h">
+      <header class="panel-head">
+        <div>
+          <h2 id="inst-h">3. Financial institutions &amp; accounts connected</h2>
+          <p>Read live over FDX, the US open banking standard.</p>
+        </div>
+      </header>
+      <div class="inst-grid">{''.join(blocks)}</div>
+    </section>"""
+
+
+# ---------------------------------------------------------------------------
+# Section 4 -- recent activity
+# ---------------------------------------------------------------------------
+
+def _recent_activity_section(profile: FinancialProfile, limit: int = 12) -> str:
+    account_lookup = {a.account_id: a for a in profile.accounts}
+    instrument_lookup = {
+        i.account_id: i.display_name for i in profile.instruments if i.is_card
+    }
+
+    def card_label(account_id: str) -> str:
+        if account_id in instrument_lookup:
+            return instrument_lookup[account_id]
+        if account_id in account_lookup:
+            return account_lookup[account_id].display_name
+        return "—"
+
+    recent = sorted(
+        profile.spend_transactions, key=lambda t: t.posted_at, reverse=True
+    )[:limit]
+
+    rows = "".join(f"""
+      <li class="activity-row">
+        <span class="act-date">{t.posted_at.strftime('%b %d')}</span>
+        <span class="act-merchant">{_t(t.description.title())}</span>
+        <span class="act-category">{_label(t.category.value)}</span>
+        <span class="act-card">{_t(card_label(t.account_id))}</span>
+        <span class="act-amount">{_money(t.amount)}</span>
+      </li>""" for t in recent)
+
+    return f"""
+    <section class="panel" aria-labelledby="activity-h">
+      <header class="panel-head">
+        <div>
+          <h2 id="activity-h">4. Recent activity</h2>
+          <p>The most recent {_t(len(recent))} payments across every connected account.</p>
+        </div>
+      </header>
+      <ul class="activity-list">{rows}</ul>
+    </section>"""
+
+
+# ---------------------------------------------------------------------------
+# Section 5 -- everything shared: accounts, transactions
+# ---------------------------------------------------------------------------
+
+def _shared_data_section(profile: FinancialProfile) -> str:
     totals: dict[str, Decimal] = defaultdict(Decimal)
     for txn in profile.spend_transactions:
         totals[txn.category.value] += txn.amount
-    rows = sorted(totals.items(), key=lambda kv: -kv[1])[:9]
-    labelled = [(CATEGORY_LABEL.get(k, k.title()), v) for k, v in rows]
+    spend_rows = sorted(totals.items(), key=lambda kv: -kv[1])[:9]
+    labelled = [(CATEGORY_LABEL.get(k, k.title()), v) for k, v in spend_rows]
     total = sum(totals.values(), Decimal(0))
     months = len({t.posted_at.strftime("%Y-%m") for t in profile.spend_transactions}) or 1
+
+    account_rows = "".join(f"""
+      <tr>
+        <td>{_t(ISSUER_NAME.get(a.institution, a.institution.title()))}</td>
+        <td>{_t(a.display_name)}</td>
+        <td>{_t(ACCOUNT_TYPE_LABEL.get(a.account_type.value, a.account_type.value))}</td>
+        <td>····{_t(a.mask)}</td>
+        <td class="num">{_money(a.current_balance)}</td>
+      </tr>""" for a in sorted(profile.accounts, key=lambda a: (a.institution, a.display_name)))
+
+    account_lookup = {a.account_id: a for a in profile.accounts}
+    txns = sorted(profile.spend_transactions, key=lambda t: t.posted_at, reverse=True)
+    txn_rows = "".join(f"""
+      <tr>
+        <td>{t.posted_at.isoformat()}</td>
+        <td>{_t(t.description.title())}</td>
+        <td>{_label(t.category.value)}</td>
+        <td>{_t(account_lookup[t.account_id].display_name) if t.account_id in account_lookup else '—'}</td>
+        <td class="num">{_money(t.amount)}</td>
+      </tr>""" for t in txns)
+
     return f"""
-    <section class="panel" aria-labelledby="spend-h">
+    <section class="panel" aria-labelledby="shared-h">
       <header class="panel-head">
         <div>
-          <h2 id="spend-h">Where your money goes</h2>
-          <p>{len(profile.spend_transactions)} payments across
-             {len({a.institution for a in profile.accounts})} institutions,
-             {months} months.</p>
+          <h2 id="shared-h">5. Here's all the information you've shared</h2>
+          <p>Everything Open Finance has given SmartPay access to for Alex — nothing
+             more, nothing hidden.</p>
         </div>
         <div class="mini-stats">
-          <div><span>{_money(total)}</span><small>Total</small></div>
+          <div><span>{_money(total)}</span><small>12-month spend</small></div>
           <div><span>{_money(total / months)}</span><small>Monthly average</small></div>
         </div>
       </header>
+
+      <h3 class="sub-h">Where your money goes</h3>
       <div class="chart-wrap" role="list">{_bar_chart(labelled)}</div>
+
+      <h3 class="sub-h">Every connected account ({_t(len(profile.accounts))})</h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Institution</th><th>Account</th><th>Type</th><th>Mask</th>
+            <th>Balance</th></tr></thead>
+          <tbody>{account_rows}</tbody>
+        </table>
+      </div>
+
+      <h3 class="sub-h">Every consumer transaction shared ({_t(len(txns))})</h3>
+      <p class="sub-lede">{_t(len(profile.transactions))} raw ledger entries in total;
+         card payments, ATM withdrawals and internal transfers are excluded here so
+         nothing is counted as spend twice.</p>
+      <div class="table-wrap scroll">
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Account</th>
+            <th>Amount</th></tr></thead>
+          <tbody>{txn_rows}</tbody>
+        </table>
+      </div>
     </section>"""
 
 
-def _wallet_section(profile: FinancialProfile) -> str:
+# ---------------------------------------------------------------------------
+# Section 6 -- card benefits, rewards, offers, terms
+# ---------------------------------------------------------------------------
+
+def _wallet_carousel(profile: FinancialProfile) -> str:
     cards = []
     for i, inst in enumerate(profile.instruments):
         product = inst.product
@@ -351,9 +549,6 @@ def _wallet_section(profile: FinancialProfile) -> str:
         art = CARD_ART.get(product.product_id, "")
         logo = ISSUER_LOGO.get(product.issuer, "")
         tier = product.network_tier.value.replace("_", " ").title()
-        # "Mastercard World Elite" is too long for the card column: it overflowed its
-        # own chip and collided with the annual-fee pill. The tier alone identifies
-        # the product, and the network mark is already printed on the card art.
         network_label = _t(tier if tier != "None" else product.network.value.title())
         top = sorted(product.reward_rules, key=lambda r: -r.multiplier)[:3]
         rules = "".join(
@@ -385,21 +580,103 @@ def _wallet_section(profile: FinancialProfile) -> str:
         </article>""")
 
     return f"""
-    <section class="panel" aria-labelledby="wallet-h">
+      <div class="wallet-carousel" tabindex="0">{''.join(cards)}</div>
+      <div class="carousel-dots" aria-hidden="true"></div>"""
+
+
+def _card_detail_tables(profile: FinancialProfile) -> str:
+    """Every reward rule and benefit, per card, in full -- not just the top 3."""
+    blocks = []
+    for inst in profile.instruments:
+        product = inst.product
+        if product is None:
+            continue
+        reward_rows = "".join(f"""
+          <tr>
+            <td><b>{_t(r.multiplier.normalize())}×</b></td>
+            <td>{_t(r.description)}</td>
+            <td>{_label(r.reward_currency.value)}</td>
+            <td>{_label(', '.join(c.value for c in r.required_channels) or 'Any')}</td>
+          </tr>""" for r in sorted(product.reward_rules, key=lambda r: -r.multiplier))
+        benefit_rows = "".join(f"""
+          <tr>
+            <td>{_t(b.display_name)}</td>
+            <td>{_t(b.description or '—')}</td>
+            <td>{_t(b.evidence.source_name)}</td>
+            <td>{_t(b.evidence.verified_at.isoformat() if b.evidence.verified_at else '—')}</td>
+          </tr>""" for b in _card_benefits(inst))
+        blocks.append(f"""
+        <div class="card-detail">
+          <h3 class="sub-h">{_t(product.display_name)}</h3>
+          <table class="data-table">
+            <thead><tr><th>Rate</th><th>Rule</th><th>Currency</th><th>Channel</th></tr></thead>
+            <tbody>{reward_rows}</tbody>
+          </table>
+          {f'''<table class="data-table" style="margin-top:10px">
+            <thead><tr><th>Network benefit</th><th>Detail</th><th>Source</th>
+              <th>Verified</th></tr></thead>
+            <tbody>{benefit_rows}</tbody>
+          </table>''' if benefit_rows else ''}
+          <p class="evidence-line">Source: {_t(product.evidence.source_name)}
+             {f"· verified {_t(product.evidence.verified_at.isoformat())}" if product.evidence.verified_at else ""}
+             {f'· <a href="{_t(product.evidence.source_url)}" target="_blank" rel="noopener noreferrer">terms</a>' if product.evidence.source_url else ''}</p>
+        </div>""")
+    return "".join(blocks)
+
+
+def _offers_and_terms(profile: FinancialProfile) -> str:
+    """Simulated offers, and the full source table for every network benefit."""
+    from app.knowledge import offers as all_offers
+
+    offer_rows = "".join(f"""
+      <li class="offer-row">
+        <span class="offer-tag">Simulated Mastercard card-linked offer</span>
+        <h4>{_t(o.merchant_name)}</h4>
+        <p>{_t(o.description)}</p>
+      </li>""" for o in all_offers())
+
+    seen: dict[tuple[str, str], str] = {}
+    for b in benefits():
+        e = b.evidence
+        if e.source_url:
+            seen[(e.source_name, e.source_url)] = (
+                e.verified_at.isoformat() if e.verified_at else "—"
+            )
+    prov_rows = "".join(
+        f'<tr><td>{_t(name)}</td><td>{_t(date)}</td>'
+        f'<td><a href="{_t(url)}" rel="noopener noreferrer" target="_blank">source</a></td></tr>'
+        for (name, url), date in sorted(seen.items())
+    )
+
+    return f"""
+      {f'<h3 class="sub-h">Offers</h3><ul class="offer-list">{offer_rows}</ul>' if offer_rows else ''}
+      <h3 class="sub-h">Every rule, and where it came from</h3>
+      <p class="sub-lede">Read off live issuer and network pages. Nothing here is estimated.</p>
+      <table class="data-table">
+        <thead><tr><th>Source</th><th>Verified</th><th></th></tr></thead>
+        <tbody>{prov_rows}</tbody>
+      </table>"""
+
+
+def _benefits_section(profile: FinancialProfile) -> str:
+    return f"""
+    <section class="panel" aria-labelledby="benefits-h">
       <header class="panel-head">
         <div>
-          <h2 id="wallet-h">Your wallet</h2>
-          <p>{len(cards)} cards, read live over FDX from two institutions.</p>
-        </div>
-        <div class="carousel-nav">
-          <button type="button" data-carousel-prev aria-label="Previous cards">‹</button>
-          <button type="button" data-carousel-next aria-label="Next cards">›</button>
+          <h2 id="benefits-h">6. Card benefits, rewards, offers &amp; terms</h2>
+          <p>{_t(sum(1 for i in profile.instruments if i.is_card))} cards, read live
+             over FDX from two institutions.</p>
         </div>
       </header>
-      <div class="wallet-carousel" tabindex="0">{''.join(cards)}</div>
-      <div class="carousel-dots" aria-hidden="true"></div>
+      {_wallet_carousel(profile)}
+      {_card_detail_tables(profile)}
+      {_offers_and_terms(profile)}
     </section>"""
 
+
+# ---------------------------------------------------------------------------
+# "And one more thing..." -- always last
+# ---------------------------------------------------------------------------
 
 def _wallet_advice(wallet: dict) -> str:
     rec = wallet["recommendation"]
@@ -410,7 +687,7 @@ def _wallet_advice(wallet: dict) -> str:
     <section class="panel closing" aria-labelledby="adv-h">
       <header class="panel-head">
         <div>
-          <h2 id="adv-h">And one more thing</h2>
+          <h2 id="adv-h">And one more thing…</h2>
           <p>Your wallet is not matched to what you are predicted to spend.</p>
         </div>
       </header>
@@ -430,69 +707,6 @@ def _wallet_advice(wallet: dict) -> str:
     </section>"""
 
 
-def _history_section(entries: list[dict], active_key: str) -> str:
-    """What SmartPay has been asked, most recent first.
-
-    Present even with a single entry: the point is to show the dashboard tracks the
-    conversation rather than displaying one frozen scenario.
-    """
-    if not entries:
-        return ""
-    cards = []
-    for e in entries:
-        is_active = e.get("key") == active_key
-        guaranteed = Decimal(str(e.get("guaranteed", "0")))
-        cards.append(f"""
-        <li class="q{' on' if is_active else ''}">
-          <span class="q-when">{_t(_ago(e.get("asked_at")))}</span>
-          <h3>{_t(e.get("title", "Untitled"))}</h3>
-          <p class="q-figures">
-            <b>{_money(guaranteed)}</b>
-            <span>{_t(e.get("items", 0))} items · {_money(e.get("total", "0"))}</span>
-          </p>
-          {'<span class="q-tag">Showing now</span>' if is_active else ''}
-        </li>""")
-    return f"""
-    <section class="panel" aria-labelledby="hist-h">
-      <header class="panel-head">
-        <div>
-          <h2 id="hist-h">Everything you have asked</h2>
-          <p>Each question SmartPay answered, newest first. The dashboard follows
-             the most recent one.</p>
-        </div>
-      </header>
-      <ul class="qlist">{''.join(cards)}</ul>
-    </section>"""
-
-
-def _provenance() -> str:
-    seen: dict[tuple[str, str], str] = {}
-    for b in benefits():
-        e = b.evidence
-        if e.source_url:
-            seen[(e.source_name, e.source_url)] = (
-                e.verified_at.isoformat() if e.verified_at else "—"
-            )
-    rows = "".join(
-        f'<tr><td>{_t(name)}</td><td>{_t(date)}</td>'
-        f'<td><a href="{_t(url)}" rel="noopener noreferrer" target="_blank">source</a></td></tr>'
-        for (name, url), date in sorted(seen.items())
-    )
-    return f"""
-    <section class="panel provenance" aria-labelledby="prov-h">
-      <header class="panel-head">
-        <div>
-          <h2 id="prov-h">Every rule, and where it came from</h2>
-          <p>Read off live issuer and network pages. Nothing here is estimated.</p>
-        </div>
-      </header>
-      <table class="prov-table">
-        <thead><tr><th>Source</th><th>Verified</th><th></th></tr></thead>
-        <tbody>{rows}</tbody>
-      </table>
-    </section>"""
-
-
 # ---------------------------------------------------------------------------
 # Page shell
 # ---------------------------------------------------------------------------
@@ -508,7 +722,7 @@ CSS = """
   --series-1:#2a78d6; --series-2:#eb6834; --series-3:#1baf7a; --series-4:#eda100;
   --series-5:#e87ba4; --series-6:#008300; --series-7:#4a3aa7; --series-8:#e34948;
   --radius:16px; --shadow:0 1px 2px rgba(17,17,16,.05),0 8px 24px -12px rgba(17,17,16,.15);
-  --max:1180px;
+  --max:1240px;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
@@ -534,7 +748,7 @@ CSS = """
 html{-webkit-text-size-adjust:100%}
 body{
   margin:0; background:var(--bg); color:var(--ink);
-  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,Roboto,sans-serif;
+  font:17px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,Roboto,sans-serif;
   font-feature-settings:"cv05","ss01"; -webkit-font-smoothing:antialiased;
 }
 .wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
@@ -546,50 +760,64 @@ a{color:inherit}
 /* top bar */
 .topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.topbar .wrap{display:flex;align-items:center;gap:16px;height:60px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:-.02em}
-.brand-mark{width:30px;height:19px;flex:none}
-.status{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--ink-2);font-size:13px}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--good);
+.topbar .wrap{display:flex;align-items:center;gap:16px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:-.02em;font-size:19px}
+.brand-mark{width:32px;height:21px;flex:none}
+.status{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--ink-2);font-size:14px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);
   box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 22%,transparent)}
 .theme-toggle{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
-  border-radius:999px;height:32px;padding:0 13px;font:inherit;font-size:13px;cursor:pointer}
+  border-radius:999px;height:34px;padding:0 14px;font:inherit;font-size:14px;cursor:pointer}
 .theme-toggle:hover{color:var(--ink);border-color:var(--ink-3)}
 
-/* hero */
-.hero{display:grid;grid-template-columns:1.35fr 1fr;gap:40px;align-items:center;
-  padding:56px 0 40px}
-.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
-  font-weight:600;margin-bottom:14px}
-.hero h1{font-size:clamp(30px,4.4vw,50px);font-weight:680;max-width:19ch}
-.hero h1 .figure{
-  background:linear-gradient(96deg,var(--brand) 8%,var(--brand-3) 52%,var(--brand-2) 96%);
-  -webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
-.lede{margin-top:18px;color:var(--ink-2);max-width:52ch;font-size:16px}
-.hero-stats{display:grid;gap:12px;margin:0}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-  padding:16px 18px;box-shadow:var(--shadow)}
+/* header / section 1 */
+.hero{padding:52px 0 40px}
+.eyebrow{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:650;margin-bottom:10px}
+.name{font-size:clamp(38px,6vw,64px);font-weight:720;letter-spacing:-.03em;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.demo-badge{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);
+  border:1px solid var(--line);border-radius:999px;padding:4px 12px;vertical-align:middle}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:30px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:20px;
+  padding:26px 28px;box-shadow:var(--shadow)}
 .stat.accent{border-color:color-mix(in srgb,var(--brand) 34%,var(--line));
-  background:linear-gradient(180deg,color-mix(in srgb,var(--brand) 5%,var(--surface)),var(--surface))}
-.stat dt{font-size:12.5px;color:var(--ink-2);font-weight:550}
-.stat dd{margin:2px 0 0;font-size:29px;font-weight:660;letter-spacing:-.03em}
-.stat p{font-size:12px;color:var(--ink-3);margin-top:2px}
+  background:linear-gradient(180deg,color-mix(in srgb,var(--brand) 6%,var(--surface)),var(--surface))}
+.stat.accent2{border-color:color-mix(in srgb,var(--brand-2) 40%,var(--line));
+  background:linear-gradient(180deg,color-mix(in srgb,var(--brand-2) 7%,var(--surface)),var(--surface))}
+.stat dt{font-size:15px;color:var(--ink-2);font-weight:600}
+.stat dd{margin:6px 0 0;font-size:clamp(36px,4.6vw,56px);font-weight:700;letter-spacing:-.03em;
+  background:linear-gradient(96deg,var(--brand),var(--brand-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.stat.accent2 dd{background:linear-gradient(96deg,var(--brand-2),var(--brand-3));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.stat p{font-size:14.5px;color:var(--ink-3);margin-top:8px;line-height:1.5}
 
 /* panels */
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:20px;
-  padding:26px;margin-bottom:22px;box-shadow:var(--shadow)}
+  padding:28px;margin-bottom:24px;box-shadow:var(--shadow)}
 .panel-head{display:flex;gap:20px;align-items:flex-start;justify-content:space-between;
   margin-bottom:22px;flex-wrap:wrap}
-.panel-head h2{font-size:21px;font-weight:640}
-.panel-head p{color:var(--ink-2);font-size:14px;margin-top:5px;max-width:62ch}
-.legend{display:flex;gap:14px;font-size:12.5px;color:var(--ink-2);align-items:center}
+.panel-head h2{font-size:27px;font-weight:680}
+.panel-head p{color:var(--ink-2);font-size:15px;margin-top:6px;max-width:64ch}
+.sub-h{font-size:18px;font-weight:660;margin:22px 0 6px}
+.sub-h:first-of-type{margin-top:6px}
+.sub-lede{color:var(--ink-2);font-size:14px;margin-bottom:12px}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--ink-2);align-items:center}
 .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:6px;
   vertical-align:-1px}
 .sw.base{background:var(--ink-3)}
 .sw.opt{background:linear-gradient(90deg,var(--brand),var(--brand-2))}
-.mini-stats{display:flex;gap:22px}
-.mini-stats span{display:block;font-size:19px;font-weight:640;letter-spacing:-.02em}
-.mini-stats small{color:var(--ink-3);font-size:11.5px}
+.mini-stats{display:flex;gap:24px}
+.mini-stats span{display:block;font-size:21px;font-weight:660;letter-spacing:-.02em}
+.mini-stats small{color:var(--ink-3);font-size:12.5px}
+
+/* stat chip row (section 2) */
+.chips-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.kv{border:1px solid var(--line);border-radius:14px;padding:12px 16px;background:var(--surface-2);
+  flex:1 1 180px}
+.kv b{display:block;font-size:22px;font-weight:680;letter-spacing:-.02em}
+.kv small{font-size:12.5px;color:var(--ink-3)}
 
 /* plan */
 .plan{display:grid;gap:10px}
@@ -598,18 +826,18 @@ a{color:inherit}
   transition:border-color .18s,transform .18s}
 .plan-row.has-gain{border-left:3px solid var(--brand)}
 .plan-row:hover{border-color:var(--ink-3);transform:translateY(-1px)}
-.plan-item h3{font-size:14.5px;font-weight:600}
-.plan-item .amount{color:var(--ink-3);font-size:13px}
+.plan-item h3{font-size:16px;font-weight:620}
+.plan-item .amount{color:var(--ink-3);font-size:14px}
 .plan-swap{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center}
-.plan-swap .tag{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+.plan-swap .tag{display:block;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;
   color:var(--ink-3);font-weight:600;margin-bottom:3px}
-.plan-swap strong{font-size:13.5px;font-weight:600;display:block;line-height:1.3}
+.plan-swap strong{font-size:15px;font-weight:620;display:block;line-height:1.3}
 .plan-swap .from strong{color:var(--ink-2);font-weight:500}
-.plan-swap .prob{font-size:11.5px;color:var(--ink-3)}
-.arrow{color:var(--brand-ink);font-size:19px;font-weight:700}
+.plan-swap .prob{font-size:12.5px;color:var(--ink-3)}
+.arrow{color:var(--brand-ink);font-size:20px;font-weight:700}
 .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
-.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
-  padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:620;
+  padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);
   background:var(--surface);white-space:nowrap;flex:none}
 .chip.portal{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));
   color:var(--brand-ink);background:color-mix(in srgb,var(--brand) 7%,transparent)}
@@ -617,16 +845,33 @@ a{color:inherit}
 .chip.mc{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));color:var(--brand-ink)}
 .chip.free{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
 .plan-value{text-align:right}
-.plan-value .gain{display:block;font-size:20px;font-weight:660;letter-spacing:-.02em}
-.plan-value .sub{font-size:11.5px;color:var(--ink-3)}
+.plan-value .gain{display:block;font-size:22px;font-weight:680;letter-spacing:-.02em}
+.plan-value .sub{font-size:12.5px;color:var(--ink-3)}
 .delta{width:100%;max-width:210px;height:12px;margin-left:auto;display:block;margin-top:7px}
 .d-track{fill:var(--line);opacity:.6}
 .d-opt{fill:var(--brand)}
 .bar-value.inside{fill:#fff}
 .plan-why{grid-column:1/-1;margin:2px 0 0;padding:10px 0 0;border-top:1px dashed var(--line);
   list-style:none;display:flex;gap:8px;flex-wrap:wrap}
-.plan-why li{font-size:11.5px;color:var(--good);background:var(--good-bg);
-  padding:3px 9px;border-radius:999px}
+.plan-why li{font-size:12.5px;color:var(--good);background:var(--good-bg);
+  padding:4px 10px;border-radius:999px}
+
+/* enquiries list */
+.enquiry-block{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.qlist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.q{position:relative;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;
+  padding:14px 16px;border:1px solid var(--line);border-radius:13px;background:var(--surface-2)}
+.q.on{border-color:color-mix(in srgb,var(--brand) 42%,var(--line));
+  background:linear-gradient(100deg,color-mix(in srgb,var(--brand) 6%,var(--surface-2)),
+  var(--surface-2))}
+.q-when{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:600}
+.q h3{font-size:16px;font-weight:620;margin-top:3px}
+.q-figures{grid-row:1/3;grid-column:2;text-align:right;white-space:nowrap}
+.q-figures b{display:block;font-size:19px;font-weight:680;letter-spacing:-.02em}
+.q-figures span{font-size:12.5px;color:var(--ink-3)}
+.q-tag{grid-column:1;font-size:11px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--brand-ink)}
 
 /* charts */
 .chart-wrap{overflow-x:auto}
@@ -635,14 +880,54 @@ a{color:inherit}
 .bar{transition:opacity .16s}
 .bar-row:hover .bar,.bar-row:focus .bar{opacity:.78}
 .bar-row:focus{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
-.bar-label{font-size:12.5px;fill:var(--ink-2)}
-.bar-value{font-size:12.5px;fill:var(--ink);font-weight:600}
+.bar-label{font-size:14px;fill:var(--ink-2)}
+.bar-value{font-size:14px;fill:var(--ink);font-weight:620}
 .ring{width:64px;height:64px;flex:none}
 .ring-track{fill:none;stroke:var(--line);stroke-width:7}
 .ring-fill{fill:none;stroke:var(--brand);stroke-width:7;stroke-linecap:round}
 .ring-text{font-size:15px;font-weight:660;fill:var(--ink);text-anchor:middle}
 
-/* wallet */
+/* institutions (section 3) */
+.inst-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.inst-card{border:1px solid var(--line);border-radius:16px;background:var(--surface-2);
+  padding:22px}
+.inst-head{display:flex;align-items:center;gap:18px;margin-bottom:18px}
+.inst-logo-plate{flex:none;width:76px;height:76px;border-radius:16px;background:var(--surface);
+  border:1px solid var(--line);display:grid;place-items:center;padding:12px}
+.inst-logo{height:100%;width:100%;object-fit:contain}
+.inst-head h3{font-size:23px;font-weight:680}
+.inst-head p{font-size:14px;color:var(--ink-3);margin-top:2px}
+.acct-list{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.acct-row{display:grid;grid-template-columns:1.3fr 1fr auto;gap:10px;align-items:baseline;
+  padding:10px 0;border-top:1px solid var(--line)}
+.acct-row:first-child{border-top:none}
+.acct-name{font-size:15px;font-weight:600}
+.acct-type{font-size:13px;color:var(--ink-3)}
+.acct-balance{font-size:16px;font-weight:640;text-align:right;letter-spacing:-.01em}
+
+/* recent activity (section 4) */
+.activity-list{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.activity-row{display:grid;grid-template-columns:64px 1.6fr 1fr 1.4fr auto;gap:14px;
+  align-items:center;padding:11px 4px;border-top:1px solid var(--line);font-size:14.5px}
+.activity-row:first-child{border-top:none}
+.act-date{color:var(--ink-3);font-weight:600}
+.act-merchant{font-weight:600}
+.act-category{color:var(--ink-2)}
+.act-card{color:var(--ink-3);font-size:13px}
+.act-amount{text-align:right;font-weight:640}
+
+/* shared data (section 5) */
+.table-wrap{overflow-x:auto}
+.table-wrap.scroll{max-height:480px;overflow-y:auto;border:1px solid var(--line);
+  border-radius:12px}
+.data-table{width:100%;border-collapse:collapse;font-size:14px}
+.data-table th{position:sticky;top:0;background:var(--surface-2);text-align:left;
+  font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);
+  padding:9px 12px;font-weight:650;border-bottom:1px solid var(--line)}
+.data-table td{padding:9px 12px;border-top:1px solid var(--line);color:var(--ink-2)}
+.data-table td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* wallet (section 6) */
 .wallet-carousel{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(268px,1fr);
   gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;
   scrollbar-width:thin}
@@ -659,61 +944,47 @@ a{color:inherit}
 .card-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:9px}
 .issuer{height:17px;width:auto;object-fit:contain;object-position:left;display:block;
   margin-bottom:6px}
-.card-body h3{font-size:14px;font-weight:640;line-height:1.3}
+.card-body h3{font-size:15px;font-weight:660;line-height:1.3}
 .card-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .card-rules,.card-perks{list-style:none;margin:0;padding:0;display:grid;gap:5px}
-.card-rules li{font-size:12px;color:var(--ink-2)}
+.card-rules li{font-size:13px;color:var(--ink-2)}
 .card-rules b{color:var(--ink);font-weight:660}
-.card-perks li{font-size:11.5px;color:var(--good);background:var(--good-bg);
+.card-perks li{font-size:12.5px;color:var(--good);background:var(--good-bg);
   padding:3px 8px;border-radius:8px}
 .carousel-nav{display:flex;gap:6px}
-.carousel-nav button{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);
-  background:var(--surface);color:var(--ink-2);font-size:17px;cursor:pointer;line-height:1}
+.carousel-nav button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink-2);font-size:18px;cursor:pointer;line-height:1}
 .carousel-nav button:hover{color:var(--ink);border-color:var(--ink-3)}
-.carousel-dots{display:flex;gap:5px;justify-content:center;margin-top:12px}
+.carousel-dots{display:flex;gap:5px;justify-content:center;margin-top:14px}
 .carousel-dots i{width:5px;height:5px;border-radius:50%;background:var(--line)}
 .carousel-dots i.on{background:var(--brand);width:16px;border-radius:3px}
+.card-detail{margin-top:26px;padding-top:20px;border-top:1px solid var(--line)}
+.evidence-line{font-size:12.5px;color:var(--ink-3);margin-top:8px}
+.evidence-line a{color:var(--brand-ink);font-weight:620;text-decoration:none}
+.evidence-line a:hover{text-decoration:underline}
+.offer-list{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:10px}
+.offer-row{border:1px dashed var(--line);border-radius:12px;padding:12px 14px}
+.offer-tag{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--brand-ink)}
+.offer-row h4{font-size:15px;font-weight:640;margin-top:4px}
+.offer-row p{font-size:13.5px;color:var(--ink-2);margin-top:4px}
 
 /* closing */
 .closing{background:linear-gradient(150deg,color-mix(in srgb,var(--brand) 7%,var(--surface)),
   color-mix(in srgb,var(--brand-2) 5%,var(--surface)));
   border-color:color-mix(in srgb,var(--brand) 24%,var(--line))}
 .advice{display:grid;grid-template-columns:1.5fr 1fr;gap:28px;align-items:center}
-.verdict{font-size:19px;font-weight:600;letter-spacing:-.02em;max-width:34ch}
+.verdict{font-size:20px;font-weight:620;letter-spacing:-.02em;max-width:34ch}
 .advice-figure{margin-top:14px}
-.advice-figure .figure{font-size:38px;font-weight:680;letter-spacing:-.03em;
+.advice-figure .figure{font-size:44px;font-weight:700;letter-spacing:-.03em;
   background:linear-gradient(96deg,var(--brand),var(--brand-2));
   -webkit-background-clip:text;background-clip:text;color:transparent}
-.advice-figure small{display:block;color:var(--ink-2);font-size:12.5px}
+.advice-figure small{display:block;color:var(--ink-2);font-size:13px}
 .advice-meta{display:flex;gap:18px;align-items:flex-start}
 .advice-meta ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.advice-meta li{font-size:12.5px;color:var(--ink-2)}
+.advice-meta li{font-size:13.5px;color:var(--ink-2)}
 
-/* asked-questions list */
-.qlist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.q{position:relative;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;
-  padding:13px 16px;border:1px solid var(--line);border-radius:13px;background:var(--surface-2)}
-.q.on{border-color:color-mix(in srgb,var(--brand) 42%,var(--line));
-  background:linear-gradient(100deg,color-mix(in srgb,var(--brand) 6%,var(--surface-2)),
-  var(--surface-2))}
-.q-when{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
-  font-weight:600}
-.q h3{font-size:14.5px;font-weight:600;margin-top:3px}
-.q-figures{grid-row:1/3;grid-column:2;text-align:right;white-space:nowrap}
-.q-figures b{display:block;font-size:17px;font-weight:660;letter-spacing:-.02em}
-.q-figures span{font-size:11.5px;color:var(--ink-3)}
-.q-tag{grid-column:1;font-size:10.5px;font-weight:700;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--brand-ink)}
-
-/* provenance */
-.prov-table{width:100%;border-collapse:collapse;font-size:13px}
-.prov-table th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;
-  color:var(--ink-3);padding:0 12px 9px 0;font-weight:600}
-.prov-table td{padding:9px 12px 9px 0;border-top:1px solid var(--line);color:var(--ink-2)}
-.prov-table a{color:var(--brand-ink);text-decoration:none;font-weight:600}
-.prov-table a:hover{text-decoration:underline}
-
-footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:12px;display:grid;gap:6px}
+footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:13px;display:grid;gap:6px}
 
 /* motion */
 @media (prefers-reduced-motion:no-preference){
@@ -726,12 +997,15 @@ footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:12px;display:grid;g
 }
 
 @media (max-width:920px){
-  .hero{grid-template-columns:1fr;gap:28px;padding:34px 0 26px}
+  .hero-stats{grid-template-columns:1fr}
   .plan-row{grid-template-columns:1fr;gap:14px}
   .plan-value{text-align:left}
   .delta{margin-left:0}
   .advice{grid-template-columns:1fr}
   .panel{padding:20px}
+  .activity-row{grid-template-columns:56px 1fr auto;grid-template-areas:
+    "date merchant amount" ". category card"}
+  .act-category,.act-card{grid-column:2/4}
 }
 @media (max-width:560px){
   .wrap{padding:0 16px}
@@ -819,7 +1093,7 @@ SCRIPT = """
 
 def render_alex_dashboard(profile: FinancialProfile) -> str:
     """Render the full dashboard for the demo consumer."""
-    from app import history
+    from app import analytics, history
     from app.services.smartpay import SmartPayService
 
     service = SmartPayService()
@@ -848,7 +1122,17 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
     title = latest.get("title") or "Latest itinerary"
     active_key = latest.get("key", "")
 
+    accumulated = analytics.accumulated_savings(profile)
+    potential = analytics.potential_future_savings(
+        Decimal(wallet["recommendation"]["net_annual_incremental_value"])
+    )
+
     institutions = ", ".join(sorted({a.institution.title() for a in profile.accounts}))
+    # FinancialProfile carries a customer_id, not a human name -- Open Finance does
+    # not model "full name" as a first-class field. DEMO_CUSTOMER_NAME is
+    # presentation-layer knowledge for this one demo persona, same as the name
+    # already printed in the page <title> and the BankSym seed script.
+    full_name = DEMO_CUSTOMER_NAME
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -877,19 +1161,21 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
   </div>
 </header>
 <main class="wrap">
-  {_hero(plan, title, latest.get('asked_at'))}
-  {_plan_section(plan)}
-  {_sources_section(plan)}
-  {_spend_section(profile)}
-  {_wallet_section(profile)}
+  {_header(full_name, accumulated, potential["total"])}
+  {_potential_section(potential, plan, title, latest.get('asked_at'), active_key, entries)}
+  {_institutions_section(profile)}
+  {_recent_activity_section(profile)}
+  {_shared_data_section(profile)}
+  {_benefits_section(profile)}
   {_wallet_advice(wallet)}
-  {_history_section(entries, active_key)}
-  {_provenance()}
   <footer class="foot">
     <p>Alex Morgan is a synthetic demo consumer. Accounts, cards and transaction
        history are generated for demonstration and are not real financial data.</p>
-    <p>Offers marked as simulated are modelled on real Mastercard card-linked offer
-       mechanics and are not live offers. Points valued at 1.0¢.</p>
+    <p>Accumulated savings is computed by re-scoring every real historical
+       transaction against every card in the wallet; it excludes itinerary-specific
+       offers, which carry redemption caps that do not apply to arbitrary past
+       purchases. Offers marked as simulated are modelled on real Mastercard
+       card-linked offer mechanics and are not live offers. Points valued at 1.0¢.</p>
   </footer>
 </main>
 <script>{SCRIPT}</script>

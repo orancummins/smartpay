@@ -198,9 +198,43 @@ the component fetches nothing.
 python -m app.dashboard_server        # http://127.0.0.1:9023
 ```
 
+Organised as a presentation surface, in six numbered sections plus a closing beat:
+
+1. **Name, accumulated savings, further potential savings** — the two headline
+   figures, both computed, neither typed in.
+2. **Potential future savings identified** — the breakdown behind figure 2: a
+   recurring wallet opportunity plus every distinct trip or purchase question
+   SmartPay has been asked, with the latest one shown in full line-item detail.
+3. **Financial institutions & accounts connected** — Citi and Chase, logos
+   prominent, every account listed underneath.
+4. **Recent activity** — the most recent real transactions across every account.
+5. **Here's all the information you've shared** — the complete accounts and
+   transaction history Open Finance has given SmartPay access to.
+6. **Card benefits, rewards, offers & terms** — every reward rule, network
+   benefit and offer, per card, with its evidence source and verification date.
+7. **"And one more thing…"** — the wallet-switch recommendation, always last.
+
+Text is sized for presenting from across a room, not just reading up close.
+
 It leads with whatever SmartPay was **asked most recently** — ask ChatGPT about a
 trip and the open page picks it up within a few seconds, no refresh — and keeps the
 previous questions listed beneath.
+
+### Accumulated savings is computed, not typed in
+
+"Accumulated savings" re-scores every one of Alex's 572 real past transactions
+against every card in the wallet and sums the guaranteed value gap between the
+card actually used and the best one available — literally *the payments
+Mastercard has already seen, run through what SmartPay would have suggested*. It
+is a pure function of the frozen dataset (`app/analytics.py`), so it never
+changes within a session and cannot be tuned to hit a target figure.
+
+"Further potential savings" is the mirror, looking forward: the wallet's
+recurring annual switch-value plus a ledger of every *distinct* enquiry SmartPay
+has answered (`.runtime/identified_ledger.json`, gitignored). Unlike the capped
+recent-activity list, this ledger never evicts an entry — re-asking the same trip
+updates its contribution rather than double-counting it, but the total only
+grows.
 
 The MCP server and the dashboard are separate processes, so the record of what has
 been asked is a small JSON file at `.runtime/queries.json` (gitignored, safe to

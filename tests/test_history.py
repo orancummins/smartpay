@@ -104,12 +104,14 @@ def test_the_dashboard_leads_with_the_most_recent_question(store):
     )
 
     html = render_alex_dashboard(SyntheticAlexProvider().get_profile("alex"))
-    assert "Latest question · Five nights in Ireland" in html
+    assert "Latest enquiry — Five nights in Ireland" in html
     assert "Hotel in Dublin" in html
-    # The earlier question is still listed, just not the headline.
-    assert "Everything you have asked" in html
+    # The earlier question is still listed, just not the headline detail.
+    assert "Every distinct enquiry counted toward this total" in html
     assert "Walt Disney World" in html
-    assert html.index("Latest question") < html.index("Everything you have asked")
+    assert html.index("Latest enquiry — Five nights in Ireland") < html.index(
+        "Every distinct enquiry counted toward this total"
+    )
 
 
 def test_an_international_trip_loses_the_domestic_baggage_benefit(store):
