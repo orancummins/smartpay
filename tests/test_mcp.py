@@ -211,6 +211,8 @@ def test_demo_alex_renders_the_open_finance_dashboard():
     assert 'id="page-previous"' in html
     assert 'id="page-next"' in html
     assert "const pageSize = 25" in html
+    assert "@media(min-width:1100px)" in html
+    assert "h1{font-size:44px}" in html
 
 
 def test_demo_alex_json_remains_available_for_debugging():
