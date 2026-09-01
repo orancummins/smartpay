@@ -25,9 +25,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app import config  # noqa: E402
 
+# Logos are served by BankSym itself (see ui/logos/) rather than hot-linked, so the
+# demo still renders with no network. Both marks are published on Wikimedia Commons
+# as public domain -- they fall below the threshold of originality, being simple
+# shapes and text -- but they remain registered trademarks of their owners and are
+# used here only to identify the institution each simulated tenant stands in for.
 INSTITUTIONS = {
-    "citi": {"display_name": "Citi", "primary_color": "#056DAE"},
-    "chase": {"display_name": "Chase", "primary_color": "#117ACA"},
+    "citi": {
+        "display_name": "Citi",
+        "primary_color": "#056DAE",
+        "logo_url": "/logos/citi.svg",
+    },
+    "chase": {
+        "display_name": "Chase",
+        "primary_color": "#117ACA",
+        "logo_url": "/logos/chase.svg",
+    },
 }
 
 ACCOUNT_TYPE = {"checking": "current", "credit_card": "credit_card"}
@@ -72,6 +85,7 @@ def create_bank(client: httpx.Client, institution: str) -> str:
             "supported_languages": ["en"],
             "open_banking_enabled": True,
             "primary_color": spec["primary_color"],
+            "logo_url": spec["logo_url"],
             # Both surfaces: Open Finance for SmartPay's aggregation, and Berlin
             # Group XS2A so the PSU consent/OAuth journey works against these banks
             # the same way it does for every other BankSym tenant.
