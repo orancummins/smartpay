@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import html
 from collections import defaultdict
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.knowledge import benefits
@@ -58,6 +59,26 @@ def _label(value: object) -> str:
 
 def _money(value: Decimal | str) -> str:
     return _t(fmt(Decimal(str(value))))
+
+
+def _ago(stamp: object) -> str:
+    """Coarse relative time. Minutes matter during a demo; seconds are noise."""
+    try:
+        then = datetime.fromisoformat(str(stamp))
+    except (TypeError, ValueError):
+        return "just now"
+    if then.tzinfo is None:
+        then = then.replace(tzinfo=UTC)
+    seconds = int((datetime.now(UTC) - then).total_seconds())
+    if seconds < 90:
+        return "just now"
+    if seconds < 3600:
+        return f"{seconds // 60} min ago"
+    if seconds < 86400:
+        hours = seconds // 3600
+        return f"{hours} hour{'s' if hours > 1 else ''} ago"
+    days = seconds // 86400
+    return f"{days} day{'s' if days > 1 else ''} ago"
 
 
 def _card_benefits(instrument: PaymentInstrument) -> list:
@@ -170,7 +191,7 @@ def _ring(pct: float, label: str) -> str:
 # Sections
 # ---------------------------------------------------------------------------
 
-def _hero(plan: dict) -> str:
+def _hero(plan: dict, title: str, asked: object) -> str:
     guaranteed = Decimal(plan["incremental_guaranteed"])
     estimated = Decimal(plan["incremental_estimated"])
     points = plan["incremental_points"]
@@ -178,7 +199,7 @@ def _hero(plan: dict) -> str:
     return f"""
     <section class="hero" aria-labelledby="hero-h">
       <div class="hero-copy">
-        <p class="eyebrow">Payment intelligence · Walt Disney World, October</p>
+        <p class="eyebrow">Latest question · {_t(title)} · {_t(_ago(asked))}</p>
         <h1 id="hero-h">SmartPay found
           <span class="figure" data-count="{guaranteed}">{_money(guaranteed)}</span>
           you would otherwise leave behind.</h1>
@@ -409,6 +430,41 @@ def _wallet_advice(wallet: dict) -> str:
     </section>"""
 
 
+def _history_section(entries: list[dict], active_key: str) -> str:
+    """What SmartPay has been asked, most recent first.
+
+    Present even with a single entry: the point is to show the dashboard tracks the
+    conversation rather than displaying one frozen scenario.
+    """
+    if not entries:
+        return ""
+    cards = []
+    for e in entries:
+        is_active = e.get("key") == active_key
+        guaranteed = Decimal(str(e.get("guaranteed", "0")))
+        cards.append(f"""
+        <li class="q{' on' if is_active else ''}">
+          <span class="q-when">{_t(_ago(e.get("asked_at")))}</span>
+          <h3>{_t(e.get("title", "Untitled"))}</h3>
+          <p class="q-figures">
+            <b>{_money(guaranteed)}</b>
+            <span>{_t(e.get("items", 0))} items · {_money(e.get("total", "0"))}</span>
+          </p>
+          {'<span class="q-tag">Showing now</span>' if is_active else ''}
+        </li>""")
+    return f"""
+    <section class="panel" aria-labelledby="hist-h">
+      <header class="panel-head">
+        <div>
+          <h2 id="hist-h">Everything you have asked</h2>
+          <p>Each question SmartPay answered, newest first. The dashboard follows
+             the most recent one.</p>
+        </div>
+      </header>
+      <ul class="qlist">{''.join(cards)}</ul>
+    </section>"""
+
+
 def _provenance() -> str:
     seen: dict[tuple[str, str], str] = {}
     for b in benefits():
@@ -633,6 +689,22 @@ a{color:inherit}
 .advice-meta ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .advice-meta li{font-size:12.5px;color:var(--ink-2)}
 
+/* asked-questions list */
+.qlist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.q{position:relative;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;
+  padding:13px 16px;border:1px solid var(--line);border-radius:13px;background:var(--surface-2)}
+.q.on{border-color:color-mix(in srgb,var(--brand) 42%,var(--line));
+  background:linear-gradient(100deg,color-mix(in srgb,var(--brand) 6%,var(--surface-2)),
+  var(--surface-2))}
+.q-when{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:600}
+.q h3{font-size:14.5px;font-weight:600;margin-top:3px}
+.q-figures{grid-row:1/3;grid-column:2;text-align:right;white-space:nowrap}
+.q-figures b{display:block;font-size:17px;font-weight:660;letter-spacing:-.02em}
+.q-figures span{font-size:11.5px;color:var(--ink-3)}
+.q-tag{grid-column:1;font-size:10.5px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--brand-ink)}
+
 /* provenance */
 .prov-table{width:100%;border-collapse:collapse;font-size:13px}
 .prov-table th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;
@@ -709,6 +781,18 @@ SCRIPT = """
     });
   }
 
+  // Watch for a newer question and pick it up without a manual refresh, so the
+  // dashboard follows the conversation while it is on screen. Polling rather than
+  // a socket: the two servers are separate processes and this needs no plumbing.
+  var stamp = document.body.dataset.latest || '';
+  setInterval(function(){
+    fetch('/history.json', {cache:'no-store'}).then(function(r){ return r.json(); })
+      .then(function(d){
+        var now = d.latest ? (d.latest.key + '|' + (d.latest.asked_at || '')) : '';
+        if(now && now !== stamp) location.reload();
+      }).catch(function(){ /* the dashboard keeps working offline */ });
+  }, 4000);
+
   // Wallet carousel
   var rail=document.querySelector('.wallet-carousel');
   if(rail){
@@ -735,11 +819,34 @@ SCRIPT = """
 
 def render_alex_dashboard(profile: FinancialProfile) -> str:
     """Render the full dashboard for the demo consumer."""
+    from app import history
     from app.services.smartpay import SmartPayService
 
     service = SmartPayService()
-    plan = service.optimise_itinerary()["data"]
     wallet = service.optimise_wallet()["data"]
+
+    entries = history.load()
+    if entries and entries[0].get("plan"):
+        latest = entries[0]
+        plan = latest["plan"]
+    else:
+        # Nothing asked yet: show the rehearsed scenario so the page is never empty,
+        # and do NOT record it -- rendering a page is not a question, and recording
+        # here would put a phantom entry at the top of the user's own history.
+        result = service.optimise_itinerary(record=False)
+        plan = result["data"]
+        latest = {
+            "key": plan["itinerary_id"],
+            "title": "Walt Disney World, October",
+            "asked_at": None,
+            "guaranteed": plan["incremental_guaranteed"],
+            "total": plan["itinerary_total"],
+            "items": len(plan["recommendations"]),
+        }
+        entries = []
+
+    title = latest.get("title") or "Latest itinerary"
+    active_key = latest.get("key", "")
 
     institutions = ", ".join(sorted({a.institution.title() for a in profile.accounts}))
     return f"""<!doctype html>
@@ -751,7 +858,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 <link rel="icon" href="/static/logos/mastercard.svg" type="image/svg+xml">
 <style>{CSS}</style>
 </head>
-<body>
+<body data-latest="{_t(active_key)}|{_t(latest.get('asked_at') or '')}">
 <header class="topbar">
   <div class="wrap">
     <div class="brand">
@@ -770,12 +877,13 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
   </div>
 </header>
 <main class="wrap">
-  {_hero(plan)}
+  {_hero(plan, title, latest.get('asked_at'))}
   {_plan_section(plan)}
   {_sources_section(plan)}
   {_spend_section(profile)}
   {_wallet_section(profile)}
   {_wallet_advice(wallet)}
+  {_history_section(entries, active_key)}
   {_provenance()}
   <footer class="foot">
     <p>Alex Morgan is a synthetic demo consumer. Accounts, cards and transaction

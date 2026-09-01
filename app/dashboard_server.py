@@ -11,7 +11,7 @@ from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import Route
 from starlette.staticfiles import StaticFiles
 
-from app import config
+from app import config, history
 from app.dashboard import render_alex_dashboard
 from app.providers.open_finance import SyntheticAlexProvider
 
@@ -28,9 +28,28 @@ async def demo_alex_json(_: Request) -> JSONResponse:
     return JSONResponse(profile.model_dump(mode="json"))
 
 
+async def query_history(_: Request) -> JSONResponse:
+    """What has been asked, so the open page can notice a new question and reload."""
+    entries = history.load()
+    latest = entries[0] if entries else None
+    return JSONResponse(
+        {
+            "count": len(entries),
+            "latest": (
+                {"key": latest.get("key"), "asked_at": latest.get("asked_at")}
+                if latest else None
+            ),
+            "entries": [
+                {k: v for k, v in e.items() if k != "plan"} for e in entries
+            ],
+        }
+    )
+
+
 app = Starlette(
     routes=[
         Route("/", demo_alex),
+        Route("/history.json", query_history),
         Route("/demo/alex", demo_alex),
         Route("/demo/alex.json", demo_alex_json),
     ]

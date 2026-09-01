@@ -9,10 +9,11 @@ stays channel-independent. Every method returns the same envelope:
 from __future__ import annotations
 
 import collections
+import re
 from datetime import date
 from decimal import Decimal
 
-from app import config, render
+from app import config, history, render
 from app.engines.baseline import BaselineEngine
 from app.engines.optimizer import ItineraryOptimizer, PurchaseOptimizer
 from app.engines.categorizer import categorise
@@ -42,6 +43,18 @@ FORECAST_NOTE = (
     "Future spend is produced by a demo CommerceGPT adapter from observed history, "
     "not a live CommerceGPT prediction."
 )
+
+
+def _slug(title: str) -> str:
+    """A stable id derived from the itinerary's title.
+
+    Every ChatGPT-authored itinerary used to be filed under "custom", so asking
+    about Ireland and then New York left only one of them in the history -- the
+    second overwrote the first. Deriving the id from the title keeps distinct trips
+    apart while re-asking the same trip still refreshes its entry in place.
+    """
+    cleaned = re.sub(r"[^a-z0-9]+", "_", (title or "").lower()).strip("_")
+    return cleaned[:60] or "custom_itinerary"
 
 
 def _envelope(markdown: str, data: dict, disclaimers: list[str]) -> dict:
@@ -130,6 +143,7 @@ class SmartPayService:
         customer_id: str = config.DEMO_CUSTOMER_ID,
         itinerary: dict | None = None,
         scenario_id: str | None = None,
+        record: bool = True,
     ) -> dict:
         """PLAN.MD sections 33 and 38.
 
@@ -137,9 +151,10 @@ class SmartPayService:
         demo is reproducible. With items supplied, optimises exactly those.
         """
         if itinerary and itinerary.get("items"):
+            title = itinerary.get("title", "Custom itinerary")
             resolved = Itinerary.model_validate(
-                {"itinerary_id": itinerary.get("itinerary_id", "custom"),
-                 "title": itinerary.get("title", "Custom itinerary"),
+                {"itinerary_id": itinerary.get("itinerary_id") or _slug(title),
+                 "title": title,
                  "start_date": itinerary.get("start_date"),
                  "end_date": itinerary.get("end_date"),
                  "items": [
@@ -149,9 +164,9 @@ class SmartPayService:
             )
         else:
             resolved = load_scenario(scenario_id or config.DEMO_SCENARIO_ID)
-        return self._optimise(customer_id, resolved)
+        return self._optimise(customer_id, resolved, record=record)
 
-    def _optimise(self, customer_id: str, itinerary: Itinerary) -> dict:
+    def _optimise(self, customer_id: str, itinerary: Itinerary, record: bool = True) -> dict:
         profile = self.provider.get_profile(customer_id)
         plan = ItineraryOptimizer(profile).optimise(itinerary, customer_id)
         plan.priceless = self._priceless_for(profile, itinerary)
@@ -206,6 +221,24 @@ class SmartPayService:
             ],
             "priceless": plan.priceless,
         }
+        if record:
+            history.record(
+                {
+                    # Keyed on the itinerary so re-running a scenario refreshes its
+                    # entry rather than stacking duplicates during a rehearsal.
+                    "key": plan.itinerary_id,
+                    "title": plan.itinerary_title,
+                    "total": str(plan.itinerary_total),
+                    "guaranteed": str(plan.incremental_guaranteed),
+                    "estimated": str(plan.incremental_estimated),
+                    "points": plan.incremental_points,
+                    "items": len(plan.recommendations),
+                    "plan": data,
+                    "priceless": plan.priceless,
+                    "disclaimers": plan.disclaimers,
+                }
+            )
+
         for r in plan.recommendations:
             self._recommendations[f"{plan.itinerary_id}:{r.item_id}"] = {
                 "item": r.item_label,

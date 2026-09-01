@@ -166,6 +166,24 @@ Three things the BankSym path does that a real FDX integration must:
   SmartPay derives that, and getting it wrong would double-count everything Alex
   repays.
 
+## The dashboard
+
+```bash
+python -m app.dashboard_server        # http://127.0.0.1:9023
+```
+
+It leads with whatever SmartPay was **asked most recently** — ask ChatGPT about a
+trip and the open page picks it up within a few seconds, no refresh — and keeps the
+previous questions listed beneath.
+
+The MCP server and the dashboard are separate processes, so the record of what has
+been asked is a small JSON file at `.runtime/queries.json` (gitignored, safe to
+delete) rather than memory. Writes are atomic; a missing or corrupt file reads as
+"nothing asked yet" and the page falls back to the frozen Disney scenario.
+
+Rendering the page does **not** count as asking a question — otherwise every poll
+would push a phantom entry to the top of your own history.
+
 ## Architecture
 
 ```
