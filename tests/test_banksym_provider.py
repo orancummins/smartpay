@@ -33,9 +33,20 @@ def fixture_profile():
     return SyntheticAlexProvider().get_profile("alex")
 
 
-def test_same_accounts_and_transaction_counts(live, fixture_profile):
+def test_seeded_accounts_and_transactions_all_arrive(live, fixture_profile):
+    """Every seeded account and transaction must come back over FDX.
+
+    Asserted as a superset, not an exact count: BankSym is a test bank and accounts
+    can legitimately be added to Alex through its console. Extra empty accounts do
+    not change any recommendation, so failing the suite over them would be noise --
+    but a *missing* seeded account is a real defect, and that is what this catches.
+    """
     profile = live.get_profile("alex")
-    assert len(profile.accounts) == len(fixture_profile.accounts)
+
+    seeded = {a.mask for a in fixture_profile.accounts}
+    live_masks = {a.mask for a in profile.accounts}
+    assert seeded <= live_masks, f"seeded accounts missing over FDX: {seeded - live_masks}"
+
     assert len(profile.transactions) == len(fixture_profile.transactions)
     assert len(profile.spend_transactions) == len(fixture_profile.spend_transactions)
 

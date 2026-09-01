@@ -330,6 +330,10 @@ def _wallet_section(profile: FinancialProfile) -> str:
         art = CARD_ART.get(product.product_id, "")
         logo = ISSUER_LOGO.get(product.issuer, "")
         tier = product.network_tier.value.replace("_", " ").title()
+        # "Mastercard World Elite" is too long for the card column: it overflowed its
+        # own chip and collided with the annual-fee pill. The tier alone identifies
+        # the product, and the network mark is already printed on the card art.
+        network_label = _t(tier if tier != "None" else product.network.value.title())
         top = sorted(product.reward_rules, key=lambda r: -r.multiplier)[:3]
         rules = "".join(
             f'<li><b>{_t(r.multiplier.normalize())}×</b> {_t(r.description)}</li>'
@@ -351,12 +355,7 @@ def _wallet_section(profile: FinancialProfile) -> str:
                f'width="52" height="18">' if logo else ''}
               <h3>{_t(product.display_name)}</h3>
               <p class="card-meta">
-                <span class="chip{' mc' if product.is_mastercard else ''}">
-                  {_t(product.network.value.title())}{f' {_t(tier)}' if tier != 'None' else ''}
-                </span>
-                <span class="chip{' free' if fee == 0 else ''}">
-                  {'No annual fee' if fee == 0 else f'{_money(fee)} a year'}
-                </span>
+                <span class="chip{' mc' if product.is_mastercard else ''}">{network_label}</span><span class="chip{' free' if fee == 0 else ''}">{'No annual fee' if fee == 0 else f'{_money(fee)} a year'}</span>
               </p>
             </header>
             <ul class="card-rules">{rules}</ul>
@@ -493,7 +492,7 @@ a{color:inherit}
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .topbar .wrap{display:flex;align-items:center;gap:16px;height:60px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:-.02em}
-.mc{width:30px;height:19px;flex:none}
+.brand-mark{width:30px;height:19px;flex:none}
 .status{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--ink-2);font-size:13px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--good);
   box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 22%,transparent)}
@@ -555,7 +554,7 @@ a{color:inherit}
 .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
   padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink-2);
-  background:var(--surface)}
+  background:var(--surface);white-space:nowrap;flex:none}
 .chip.portal{border-color:color-mix(in srgb,var(--brand) 40%,var(--line));
   color:var(--brand-ink);background:color-mix(in srgb,var(--brand) 7%,transparent)}
 .chip.tie{border-style:dashed}
@@ -756,7 +755,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 <header class="topbar">
   <div class="wrap">
     <div class="brand">
-      <svg class="mc" viewBox="0 0 48 30" aria-hidden="true">
+      <svg class="brand-mark" viewBox="0 0 48 30" aria-hidden="true">
         <circle cx="17" cy="15" r="14" fill="#EB001B"/>
         <circle cx="31" cy="15" r="14" fill="#F79E1B"/>
         <path fill="#FF5F00" d="M24 4.2a14 14 0 0 0 0 21.6 14 14 0 0 0 0-21.6z"/>

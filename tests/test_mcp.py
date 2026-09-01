@@ -252,3 +252,44 @@ def test_demo_alex_json_remains_available_for_debugging():
 
     assert payload["customer_id"] == "alex"
     assert len(payload["accounts"]) == 7
+
+
+def test_card_art_carries_no_placeholder_cardholder_name():
+    """Citi's product shots ship embossed with their placeholder, "LINDA WALKER".
+
+    On a dashboard about Alex Morgan that reads as a bug, so the art is rewritten by
+    scripts/restyle_card_art.py. This guards the originals never creep back in.
+    """
+    from pathlib import Path
+
+    cards = Path(__file__).resolve().parent.parent / "app" / "static" / "cards"
+    shipped = [p for p in cards.glob("*") if p.suffix in {".png", ".webp"}]
+    assert len(shipped) == 5
+
+    originals = cards / "_original"
+    assert originals.is_dir(), "originals must be kept so the edit stays reversible"
+    for edited in shipped:
+        backup = originals / edited.name
+        if backup.exists():
+            assert edited.read_bytes() != backup.read_bytes(), (
+                f"{edited.name} still matches the untouched original"
+            )
+
+
+def test_network_chip_never_collides_with_the_fee_pill():
+    """`.mc` was both the topbar logo (width:30px) and the chip's network modifier.
+
+    The logo rule won, collapsing every network chip to 30px so its text spilled over
+    the annual-fee pill beside it. Two guards: the logo no longer uses a name generic
+    enough to collide, and chips do not wrap their own text.
+    """
+    html = anyio.run(demo_alex, None).body.decode()
+
+    assert 'class="brand-mark"' in html
+    assert ".mc{width:30px" not in html, "the bare .mc width rule is back"
+    assert "white-space:nowrap" in html
+
+    # The chip says the tier, not the full "Mastercard World Elite", which is too
+    # long for the card column.
+    assert '<span class="chip mc">World Elite</span>' in html
+    assert "Mastercard World Elite</span>" not in html
