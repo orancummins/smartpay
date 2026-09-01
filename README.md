@@ -17,7 +17,12 @@ curated rules and returned as pre-rendered markdown that ChatGPT presents verbat
 ```
 
 Creates the virtualenv, generates Alex's dataset if missing, runs the test suite,
-and serves MCP on `http://127.0.0.1:9022/mcp`.
+serves MCP on `http://127.0.0.1:9022/mcp`, and starts the visual dashboard on
+`http://127.0.0.1:9023/demo/alex`.
+
+Open `http://127.0.0.1:9023/demo/alex` for Alex's Open Finance dashboard. It
+shows every connected account, card, reward rule, benefit and transaction used
+by SmartPay.
 
 ### Reaching ChatGPT
 

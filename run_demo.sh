@@ -19,6 +19,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 PORT="${SMARTPAY_PORT:-9022}"
+DASHBOARD_PORT="${SMARTPAY_DASHBOARD_PORT:-9023}"
 VENV=".venv/bin/python"
 
 if [[ ! -x "$VENV" ]]; then
@@ -41,7 +42,10 @@ trap cleanup EXIT
 if [[ "${1:-}" != "--ngrok" ]]; then
   cat <<BANNER
 
-  SmartPay is live on http://127.0.0.1:${PORT}/mcp
+  SmartPay is live.
+
+    Alex dashboard : http://127.0.0.1:${DASHBOARD_PORT}/demo/alex
+    MCP server     : http://127.0.0.1:${PORT}/mcp
 
   If the OpenAI tunnel is running (tunnel-client run --profile smartpay) it will
   reach this over loopback and ChatGPT can call the tools. Check it with:
@@ -49,7 +53,10 @@ if [[ "${1:-}" != "--ngrok" ]]; then
       curl -s http://127.0.0.1:8080/readyz
 
 BANNER
-  exec $VENV -m app.mcp_server
+  $VENV -m app.dashboard_server &
+  $VENV -m app.mcp_server &
+  wait
+  exit
 fi
 
 if ! command -v ngrok >/dev/null; then
@@ -82,6 +89,7 @@ cat <<BANNER
 
   SmartPay is live.
 
+    Alex dashboard         : http://127.0.0.1:${DASHBOARD_PORT}/demo/alex
     ChatGPT connector URL : ${PUBLIC_URL}/mcp
     Health                : ${PUBLIC_URL}/health
     Local                 : http://127.0.0.1:${PORT}/mcp
@@ -91,4 +99,6 @@ cat <<BANNER
 
 BANNER
 
-exec $VENV -m app.mcp_server
+$VENV -m app.dashboard_server &
+$VENV -m app.mcp_server &
+wait

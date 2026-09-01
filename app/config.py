@@ -17,6 +17,7 @@ DEMO_SCENARIO_ID = "disney_october_2026"
 
 HOST = os.environ.get("SMARTPAY_HOST", "127.0.0.1")
 PORT = int(os.environ.get("SMARTPAY_PORT", "9022"))
+DASHBOARD_PORT = int(os.environ.get("SMARTPAY_DASHBOARD_PORT", "9023"))
 
 # Public hostname(s) the server is reached on, comma separated. The MCP SDK's
 # DNS-rebinding protection rejects any Host header it has not been told about, and

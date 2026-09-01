@@ -153,12 +153,6 @@ async def health(_: Request) -> JSONResponse:
     return JSONResponse({"status": "ok", "service": "smartpay", "version": "0.1.0"})
 
 
-@mcp.custom_route("/demo/alex", methods=["GET"])
-async def demo_alex(_: Request) -> JSONResponse:
-    """Debugging shortcut. PLAN.MD section 30."""
-    return JSONResponse(smartpay.get_financial_profile(config.DEMO_CUSTOMER_ID)["data"])
-
-
 @mcp.custom_route("/", methods=["GET"])
 async def root(_: Request) -> PlainTextResponse:
     return PlainTextResponse("SmartPay MCP server. Endpoint: /mcp   Health: /health\n")

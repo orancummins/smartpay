@@ -10,6 +10,7 @@ import anyio
 import pytest
 from mcp.client.client import Client
 
+from app.dashboard_server import demo_alex, demo_alex_json
 from app.mcp_server import mcp
 
 EXPECTED_TOOLS = {
@@ -173,3 +174,48 @@ def test_instructions_pin_the_consumer_to_the_us():
     assert "US-based consumer" in text
     assert "NOT the person operating this chat" in text
     assert "Do NOT localise" in text
+
+
+def test_demo_alex_renders_the_open_finance_dashboard():
+    response = anyio.run(demo_alex, None)
+    html = response.body.decode()
+
+    assert response.media_type == "text/html"
+    assert "Alex Morgan" in html
+    assert html.count('class="wallet-card art-') == 5
+    assert 'class="wallet-carousel"' in html
+    assert 'data-carousel-next' in html
+    assert 'data-carousel-prev' in html
+    assert 'class="carousel-dots"' in html
+    assert html.count('/static/cards/') == 10
+    assert "citi_strata_premier.webp" in html
+    assert "chase_sapphire_preferred.png" in html
+    assert '/static/logos/citi.svg' in html
+    assert '/static/logos/chase.svg' in html
+    assert '<link rel="icon" href="/static/logos/mastercard.svg" type="image/svg+xml">' in html
+    assert "Powered by Mastercard" not in html
+    assert "#EB001B" in html
+    assert "#FF5F00" in html
+    assert "#F79E1B" in html
+    assert "conic-gradient" in html
+    assert "Where Alex spends" in html
+    assert "spend-track" in html
+    assert "Monthly average" in html
+    assert 'class="spend-summary"' in html
+    assert "backdrop-filter:blur(6px)" in html
+    assert "art-chase_freedom_unlimited .art-cleanup" in html
+    assert html.count('class="account-name"') == 7
+    assert "Connected accounts" in html
+    assert "Citi Strata Premier Card" in html
+    assert "Recent activity" in html
+    assert 'id="page-previous"' in html
+    assert 'id="page-next"' in html
+    assert "const pageSize = 25" in html
+
+
+def test_demo_alex_json_remains_available_for_debugging():
+    response = anyio.run(demo_alex_json, None)
+    payload = json.loads(response.body)
+
+    assert payload["customer_id"] == "alex"
+    assert len(payload["accounts"]) == 7
