@@ -10,13 +10,14 @@ one test's monkeypatched profile cannot leak into the next.
 
 import pytest
 
-from app import analytics, history
+from app import analytics, coupons, history
 
 
 @pytest.fixture(autouse=True)
 def isolated_query_history(tmp_path, monkeypatch):
     monkeypatch.setattr(history, "HISTORY_PATH", tmp_path / "queries.json")
     monkeypatch.setattr(analytics, "LEDGER_PATH", tmp_path / "identified_ledger.json")
+    monkeypatch.setattr(coupons, "COUPONS_PATH", tmp_path / "coupons.json")
     analytics._CACHE.clear()
     analytics._RECORDS_CACHE.clear()
     yield

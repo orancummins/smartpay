@@ -269,7 +269,7 @@ function render() {
     <div class="wrap">
       <div class="head">
         <img src="${ASSETS.logos.mastercard}" alt="">
-        <span class="who">SmartPay</span>
+        <span class="who">SmartPay by Mastercard</span>
         <span class="ctx">${esc(total)} items · ${money(plan.itinerary_total)}</span>
       </div>
 

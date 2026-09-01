@@ -215,14 +215,16 @@ def test_demo_alex_renders_the_dashboard():
     assert "2026-09-01" in html
     assert "financialdataexchange" in html or "citi.com" in html or "chase.com" in html
 
-    # The six numbered sections the user asked for, in order, plus the closing beat.
+    # The six sections the user asked for, in order, plus the closing beat.
+    # Headings are no longer numbered in the UI -- the numbers were a build-time
+    # ordering aid, not something a reader needed on screen.
     headings = [
         "Potential savings over last year",
-        "2. Potential future savings identified",
-        "3. Financial institutions &amp; accounts connected",
-        "4. Recent activity",
-        "5. Here's all the information you've shared",
-        "6. Card benefits, rewards, offers &amp; terms",
+        "Potential future savings identified",
+        "Financial institutions &amp; accounts connected",
+        "Recent activity",
+        "Here's all the information you've shared",
+        "Card benefits, rewards, offers &amp; terms",
         "And one more thing…",
     ]
     positions = [html.index(h) for h in headings]

@@ -13,7 +13,7 @@ import re
 from datetime import date
 from decimal import Decimal
 
-from app import analytics, config, history, render
+from app import analytics, config, coupons, history, render
 from app.engines.baseline import BaselineEngine
 from app.engines.optimizer import ItineraryOptimizer, PurchaseOptimizer
 from app.engines.categorizer import categorise
@@ -247,6 +247,20 @@ class SmartPayService:
                 plan.itinerary_id, plan.itinerary_title,
                 plan.incremental_guaranteed, plan.incremental_estimated,
             )
+            for r in plan.recommendations:
+                if r.recommended.tiebreak_bonus > ZERO:
+                    discount_percent = quantize(
+                        r.recommended.tiebreak_bonus / r.amount * 100
+                    )
+                    coupons.record_from_recommendation(
+                        coupon_id=f"{plan.itinerary_id}:{r.item_id}",
+                        merchant=r.merchant,
+                        item_label=r.item_label,
+                        approx_amount=r.amount,
+                        card_name=r.recommended.instrument_name,
+                        discount_percent=discount_percent,
+                        issued_on=date.today(),
+                    )
 
         for r in plan.recommendations:
             self._recommendations[f"{plan.itinerary_id}:{r.item_id}"] = {

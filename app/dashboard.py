@@ -20,7 +20,7 @@ from __future__ import annotations
 import html
 import json
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from app.knowledge import benefits
@@ -231,6 +231,56 @@ def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
              about, plus a recurring wallet opportunity. See the breakdown below.</p>
         </div>
       </div>
+    </section>"""
+
+
+# ---------------------------------------------------------------------------
+# Clipped coupons -- a Mastercard tiebreak discount made real and actionable.
+# Only ever appears when app.engines.optimizer actually proposed one (see
+# app.coupons and the record_from_recommendation call in the service layer);
+# there is nothing to render otherwise.
+# ---------------------------------------------------------------------------
+
+def _coupons_section(coupon_list: list[dict]) -> str:
+    if not coupon_list:
+        return ""
+    today = date.today()
+    cards = []
+    for c in coupon_list:
+        expires = date.fromisoformat(c["expires_on"])
+        days_left = (expires - today).days
+        if days_left <= 0:
+            expiry_text = "expires today"
+        elif days_left == 1:
+            expiry_text = "expires in 1 day"
+        else:
+            expiry_text = f"expires in {days_left} days"
+        merchant_label = _t(c["merchant"].replace("_", " ").title())
+        clipped = bool(c["clipped"])
+        cards.append(f"""
+        <article class="coupon{' clipped' if clipped else ''}" data-coupon-id="{_t(c['coupon_id'])}">
+          <div class="coupon-badge"><b>{_t(c['discount_percent'])}%</b><small>OFF</small></div>
+          <div class="coupon-body">
+            <h3>{merchant_label}</h3>
+            <p>{_t(c['card'])} — funded by Mastercard, refunded as a statement credit</p>
+            <p class="coupon-meta">~{_money(c['approx_amount'])} purchase · {expiry_text}</p>
+          </div>
+          <button class="coupon-clip{' on' if clipped else ''}" type="button"
+                  data-coupon-id="{_t(c['coupon_id'])}">
+            <span>{'Clipped' if clipped else 'Clip coupon'}</span>
+          </button>
+        </article>""")
+
+    return f"""
+    <section class="panel coupons-panel" aria-labelledby="coupons-h">
+      <header class="panel-head">
+        <div>
+          <h2 id="coupons-h">Mastercard offers for you</h2>
+          <p>When two cards tie on value, Mastercard funds an extra discount to win
+             it — here it is as a coupon, tied to the purchase that earned it.</p>
+        </div>
+      </header>
+      <div class="coupon-grid">{''.join(cards)}</div>
     </section>"""
 
 
@@ -471,7 +521,7 @@ def _potential_section(potential: dict, entries: list[dict], active_key: str) ->
       <button class="expand-toggle" id="future-toggle" type="button" aria-expanded="false"
               aria-controls="future-body">
         <div class="expand-toggle-text">
-          <h2 id="future-h">2. Potential future savings identified</h2>
+          <h2 id="future-h">Potential future savings identified</h2>
           <p>Calculated from upcoming suggestions, and added to every time you ask
              SmartPay a new, distinct question.</p>
         </div>
@@ -541,7 +591,7 @@ def _institutions_section(profile: FinancialProfile) -> str:
       <button class="expand-toggle" id="inst-toggle" type="button" aria-expanded="false"
               aria-controls="inst-body">
         <div class="expand-toggle-text">
-          <h2 id="inst-h">3. Financial institutions &amp; accounts connected</h2>
+          <h2 id="inst-h">Financial institutions &amp; accounts connected</h2>
           <p>Read live over FDX, the US open banking standard.</p>
         </div>
         <span class="expand-figure small">{_t(len(by_institution))} banks ·
@@ -588,14 +638,21 @@ def _recent_activity_section(profile: FinancialProfile, limit: int = 12) -> str:
       </li>""" for t in recent)
 
     return f"""
-    <section class="panel" aria-labelledby="activity-h">
-      <header class="panel-head">
-        <div>
-          <h2 id="activity-h">4. Recent activity</h2>
+    <section class="panel expandable" aria-labelledby="activity-h">
+      <button class="expand-toggle" id="activity-toggle" type="button" aria-expanded="false"
+              aria-controls="activity-body">
+        <div class="expand-toggle-text">
+          <h2 id="activity-h">Recent activity</h2>
           <p>The most recent {_t(len(recent))} payments across every connected account.</p>
         </div>
-      </header>
-      <ul class="activity-list">{rows}</ul>
+        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="expand-body" id="activity-body" hidden>
+        <ul class="activity-list">{rows}</ul>
+      </div>
     </section>"""
 
 
@@ -643,7 +700,7 @@ def _shared_data_section(profile: FinancialProfile) -> str:
       <button class="expand-toggle" id="shared-toggle" type="button" aria-expanded="false"
               aria-controls="shared-body">
         <div class="expand-toggle-text">
-          <h2 id="shared-h">5. Here's all the information you've shared</h2>
+          <h2 id="shared-h">Here's all the information you've shared</h2>
           <p>Everything Open Finance has given SmartPay access to for Alex — nothing
              more, nothing hidden.</p>
         </div>
@@ -810,17 +867,24 @@ def _offers_and_terms(profile: FinancialProfile) -> str:
 
 def _benefits_section(profile: FinancialProfile) -> str:
     return f"""
-    <section class="panel" aria-labelledby="benefits-h">
-      <header class="panel-head">
-        <div>
-          <h2 id="benefits-h">6. Card benefits, rewards, offers &amp; terms</h2>
+    <section class="panel expandable" aria-labelledby="benefits-h">
+      <button class="expand-toggle" id="benefits-toggle" type="button" aria-expanded="false"
+              aria-controls="benefits-body">
+        <div class="expand-toggle-text">
+          <h2 id="benefits-h">Card benefits, rewards, offers &amp; terms</h2>
           <p>{_t(sum(1 for i in profile.instruments if i.is_card))} cards, read live
              over FDX from two institutions.</p>
         </div>
-      </header>
-      {_wallet_carousel(profile)}
-      {_card_detail_tables(profile)}
-      {_offers_and_terms(profile)}
+        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="expand-body" id="benefits-body" hidden>
+        {_wallet_carousel(profile)}
+        {_card_detail_tables(profile)}
+        {_offers_and_terms(profile)}
+      </div>
     </section>"""
 
 
@@ -964,6 +1028,33 @@ a{color:inherit}
 .mini-stats{display:flex;gap:24px}
 .mini-stats span{display:block;font-size:21px;font-weight:660;letter-spacing:-.02em}
 .mini-stats small{color:var(--ink-3);font-size:12.5px}
+
+/* clipped coupons -- a Mastercard tiebreak discount made tangible */
+.coupons-panel .panel-head{margin-bottom:18px}
+.coupon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.coupon{position:relative;display:flex;flex-direction:column;background:var(--surface-2);
+  border:1.5px dashed color-mix(in srgb,var(--brand) 45%,var(--line));border-radius:14px;
+  padding:18px 18px 16px;gap:10px;transition:opacity .2s}
+.coupon::before,.coupon::after{content:'';position:absolute;left:50%;width:18px;height:18px;
+  border-radius:50%;background:var(--bg);transform:translateX(-50%)}
+.coupon::before{top:-9px}
+.coupon::after{bottom:-9px}
+.coupon-badge{display:flex;align-items:baseline;gap:5px}
+.coupon-badge b{font-size:28px;font-weight:800;letter-spacing:-.02em;
+  background:linear-gradient(96deg,var(--brand),var(--brand-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.coupon-badge small{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink-3)}
+.coupon-body h3{font-size:16px;font-weight:660}
+.coupon-body p{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.4}
+.coupon-body .coupon-meta{color:var(--ink-3);font-size:12.5px;margin-top:6px}
+.coupon-clip{margin-top:auto;border:1px solid var(--line);background:var(--surface);
+  color:var(--ink);border-radius:10px;padding:10px 14px;font:inherit;font-size:13.5px;
+  font-weight:660;cursor:pointer;transition:background-color .15s,border-color .15s}
+.coupon-clip:hover{border-color:var(--ink-3)}
+.coupon-clip.on{background:var(--good-bg);border-color:color-mix(in srgb,var(--good) 45%,var(--line));
+  color:var(--good)}
+.coupon-clip.on span::before{content:'✓ '}
+.coupon.clipped{opacity:.75}
 
 /* generic expandable panel -- retro, enquiries, institutions, shared data all
    use this same toggle/body pair so one delegated click handler covers all of
@@ -1361,6 +1452,23 @@ SCRIPT = """
     if(container) container.classList.toggle('open', !open);
   });
 
+  // Clipped coupons: toggle clip state server-side so it survives a refresh,
+  // but update the button immediately rather than waiting on the round trip.
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.coupon-clip');
+    if(!btn) return;
+    var id = btn.dataset.couponId;
+    var willClip = !btn.classList.contains('on');
+    btn.classList.toggle('on', willClip);
+    btn.querySelector('span').textContent = willClip ? 'Clipped' : 'Clip coupon';
+    var card = btn.closest('.coupon');
+    if(card) card.classList.toggle('clipped', willClip);
+    fetch('/coupons/clip', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({coupon_id: id, clipped: willClip})
+    }).catch(function(){ /* offline: the click still reflects locally */ });
+  });
+
   // Retrospective slider ("what could you have saved?")
   var retroSection=document.querySelector('.retro');
   if(retroSection){
@@ -1423,11 +1531,12 @@ SCRIPT = """
 
 def render_alex_dashboard(profile: FinancialProfile) -> str:
     """Render the full dashboard for the demo consumer."""
-    from app import analytics, history
+    from app import analytics, coupons, history
     from app.services.smartpay import SmartPayService
 
     service = SmartPayService()
     wallet = service.optimise_wallet()["data"]
+    active_coupons = coupons.load_active(date.today())
 
     entries = history.load()
     if entries and entries[0].get("plan"):
@@ -1468,7 +1577,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Alex · SmartPay Open Finance</title>
+<title>Alex · SmartPay by Mastercard</title>
 <link rel="icon" href="/static/logos/mastercard.svg" type="image/svg+xml">
 <style>{CSS}</style>
 </head>
@@ -1481,7 +1590,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
         <circle cx="31" cy="15" r="14" fill="#F79E1B"/>
         <path fill="#FF5F00" d="M24 4.2a14 14 0 0 0 0 21.6 14 14 0 0 0 0-21.6z"/>
       </svg>
-      SmartPay
+      SmartPay by Mastercard
     </div>
     <div class="status">
       <span class="dot" aria-hidden="true"></span>
@@ -1492,6 +1601,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 </header>
 <main class="wrap">
   {_header(full_name, accumulated, potential["total"])}
+  {_coupons_section(active_coupons)}
   {_retrospective_section(retrospective, accumulated)}
   {_potential_section(potential, entries, active_key)}
   {_institutions_section(profile)}

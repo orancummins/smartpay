@@ -20,6 +20,7 @@ import contextlib
 import uvicorn
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
+from mcp.types import Icon
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
 
@@ -56,9 +57,15 @@ re-round, re-total or restate any monetary figure, and never omit any entry in
 `disclaimers`. All arithmetic is performed in Python; your role is narration only.
 """.strip()
 
+#: Inlined as a data URI, the same way the embedded widget carries its own images
+#: -- ChatGPT fetches the connector icon independently of this server's own
+#: reachability, so a relative /static path would not resolve for it.
+CONNECTOR_ICON = Icon(src=widget.data_uri("logos/mastercard.svg"), mimeType="image/svg+xml")
+
 mcp = MCPServer(
     name="SmartPay",
-    title="SmartPay Payment Intelligence",
+    title="SmartPay by Mastercard",
+    icons=[CONNECTOR_ICON],
     instructions=INSTRUCTIONS,
     version="0.1.0",
 )
