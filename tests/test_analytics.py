@@ -135,3 +135,33 @@ def test_habit_change_channel_only_switch_is_labelled_as_a_channel_change():
         if h["label"].startswith("Keep ") and "booking via" in h["label"]
     ]
     assert channel_only, "expected a same-card, channel-only habit change"
+
+
+def test_late_fee_is_annotated_as_its_own_avoidable_amount_never_added_to_guaranteed():
+    """A late fee is not a "which card" decision (accumulated_savings excludes it
+    for the same reason), so its avoidable value must show up as its own line --
+    never silently inflate the card-driven guaranteed total.
+    """
+    profile = SyntheticAlexProvider().get_profile("alex")
+    accumulated = analytics.accumulated_savings(profile)
+    history = analytics.retrospective_history(profile)
+
+    assert history["fee_avoidable"], "expected the planted late fee in the fixture"
+    fee = history["fee_avoidable"][0]
+    assert fee["amount"] == "40.00"
+    assert "autopay" in fee["label"]
+    assert "40.00" in fee["label"]
+
+    fee_txns = [t for t in history["transactions"] if t["kind"] == "fee"]
+    assert len(fee_txns) == 1
+    assert fee_txns[0]["guaranteed_delta"] == "0.00", (
+        "a fee's avoidable value must never count toward the card-driven guaranteed total"
+    )
+    assert fee_txns[0]["avoidable_amount"] == "40.00"
+
+    total = sum(
+        (Decimal(t["guaranteed_delta"]) for t in history["transactions"]), Decimal(0)
+    )
+    assert total == accumulated["guaranteed"], (
+        "adding the fee annotation must not change the card-driven guaranteed total"
+    )

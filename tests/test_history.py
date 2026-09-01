@@ -104,13 +104,14 @@ def test_the_dashboard_leads_with_the_most_recent_question(store):
     )
 
     html = render_alex_dashboard(SyntheticAlexProvider().get_profile("alex"))
-    assert "Latest enquiry — Five nights in Ireland" in html
-    assert "Hotel in Dublin" in html
-    # The earlier question is still listed, just not the headline detail.
+    assert "Five nights in Ireland" in html
+    assert "Hotel in Dublin" in html, "the most recent enquiry's own detail must be present"
+    # The earlier question is still listed, just further down.
     assert "Every distinct enquiry counted toward this total" in html
     assert "Walt Disney World" in html
-    assert html.index("Latest enquiry — Five nights in Ireland") < html.index(
-        "Every distinct enquiry counted toward this total"
+    assert '<span class="q-tag">Latest</span>' in html
+    assert html.index("Five nights in Ireland") < html.index("Walt Disney World"), (
+        "the most recent enquiry must lead the list"
     )
 
 

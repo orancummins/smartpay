@@ -2,7 +2,7 @@
 
 Organised as a presentation surface, not a data viewer:
 
-  1. Name, accumulated savings, further potential savings (the header).
+  1. Name, potential savings over last year, further potential savings (the header).
   2. Potential future savings identified -- the breakdown behind that number.
   3. Financial institutions and accounts connected, logos prominent.
   4. Recent activity.
@@ -26,6 +26,7 @@ from decimal import Decimal
 from app.knowledge import benefits
 from app.models.financial import Account, FinancialProfile, PaymentInstrument
 from app.money import fmt
+from app.render import upside_sentence
 
 CARD_ART = {
     "citi_strata_premier": "/static/cards/citi_strata_premier.webp",
@@ -206,7 +207,7 @@ def _ring(pct: float, label: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Section 1 -- header: name, accumulated savings, further potential savings
+# Section 1 -- header: name, potential savings over last year, further potential savings
 # ---------------------------------------------------------------------------
 
 def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
@@ -216,7 +217,7 @@ def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
       <h1 id="hero-h" class="name">{_t(full_name)} <span class="demo-badge">DEMO</span></h1>
       <div class="hero-stats">
         <div class="stat accent">
-          <dt>Accumulated savings</dt>
+          <dt>Potential savings over last year</dt>
           <dd class="figure" data-count="{accumulated['guaranteed']}">
             {_money(accumulated['guaranteed'])}</dd>
           <p>Guaranteed value SmartPay's rules have identified across the last 12
@@ -243,29 +244,44 @@ def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
 def _retrospective_section(history: dict, accumulated: dict) -> str:
     months = history["months"]
     n_months = len(months) or 1
+    fee_total = sum((Decimal(f["amount"]) for f in history["fee_avoidable"]), Decimal(0))
     # Most recent first, matching the recent-activity convention elsewhere on the
     # page. Both the rendered rows and the JSON payload below iterate this same
     # sorted list, in the same order, so the Nth <li> always corresponds to the
     # Nth entry in the JS array -- the slider toggles visibility by index alone.
     txns = sorted(history["transactions"], key=lambda t: t["date"], reverse=True)
 
-    txn_rows = "".join(f"""
-      <li class="retro-txn{' improved' if t['improved'] else ''}" data-month="{_t(t['month'])}"
-          data-guaranteed="{t['guaranteed_delta']}">
+    def _row(t: dict) -> str:
+        is_fee = t["kind"] == "fee"
+        flagged = is_fee or t["improved"]
+        display_amount = t["avoidable_amount"] if is_fee else t["guaranteed_delta"]
+        category_label = "Late fee" if is_fee else _label(t["category"])
+        change_line = (
+            f'<span class="rt-change">{_t(t["habit_label"])}</span>'
+            if t["habit_label"] else ""
+        )
+        classes = "retro-txn" + (" fee" if is_fee else "") + (" improved" if flagged else "")
+        return f"""
+      <li class="{classes}" data-month="{_t(t['month'])}" data-guaranteed="{t['guaranteed_delta']}">
         <span class="rt-date">{_t(t['date'][5:])}</span>
         <span class="rt-merchant">{_t(t['description'].title())}</span>
-        <span class="rt-category">{_label(t['category'])}</span>
+        <span class="rt-category">{category_label}</span>
         <span class="rt-card">{_t(t['actual_card'])}</span>
-        <span class="rt-delta">{_money(t['guaranteed_delta']) if t['improved'] else '—'}</span>
-      </li>""" for t in txns)
+        <span class="rt-delta">{_money(display_amount) if flagged else '—'}{' avoidable' if is_fee else ''}</span>
+        {change_line}
+      </li>"""
+
+    txn_rows = "".join(_row(t) for t in txns)
 
     payload = json.dumps({
         "months": months,
         "transactions": [
             {
+                "kind": t["kind"],
                 "month": t["month"],
                 "guaranteed_delta": t["guaranteed_delta"],
                 "estimated_delta": t["estimated_delta"],
+                "avoidable_amount": t.get("avoidable_amount", "0.00"),
                 "category": t["category"],
                 "improved": t["improved"],
                 "habit_label": t["habit_label"],
@@ -279,21 +295,21 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
     payload = payload.replace("</", "<\\/")
 
     return f"""
-    <section class="panel retro" aria-labelledby="retro-h">
-      <button class="retro-toggle" id="retro-toggle" type="button" aria-expanded="false"
+    <section class="panel expandable retro" aria-labelledby="retro-h">
+      <button class="expand-toggle" id="retro-toggle" type="button" aria-expanded="false"
               aria-controls="retro-body">
-        <div class="retro-toggle-text">
+        <div class="expand-toggle-text">
           <h2 id="retro-h">What could you have saved?</h2>
           <p>Drag back through the last {_t(n_months)} months to see the total, and
              exactly which habits would have to change to reach it.</p>
         </div>
-        <span class="retro-headline-figure">{_money(accumulated['guaranteed'])}</span>
+        <span class="expand-figure">{_money(accumulated['guaranteed'])}</span>
         <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
           <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
                 stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
-      <div class="retro-body" id="retro-body" hidden>
+      <div class="expand-body" id="retro-body" hidden>
         <noscript><p class="sub-lede">Enable JavaScript to use the savings slider.</p></noscript>
 
         <div class="retro-slider-row">
@@ -309,6 +325,9 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
             <span class="figure" id="retro-total">{_money(accumulated['guaranteed'])}</span>
             <small>guaranteed, across <span id="retro-txn-count">0</span> transactions in this
                window</small>
+            {f'''<small class="retro-fee-total" id="retro-fee-total-wrap">
+               + <span id="retro-fee-total">{_money(fee_total)}</span> in late fees you could
+               have avoided with autopay</small>''' if history["fee_avoidable"] else ''}
           </div>
           <div>
             <h3 class="sub-h" style="margin-top:0">Spending habits that would need to change</h3>
@@ -317,9 +336,10 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
         </div>
 
         <h3 class="sub-h">Annotated transaction history</h3>
-        <p class="sub-lede">Every scored purchase from the window above. Highlighted rows are
-           where a different card or channel would have earned more; dimmed rows are outside
-           the selected window or were already on the best option.</p>
+        <p class="sub-lede">Every scored purchase and late fee from the window above. Each
+           highlighted row spells out the specific change -- switch card, switch how you book,
+           or turn on autopay -- and exactly what it would have been worth. Dimmed rows are
+           outside the selected window or were already on the best option.</p>
         <ul class="retro-txn-list" id="retro-txn-list">{txn_rows}</ul>
       </div>
     </section>
@@ -347,8 +367,8 @@ def _plan_rows(plan: dict) -> tuple[str, Decimal]:
             if channel != "booked direct" else ""
         )
         note = (
-            '<span class="chip tie" title="Options were worth exactly the same">'
-            "tie · disclosed</span>" if r["tiebreak_note"] else ""
+            f'<span class="chip tie" title="{_t(r["tiebreak_note"])}">'
+            "tie · +5% Mastercard credit</span>" if r["tiebreak_note"] else ""
         )
         why = "".join(
             f'<li>{_t(b)}</li>' for b in r["benefits"]
@@ -359,6 +379,10 @@ def _plan_rows(plan: dict) -> tuple[str, Decimal]:
             note for note in (r.get("late_fee_warning"), r.get("payoff_recommendation")) if note
         ]
         risk_notes = "".join(f'<li>{_t(note)}</li>' for note in risk_items)
+        upside = upside_sentence(
+            r["recommended_payment"], r["baseline_payment"], guaranteed, estimated,
+            r["tiebreak_note"],
+        )
         rows.append(f"""
         <article class="plan-row{' has-gain' if gained > 0 else ''}">
           <div class="plan-item">
@@ -383,100 +407,98 @@ def _plan_rows(plan: dict) -> tuple[str, Decimal]:
             <span class="sub">+{_money(estimated)} est.</span>
             {_gain_bar(gained, peak)}
           </div>
+          <p class="plan-upside">{_t(upside)}</p>
           {f'<ul class="plan-why">{why}</ul>' if why else ''}
           {f'<ul class="plan-risk">{risk_notes}</ul>' if risk_notes else ''}
         </article>""")
     return "".join(rows), peak
 
 
-def _sources_for(plan: dict) -> list[tuple[str, Decimal]]:
-    sources: list[tuple[str, Decimal]] = []
-    for r in plan["recommendations"]:
-        for b in r["benefits"]:
-            value = Decimal(r["guaranteed_savings"])
-            if value > 0 and not r["offers"]:
-                sources.append((b, value))
-        for o in r["offers"]:
-            sources.append((f'{o["merchant"]} offer', Decimal(o["value"])))
-            remainder = Decimal(r["guaranteed_savings"]) - Decimal(o["value"])
-            if remainder > 0 and r["benefits"]:
-                sources.append((r["benefits"][0], remainder))
-    return sorted(sources, key=lambda kv: -kv[1])
+def _enquiry_item(entry: dict, index: int, is_active: bool) -> str:
+    """One distinct ChatGPT enquiry, collapsed to a summary line by default.
 
-
-def _enquiry_list(entries: list[dict], active_key: str) -> str:
-    """Every distinct question SmartPay has been asked, most recent first."""
-    if not entries:
-        return ""
-    cards = []
-    for e in entries:
-        is_active = e.get("key") == active_key
-        guaranteed = Decimal(str(e.get("guaranteed", "0")))
-        cards.append(f"""
-        <li class="q{' on' if is_active else ''}">
-          <span class="q-when">{_t(_ago(e.get("asked_at")))}</span>
-          <h3>{_t(e.get("title", "Untitled"))}</h3>
-          <p class="q-figures">
-            <b>{_money(guaranteed)}</b>
-            <span>{_t(e.get("items", 0))} items · {_money(e.get("total", "0"))}</span>
-          </p>
-          {'<span class="q-tag">Showing now</span>' if is_active else ''}
-        </li>""")
+    Expanding it reveals exactly the same per-item detail the old "latest
+    enquiry" block always showed for just one entry -- now available for
+    whichever enquiry the reader actually wants to look at, not just the most
+    recent one.
+    """
+    guaranteed = Decimal(str(entry.get("guaranteed", "0")))
+    plan = entry.get("plan")
+    body_id = f"enq-body-{index}"
+    if plan:
+        plan_rows, _peak = _plan_rows(plan)
+        detail = f"""
+          <div class="chips-row">
+            <span class="kv"><b>{_money(plan["incremental_guaranteed"])}</b>
+              <small>Guaranteed on this enquiry</small></span>
+            <span class="kv"><b>{_money(plan["incremental_estimated"])}</b>
+              <small>Estimated rewards on this enquiry</small></span>
+            <span class="kv"><b>{int(plan["incremental_points"]):,}</b>
+              <small>Extra points on this enquiry</small></span>
+          </div>
+          <div class="plan">{plan_rows}</div>"""
+    else:
+        detail = '<p class="sub-lede">No detail recorded for this enquiry.</p>'
     return f"""
-    <div class="enquiry-block">
-      <h3 class="sub-h">Every distinct enquiry counted toward this total</h3>
-      <ul class="qlist">{''.join(cards)}</ul>
-    </div>"""
+    <li class="q{' on' if is_active else ''}">
+      <button class="expand-toggle" id="enq-toggle-{index}" type="button" aria-expanded="false"
+              aria-controls="{body_id}">
+        <div class="expand-toggle-text">
+          <span class="q-when">{_t(_ago(entry.get("asked_at")))}</span>
+          <h3>{_t(entry.get("title", "Untitled"))}</h3>
+          <p class="q-meta">{_t(entry.get("items", 0))} items · {_money(entry.get("total", "0"))}</p>
+        </div>
+        {'<span class="q-tag">Latest</span>' if is_active else ''}
+        <span class="expand-figure small">{_money(guaranteed)}</span>
+        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="expand-body" id="{body_id}" hidden>{detail}</div>
+    </li>"""
 
 
-def _potential_section(
-    potential: dict, plan: dict, title: str, asked: object,
-    active_key: str, entries: list[dict],
-) -> str:
-    plan_rows, peak = _plan_rows(plan)
-    sources = _sources_for(plan)
-    plan_guaranteed = Decimal(plan["incremental_guaranteed"])
-    plan_estimated = Decimal(plan["incremental_estimated"])
-    plan_points = plan["incremental_points"]
+def _potential_section(potential: dict, entries: list[dict], active_key: str) -> str:
+    """Every distinct question SmartPay has been asked, most recent first, each
+    collapsed to a one-line summary that expands to the full per-item detail.
+    """
+    items_html = "".join(
+        _enquiry_item(e, i, e.get("key") == active_key) for i, e in enumerate(entries)
+    )
     return f"""
-    <section class="panel" aria-labelledby="future-h">
-      <header class="panel-head">
-        <div>
+    <section class="panel expandable" aria-labelledby="future-h">
+      <button class="expand-toggle" id="future-toggle" type="button" aria-expanded="false"
+              aria-controls="future-body">
+        <div class="expand-toggle-text">
           <h2 id="future-h">2. Potential future savings identified</h2>
           <p>Calculated from upcoming suggestions, and added to every time you ask
              SmartPay a new, distinct question.</p>
         </div>
-      </header>
+        <span class="expand-figure">{_money(potential['total'])}</span>
+        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="expand-body" id="future-body" hidden>
+        <div class="chips-row">
+          <span class="kv"><b>{_money(potential['wallet_annual'])}</b>
+            <small>Recurring wallet opportunity</small></span>
+          <span class="kv"><b>{_t(potential['enquiry_count'])}</b>
+            <small>Distinct enquiries asked</small></span>
+          <span class="kv"><b>{_money(potential['enquiries_guaranteed'])}</b>
+            <small>Guaranteed, across all enquiries</small></span>
+          <span class="kv"><b>{_money(potential['enquiries_estimated'])}</b>
+            <small>Estimated rewards, across all enquiries</small></span>
+        </div>
 
-      <div class="chips-row">
-        <span class="kv"><b>{_money(potential['wallet_annual'])}</b>
-          <small>Recurring wallet opportunity</small></span>
-        <span class="kv"><b>{_t(potential['enquiry_count'])}</b>
-          <small>Distinct enquiries asked</small></span>
-        <span class="kv"><b>{_money(potential['enquiries_guaranteed'])}</b>
-          <small>Guaranteed, across all enquiries</small></span>
-        <span class="kv"><b>{_money(potential['enquiries_estimated'])}</b>
-          <small>Estimated rewards, across all enquiries</small></span>
+        <h3 class="sub-h">Every distinct enquiry counted toward this total</h3>
+        <p class="sub-lede">Baseline is inferred from 12 months of your own
+           transactions, not assumed. Expand any enquiry to see the full
+           breakdown.</p>
+        <ul class="qlist">{items_html}</ul>
       </div>
-
-      <h3 class="sub-h">Latest enquiry — {_t(title)} · {_t(_ago(asked))}</h3>
-      <p class="sub-lede">Baseline is inferred from 12 months of your own
-         transactions, not assumed.</p>
-      <div class="chips-row">
-        <span class="kv"><b>{_money(plan_guaranteed)}</b>
-          <small>Guaranteed on this enquiry</small></span>
-        <span class="kv"><b>{_money(plan_estimated)}</b>
-          <small>Estimated rewards on this enquiry</small></span>
-        <span class="kv"><b>{plan_points:,}</b>
-          <small>Extra points on this enquiry</small></span>
-      </div>
-      <div class="plan">{plan_rows}</div>
-
-      {f'''<h3 class="sub-h">Where this enquiry's guaranteed value comes from</h3>
-      <div class="chart-wrap" role="list">{_bar_chart(sources, label_w=210, budget=32)}</div>
-      ''' if sources else ''}
-
-      {_enquiry_list(entries, active_key)}
     </section>"""
 
 
@@ -513,15 +535,25 @@ def _institutions_section(profile: FinancialProfile) -> str:
           <ul class="acct-list">{rows}</ul>
         </article>""")
 
+    account_count = len(profile.accounts)
     return f"""
-    <section class="panel" aria-labelledby="inst-h">
-      <header class="panel-head">
-        <div>
+    <section class="panel expandable" aria-labelledby="inst-h">
+      <button class="expand-toggle" id="inst-toggle" type="button" aria-expanded="false"
+              aria-controls="inst-body">
+        <div class="expand-toggle-text">
           <h2 id="inst-h">3. Financial institutions &amp; accounts connected</h2>
           <p>Read live over FDX, the US open banking standard.</p>
         </div>
-      </header>
-      <div class="inst-grid">{''.join(blocks)}</div>
+        <span class="expand-figure small">{_t(len(by_institution))} banks ·
+          {_t(account_count)} account{'s' if account_count != 1 else ''}</span>
+        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="expand-body" id="inst-body" hidden>
+        <div class="inst-grid">{''.join(blocks)}</div>
+      </div>
     </section>"""
 
 
@@ -607,9 +639,10 @@ def _shared_data_section(profile: FinancialProfile) -> str:
       </tr>""" for t in txns)
 
     return f"""
-    <section class="panel" aria-labelledby="shared-h">
-      <header class="panel-head">
-        <div>
+    <section class="panel expandable" aria-labelledby="shared-h">
+      <button class="expand-toggle" id="shared-toggle" type="button" aria-expanded="false"
+              aria-controls="shared-body">
+        <div class="expand-toggle-text">
           <h2 id="shared-h">5. Here's all the information you've shared</h2>
           <p>Everything Open Finance has given SmartPay access to for Alex — nothing
              more, nothing hidden.</p>
@@ -618,32 +651,37 @@ def _shared_data_section(profile: FinancialProfile) -> str:
           <div><span>{_money(total)}</span><small>12-month spend</small></div>
           <div><span>{_money(total / months)}</span><small>Monthly average</small></div>
         </div>
-      </header>
+        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="expand-body" id="shared-body" hidden>
+        <h3 class="sub-h">Where your money goes</h3>
+        <div class="chart-wrap" role="list">{_bar_chart(labelled)}</div>
 
-      <h3 class="sub-h">Where your money goes</h3>
-      <div class="chart-wrap" role="list">{_bar_chart(labelled)}</div>
+        <h3 class="sub-h">Every connected account ({_t(len(profile.accounts))})</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Institution</th><th>Account</th><th>Type</th><th>Mask</th>
+              <th>Balance</th></tr></thead>
+            <tbody>{account_rows}</tbody>
+          </table>
+        </div>
 
-      <h3 class="sub-h">Every connected account ({_t(len(profile.accounts))})</h3>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr><th>Institution</th><th>Account</th><th>Type</th><th>Mask</th>
-            <th>Balance</th></tr></thead>
-          <tbody>{account_rows}</tbody>
-        </table>
-      </div>
-
-      <h3 class="sub-h">Every transaction shared ({_t(len(txns))})</h3>
-      <p class="sub-lede">Every raw ledger entry Open Finance returned, nothing
-         held back. Rows dimmed and marked <b>Card payment</b>,
-         <b>ATM withdrawal</b> or <b>Income</b> are not counted as spend anywhere
-         on this page -- counting a card repayment as a purchase would double-count
-         money already counted when it was first spent.</p>
-      <div class="table-wrap scroll">
-        <table class="data-table">
-          <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th>
-            <th>Account</th><th>Amount</th></tr></thead>
-          <tbody>{txn_rows}</tbody>
-        </table>
+        <h3 class="sub-h">Every transaction shared ({_t(len(txns))})</h3>
+        <p class="sub-lede">Every raw ledger entry Open Finance returned, nothing
+           held back. Rows dimmed and marked <b>Card payment</b>,
+           <b>ATM withdrawal</b> or <b>Income</b> are not counted as spend anywhere
+           on this page -- counting a card repayment as a purchase would double-count
+           money already counted when it was first spent.</p>
+        <div class="table-wrap scroll">
+          <table class="data-table">
+            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th>
+              <th>Account</th><th>Amount</th></tr></thead>
+            <tbody>{txn_rows}</tbody>
+          </table>
+        </div>
       </div>
     </section>"""
 
@@ -927,21 +965,27 @@ a{color:inherit}
 .mini-stats span{display:block;font-size:21px;font-weight:660;letter-spacing:-.02em}
 .mini-stats small{color:var(--ink-3);font-size:12.5px}
 
-/* retrospective slider ("what could you have saved?") */
-.retro{padding:0;overflow:hidden}
-.retro-toggle{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:20px;
+/* generic expandable panel -- retro, enquiries, institutions, shared data all
+   use this same toggle/body pair so one delegated click handler covers all of
+   them (see the SCRIPT block). */
+.expandable{padding:0;overflow:hidden}
+.expand-toggle{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:20px;
   width:100%;padding:26px 28px;cursor:pointer}
-.retro-toggle:hover{background:color-mix(in srgb,var(--brand) 4%,transparent)}
-.retro-toggle:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
-.retro-toggle-text{flex:1 1 auto;min-width:0}
-.retro-toggle-text h2{font-size:23px;font-weight:680}
-.retro-toggle-text p{color:var(--ink-2);font-size:14.5px;margin-top:5px;max-width:56ch}
-.retro-headline-figure{font-size:26px;font-weight:700;letter-spacing:-.02em;flex:none;
+.expand-toggle:hover{background:color-mix(in srgb,var(--brand) 4%,transparent)}
+.expand-toggle:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+.expand-toggle-text{flex:1 1 auto;min-width:0}
+.expand-toggle-text h2{font-size:23px;font-weight:680}
+.expand-toggle-text p{color:var(--ink-2);font-size:14.5px;margin-top:5px;max-width:56ch}
+.expand-figure{font-size:26px;font-weight:700;letter-spacing:-.02em;flex:none;
   background:linear-gradient(96deg,var(--brand),var(--brand-2));
   -webkit-background-clip:text;background-clip:text;color:transparent}
-.retro .chevron{width:20px;height:20px;flex:none;color:var(--ink-3);transition:transform .22s}
-.retro.open .chevron{transform:rotate(180deg)}
-.retro-body{padding:0 28px 28px}
+.expand-figure.small{font-size:14.5px;font-weight:600;color:var(--ink-2);background:none;
+  -webkit-background-clip:unset;background-clip:unset}
+.expandable .chevron{width:20px;height:20px;flex:none;color:var(--ink-3);transition:transform .22s}
+.expandable.open .chevron{transform:rotate(180deg)}
+.expand-body{padding:0 28px 28px}
+
+/* retrospective slider ("what could you have saved?") */
 .retro-slider-row{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
 .retro-slider-label{font-size:14px;color:var(--ink-2);font-weight:600}
 .retro-slider-label b{color:var(--ink);font-weight:700}
@@ -960,6 +1004,7 @@ a{color:inherit}
   -webkit-background-clip:text;background-clip:text;color:transparent}
 .retro-summary-figure small{color:var(--ink-3);font-size:13px;line-height:1.5;display:block;
   margin-top:6px}
+.retro-summary-figure small.retro-fee-total{color:var(--warn);font-weight:600}
 .habit-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
 .habit-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
   font-size:13.5px;padding:7px 10px;border-radius:9px;background:var(--surface)}
@@ -969,15 +1014,18 @@ a{color:inherit}
 .habit-value{font-weight:660;letter-spacing:-.01em;color:var(--good)}
 .retro-txn-list{list-style:none;margin:0;padding:0;display:grid;gap:2px;max-height:420px;
   overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:4px}
-.retro-txn{display:grid;grid-template-columns:56px 1.6fr 1fr 1.4fr auto;gap:12px;
+.retro-txn{display:grid;grid-template-columns:56px 1.6fr 1fr 1.4fr auto;gap:4px 12px;
   align-items:center;padding:9px 10px;border-radius:8px;font-size:13.5px;
   transition:opacity .15s,background-color .15s}
 .retro-txn.improved{background:var(--good-bg)}
 .retro-txn.improved .rt-delta{color:var(--good);font-weight:660}
+.retro-txn.fee.improved{background:var(--warn-bg)}
+.retro-txn.fee.improved .rt-delta{color:var(--warn)}
 .retro-txn .rt-date{color:var(--ink-3);font-weight:600}
 .retro-txn .rt-category{color:var(--ink-3)}
 .retro-txn .rt-card{color:var(--ink-3);font-size:12.5px}
 .retro-txn .rt-delta{text-align:right;color:var(--ink-3)}
+.retro-txn .rt-change{grid-column:1/-1;font-size:12px;color:var(--ink-2);padding-top:2px}
 .retro-txn.out-of-window{opacity:.32}
 .retro-txn.out-of-window.improved{background:transparent}
 
@@ -1020,7 +1068,9 @@ a{color:inherit}
 .d-track{fill:var(--line);opacity:.6}
 .d-opt{fill:var(--brand)}
 .bar-value.inside{fill:#fff}
-.plan-why{grid-column:1/-1;margin:2px 0 0;padding:10px 0 0;border-top:1px dashed var(--line);
+.plan-upside{grid-column:1/-1;margin:0;font-size:13.5px;color:var(--ink-2);
+  padding-top:8px;border-top:1px dashed var(--line)}
+.plan-why{grid-column:1/-1;margin:2px 0 0;padding:6px 0 0;
   list-style:none;display:flex;gap:8px;flex-wrap:wrap}
 .plan-why li{font-size:12.5px;color:var(--good);background:var(--good-bg);
   padding:4px 10px;border-radius:999px}
@@ -1029,22 +1079,23 @@ a{color:inherit}
 .plan-risk li{font-size:12.5px;color:var(--warn);background:var(--warn-bg);
   padding:6px 10px;border-radius:10px}
 
-/* enquiries list */
-.enquiry-block{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+/* enquiries list -- each <li> is its own nested expandable */
 .qlist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.q{position:relative;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;
-  padding:14px 16px;border:1px solid var(--line);border-radius:13px;background:var(--surface-2)}
+.q{position:relative;border:1px solid var(--line);border-radius:13px;
+  background:var(--surface-2);overflow:hidden}
 .q.on{border-color:color-mix(in srgb,var(--brand) 42%,var(--line));
   background:linear-gradient(100deg,color-mix(in srgb,var(--brand) 6%,var(--surface-2)),
   var(--surface-2))}
+.q .expand-toggle{padding:14px 16px;gap:14px}
+.q .expand-toggle-text{display:flex;flex-direction:column;gap:2px}
 .q-when{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
   font-weight:600}
-.q h3{font-size:16px;font-weight:620;margin-top:3px}
-.q-figures{grid-row:1/3;grid-column:2;text-align:right;white-space:nowrap}
-.q-figures b{display:block;font-size:19px;font-weight:680;letter-spacing:-.02em}
-.q-figures span{font-size:12.5px;color:var(--ink-3)}
-.q-tag{grid-column:1;font-size:11px;font-weight:700;letter-spacing:.06em;
+.q .expand-toggle-text h3{font-size:16px;font-weight:620;margin:0}
+.q-meta{font-size:12.5px;color:var(--ink-3)}
+.q-tag{font-size:11px;font-weight:700;letter-spacing:.06em;flex:none;
   text-transform:uppercase;color:var(--brand-ink)}
+.q .expand-body{padding:0 16px 16px}
+.q .expand-body .plan{margin-top:2px}
 
 /* charts */
 .chart-wrap{overflow-x:auto}
@@ -1181,14 +1232,16 @@ footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:13px;display:grid;g
   .activity-row{grid-template-columns:56px 1fr auto;grid-template-areas:
     "date merchant amount" ". category card"}
   .act-category,.act-card{grid-column:2/4}
-  .retro-toggle{padding:20px}
-  .retro-body{padding:0 20px 20px}
+  .expand-toggle{padding:20px}
+  .expand-body{padding:0 20px 20px}
   .retro-summary{grid-template-columns:1fr}
-  .retro-txn{grid-template-columns:1fr auto;grid-template-areas:"merchant delta" "category delta"}
+  .retro-txn{grid-template-columns:1fr auto;
+    grid-template-areas:"merchant delta" "category delta" "change change"}
   .retro-txn .rt-date,.retro-txn .rt-card{display:none}
   .retro-txn .rt-merchant{grid-area:merchant}
   .retro-txn .rt-category{grid-area:category;font-size:12px}
   .retro-txn .rt-delta{grid-area:delta}
+  .retro-txn .rt-change{grid-area:change}
 }
 @media (max-width:560px){
   .wrap{padding:0 16px}
@@ -1202,9 +1255,9 @@ footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:13px;display:grid;g
      block only a sliver of width on a phone, wrapping its heading to one word
      per line. Wrapping the row lets the figure and chevron drop to their own
      line instead of starving the text next to them. */
-  .retro-toggle{flex-wrap:wrap;row-gap:12px}
-  .retro-toggle-text{flex:1 1 100%}
-  .retro-headline-figure{font-size:21px}
+  .expand-toggle{flex-wrap:wrap;row-gap:12px}
+  .expand-toggle-text{flex:1 1 100%}
+  .expand-figure{font-size:21px}
   .retro-summary{padding:16px}
   .habit-row{grid-template-columns:1fr auto;row-gap:2px}
   .habit-label{grid-column:1/-1}
@@ -1293,22 +1346,28 @@ SCRIPT = """
     }
   }
 
+  // Generic expand/collapse: one delegated handler for every .expand-toggle
+  // button on the page (retro, potential-future-savings, institutions, shared
+  // data, and each individual enquiry inside the enquiry list).
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.expand-toggle');
+    if(!btn) return;
+    var body = document.getElementById(btn.getAttribute('aria-controls'));
+    if(!body) return;
+    var open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!open));
+    body.hidden = open;
+    var container = btn.closest('.expandable');
+    if(container) container.classList.toggle('open', !open);
+  });
+
   // Retrospective slider ("what could you have saved?")
   var retroSection=document.querySelector('.retro');
   if(retroSection){
-    var toggle=document.getElementById('retro-toggle');
-    var body=document.getElementById('retro-body');
     var dataEl=document.getElementById('retro-data');
     var DATA = dataEl ? JSON.parse(dataEl.textContent) : {months:[],transactions:[]};
     var slider=document.getElementById('retro-slider');
     var rows=document.querySelectorAll('#retro-txn-list .retro-txn');
-
-    toggle.addEventListener('click', function(){
-      var open = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!open));
-      body.hidden = open;
-      retroSection.classList.toggle('open', !open);
-    });
 
     function update(monthsBack){
       var months = DATA.months;
@@ -1316,7 +1375,7 @@ SCRIPT = """
       var windowMonths = {};
       months.slice(cutoff).forEach(function(m){ windowMonths[m] = true; });
 
-      var total = 0, count = 0;
+      var total = 0, count = 0, feeTotal = 0;
       var habits = {}; // label -> {count, total}
       DATA.transactions.forEach(function(t, i){
         var inWindow = !!windowMonths[t.month];
@@ -1325,7 +1384,9 @@ SCRIPT = """
         if(!inWindow) return;
         count++;
         total += parseFloat(t.guaranteed_delta || 0);
-        if(t.improved && t.habit_label){
+        if(t.kind === 'fee'){
+          feeTotal += parseFloat(t.avoidable_amount || 0);
+        } else if(t.improved && t.habit_label){
           var h = habits[t.habit_label] || {count:0, total:0, category:t.category};
           h.count++; h.total += parseFloat(t.guaranteed_delta || 0);
           habits[t.habit_label] = h;
@@ -1335,6 +1396,8 @@ SCRIPT = """
       document.getElementById('retro-slider-value').textContent = monthsBack;
       document.getElementById('retro-txn-count').textContent = count;
       document.getElementById('retro-total').textContent = money(total);
+      var feeEl = document.getElementById('retro-fee-total');
+      if(feeEl) feeEl.textContent = money(feeTotal);
 
       var list = document.getElementById('habit-list');
       var ranked = Object.keys(habits).map(function(label){
@@ -1369,7 +1432,6 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
     entries = history.load()
     if entries and entries[0].get("plan"):
         latest = entries[0]
-        plan = latest["plan"]
     else:
         # Nothing asked yet: show the rehearsed scenario so the page is never empty,
         # and do NOT record it -- rendering a page is not a question, and recording
@@ -1383,10 +1445,10 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
             "guaranteed": plan["incremental_guaranteed"],
             "total": plan["itinerary_total"],
             "items": len(plan["recommendations"]),
+            "plan": plan,
         }
-        entries = []
+        entries = [latest]
 
-    title = latest.get("title") or "Latest itinerary"
     active_key = latest.get("key", "")
 
     accumulated = analytics.accumulated_savings(profile)
@@ -1431,7 +1493,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 <main class="wrap">
   {_header(full_name, accumulated, potential["total"])}
   {_retrospective_section(retrospective, accumulated)}
-  {_potential_section(potential, plan, title, latest.get('asked_at'), active_key, entries)}
+  {_potential_section(potential, entries, active_key)}
   {_institutions_section(profile)}
   {_recent_activity_section(profile)}
   {_shared_data_section(profile)}
@@ -1440,11 +1502,12 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
   <footer class="foot">
     <p>Alex Morgan is a synthetic demo consumer. Accounts, cards and transaction
        history are generated for demonstration and are not real financial data.</p>
-    <p>Accumulated savings is computed by re-scoring every real historical
-       transaction against every card in the wallet; it excludes itinerary-specific
-       offers, which carry redemption caps that do not apply to arbitrary past
-       purchases. Offers marked as simulated are modelled on real Mastercard
-       card-linked offer mechanics and are not live offers. Points valued at 1.0¢.</p>
+    <p>Potential savings over last year is computed by re-scoring every real
+       historical transaction against every card in the wallet; it excludes
+       itinerary-specific offers, which carry redemption caps that do not apply
+       to arbitrary past purchases. Offers marked as simulated are modelled on
+       real Mastercard card-linked offer mechanics and are not live offers.
+       Points valued at 1.0¢.</p>
   </footer>
 </main>
 <script>{SCRIPT}</script>

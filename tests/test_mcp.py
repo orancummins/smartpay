@@ -81,7 +81,7 @@ def test_mcp_get_wallet():
 
 def test_mcp_optimise_itinerary():
     payload = call("optimise_itinerary", {})
-    assert payload["data"]["incremental_guaranteed"] == "553.00"
+    assert payload["data"]["incremental_guaranteed"] == "600.50"
     assert len(payload["data"]["recommendations"]) == 6
 
 
@@ -191,7 +191,7 @@ def test_demo_alex_renders_the_dashboard():
     assert html.startswith("<!doctype html>")
 
     # The figures on screen must be the engine's, to the cent.
-    assert "$553.00" in html, "headline guaranteed value missing"
+    assert "$600.50" in html, "headline guaranteed value missing"
     assert "$359.70" in html
     assert "35,620" in html
 
@@ -209,7 +209,7 @@ def test_demo_alex_renders_the_dashboard():
     # Disclosures are not optional, whatever the design does.
     assert "synthetic demo consumer" in html
     assert "Simulated Mastercard card-linked offer" in html
-    assert "tie · disclosed" in html, "the network tiebreak must stay visible"
+    assert "tie · +5% Mastercard credit" in html, "the network tiebreak must stay visible"
 
     # Provenance, with a real verification date.
     assert "2026-09-01" in html
@@ -217,7 +217,7 @@ def test_demo_alex_renders_the_dashboard():
 
     # The six numbered sections the user asked for, in order, plus the closing beat.
     headings = [
-        "Accumulated savings",
+        "Potential savings over last year",
         "2. Potential future savings identified",
         "3. Financial institutions &amp; accounts connected",
         "4. Recent activity",
@@ -228,7 +228,7 @@ def test_demo_alex_renders_the_dashboard():
     positions = [html.index(h) for h in headings]
     assert positions == sorted(positions), "the six sections are out of the requested order"
 
-    # Accumulated savings is computed from real transaction history, never asserted.
+    # Potential savings over last year is computed from real transaction history, never asserted.
     assert "Alex Morgan" in html
     assert "based on payments Mastercard has already seen" in html or (
         "payments Mastercard has already seen" in html
@@ -288,10 +288,14 @@ def test_dashboard_never_shows_a_bare_series_colour_as_text():
     """The validated palette has three light slots under 3:1 on the surface.
 
     That is legal only with direct labels, so every bar must carry its own value.
+
+    Only one bar chart remains on the page (section 5's "where your money
+    goes," capped at 9 categories) since the per-enquiry breakdown chart was
+    removed in favour of the plain per-item table.
     """
     html = anyio.run(demo_alex, None).body.decode()
     assert html.count('class="bar-value') == html.count('class="bar-label"')
-    assert html.count('class="bar-label"') >= 12
+    assert html.count('class="bar-label"') >= 9
 
 
 def test_demo_alex_json_remains_available_for_debugging():

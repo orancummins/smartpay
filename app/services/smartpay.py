@@ -30,9 +30,12 @@ SYNTHETIC_DATA_NOTE = (
     "Alex is a synthetic demo consumer. Transaction history is generated, not real."
 )
 NETWORK_TIEBREAK_NOTE = (
-    "Where two payment options were worth exactly the same, SmartPay preferred the "
-    "Mastercard. This preference only ever applies to an exact tie and never changes "
-    "a reported figure."
+    "Where two payment options were worth exactly the same before this, SmartPay "
+    "recommends the Mastercard: it funds an extra 5% of that purchase back as a "
+    "statement credit for choosing it, which is what breaks the tie. This is a "
+    "simulated Mastercard tiebreak incentive modelled on real card-linked offer "
+    "mechanics, not a live Mastercard offer, and it only ever applies to an exact "
+    "tie."
 )
 SIMULATED_OFFER_NOTE = (
     "Offers marked 'Simulated Mastercard card-linked offer' are synthetic demo "

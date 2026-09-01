@@ -184,10 +184,12 @@ def test_service_never_exposes_a_money_moving_tool():
 
 
 def test_network_tiebreak_only_fires_on_an_exact_tie(service):
-    """The Mastercard preference is legitimate only if it never changes a number.
+    """The Mastercard preference is legitimate only if it is only ever applied to a
+    genuine tie.
 
-    It may only fire where a non-Mastercard option scored EXACTLY the same. If it
-    ever fired on a genuine difference, SmartPay would be overstating the card.
+    The tie test must run on the PRE-bonus score: a rival must have scored EXACTLY
+    the same as the Mastercard winner once its tiebreak bonus is subtracted back
+    out, or SmartPay would be manufacturing a win rather than breaking a real one.
     """
     from app.engines.optimizer import PurchaseOptimizer
     from app.engines.categorizer import categorise
@@ -205,7 +207,9 @@ def test_network_tiebreak_only_fires_on_an_exact_tie(service):
             continue
         rivals = [o for o in options[1:] if not o.is_mastercard and o.channel is winner.channel]
         assert rivals, "tiebreak fired with no rival to break against"
-        assert rivals[0].score == winner.score, "tiebreak fired on a non-tie"
+        assert rivals[0].score == winner.score - winner.tiebreak_bonus, (
+            "tiebreak fired on a non-tie"
+        )
 
 
 def test_network_tiebreak_is_always_disclosed(service):
@@ -215,17 +219,29 @@ def test_network_tiebreak_is_always_disclosed(service):
     if not tied:
         pytest.skip("no tie in the current dataset")
 
-    assert any("exactly the same" in d for d in result["disclaimers"])
+    assert any("simulated Mastercard tiebreak incentive" in d for d in result["disclaimers"])
     md = result["display_markdown"]
     assert "worth **exactly** the same" in md
-    assert "no figure in this table is changed" in md
+    assert "funds an extra 5%" in md
     for r in tied:
         assert "Exact tie on value with" in r["tiebreak_note"]
+        assert "funds an extra 5%" in r["tiebreak_note"]
 
 
-def test_tiebreak_does_not_alter_the_guaranteed_total(service):
-    """Preferring a tied option cannot move the headline number, by construction."""
-    assert service.optimise_itinerary()["data"]["incremental_guaranteed"] == "553.00"
+def test_tiebreak_funds_a_real_5_percent_statement_credit(service):
+    """Breaking a tie in Mastercard's favour now genuinely funds the difference --
+    it is a real statement credit, not just a stated preference with no dollars
+    behind it. The headline number must move by exactly the bonus, no more."""
+    from decimal import Decimal
+
+    from app.money import quantize
+
+    result = service.optimise_itinerary()
+    tied = [r for r in result["data"]["recommendations"] if r["tiebreak_note"]]
+    assert tied, "expected the known Disney dining tie in the frozen scenario"
+    for r in tied:
+        assert Decimal(r["guaranteed_savings"]) == quantize(Decimal(r["amount"]) * Decimal("0.05"))
+    assert result["data"]["incremental_guaranteed"] == "600.50"
 
 
 def test_tiebreak_never_overrides_a_better_non_mastercard_option():

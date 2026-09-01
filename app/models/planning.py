@@ -135,6 +135,11 @@ class PaymentOption(BaseModel):
     #: Set when this option only won because of the network tiebreak. Disclosed in
     #: the output rather than applied silently.
     tiebreak_note: str | None = None
+    #: The simulated Mastercard-funded statement credit granted when a tie is
+    #: broken in its favour -- already folded into `value.statement_credits`
+    #: above, and repeated here so a caller can show "+$X for choosing
+    #: Mastercard" without having to re-derive it from a rival's score.
+    tiebreak_bonus: Decimal = ZERO
     #: Disclosed riders from app.engines.risk -- informational, never folded into
     #: `value` or `score`. Available credit is enforced as a hard filter before an
     #: option is ever built (see PurchaseOptimizer.options_for); these two are

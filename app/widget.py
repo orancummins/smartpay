@@ -195,7 +195,9 @@ function renderRows(plan) {
     const est = Number(r.estimated_reward_value_delta || 0);
     const portal = r.recommended_channel && r.recommended_channel !== 'booked direct'
       ? `<span class="tag">${esc(r.recommended_channel)}</span>` : '';
-    const tie = r.tiebreak_note ? '<span class="tag tie">tie · disclosed</span>' : '';
+    const tie = r.tiebreak_note
+      ? `<span class="tag tie" title="${esc(r.tiebreak_note)}">tie &middot; +5% Mastercard credit</span>`
+      : '';
     const riskNotes = [r.late_fee_warning, r.payoff_recommendation].filter(Boolean)
       .map((note) => `<div class="risk-note">${esc(note)}</div>`).join('');
     return `

@@ -28,7 +28,7 @@ from app import config
 from app.engines.optimizer import PurchaseOptimizer
 from app.models.financial import FinancialProfile, TransactionType
 from app.models.planning import PurchaseIntent
-from app.money import ZERO, quantize
+from app.money import ZERO, fmt, quantize
 
 #: Never pruned, unlike history.HISTORY_PATH's capped recent-activity list. This is
 #: the one number in the header that must only ever grow.
@@ -173,20 +173,50 @@ def _habit_change_label(category: str, from_card: str, to_card: str, from_ch: st
     return f"Keep {to_card}, but try {phrase} instead"
 
 
+def _fee_records(profile: FinancialProfile) -> list[dict]:
+    """Late-fee transactions, annotated for the "what could you have saved" panel.
+
+    Kept separate from _purchase_records on purpose: a fee is not a "which card"
+    decision (see accumulated_savings' own rationale for excluding it there), so
+    its avoidable value is tracked as its own thing -- never folded into the
+    card-driven guaranteed total the header figure reports, only ever shown
+    alongside it.
+    """
+    instruments = {i.account_id: i for i in profile.instruments if i.is_card}
+    records: list[dict] = []
+    for t in profile.spend_transactions:
+        if t.transaction_type is not TransactionType.FEE:
+            continue
+        instrument = instruments.get(t.account_id)
+        records.append({
+            "date": t.posted_at,
+            "month": t.posted_at.strftime("%Y-%m"),
+            "merchant": t.merchant,
+            "description": t.description,
+            "category": t.category.value,
+            "amount": t.amount,
+            "card_name": instrument.display_name if instrument else "this card",
+        })
+    return records
+
+
 def retrospective_history(profile: FinancialProfile) -> dict:
     """Per-transaction and per-month detail behind accumulated_savings.
 
     Powers the dashboard's "what could you have saved" panel: a slider over
     trailing months, an annotated transaction list, and the specific habit
     changes (grouped by category, from-card/channel, to-card/channel) that
-    would produce whatever total the slider lands on.
+    would produce whatever total the slider lands on. Late fees are annotated
+    the same way but kept in a separate `fee_avoidable` bucket -- see
+    _fee_records for why they never add into the main guaranteed total.
 
     Every value here is JSON-safe (Decimals and dates as strings) since this is
     embedded directly into the rendered page for client-side slider math --
     there is no server round-trip as the user drags.
     """
     records = _purchase_records(profile)
-    months = sorted({r["month"] for r in records})
+    fees = _fee_records(profile)
+    months = sorted({r["month"] for r in records} | {f["month"] for f in fees})
 
     transactions: list[dict] = []
     habit_totals: dict[tuple[str, str, str, str, str], dict] = {}
@@ -198,7 +228,8 @@ def retrospective_history(profile: FinancialProfile) -> dict:
         # dashboard's slider can regroup habit changes for an arbitrary trailing
         # window purely by grouping on this string -- the "same card, different
         # channel" honesty check in _habit_change_label lives in exactly one
-        # place, not duplicated in client-side JS.
+        # place, not duplicated in client-side JS. It also doubles as the
+        # per-row "what would change here" line in the annotated list.
         habit_label = (
             _habit_change_label(
                 r["category"], r["actual_card"], r["best_card"],
@@ -207,6 +238,7 @@ def retrospective_history(profile: FinancialProfile) -> dict:
             if improved else None
         )
         transactions.append({
+            "kind": "card",
             "date": r["date"].isoformat(),
             "month": r["month"],
             "merchant": r["merchant"],
@@ -246,7 +278,44 @@ def retrospective_history(profile: FinancialProfile) -> dict:
         key=lambda h: -Decimal(h["guaranteed"]),
     )
 
-    return {"months": months, "transactions": transactions, "habit_changes": habit_changes}
+    fee_avoidable: list[dict] = []
+    for f in fees:
+        habit_label = (
+            f"Set up autopay on {f['card_name']} -- this {fmt(f['amount'])} late fee "
+            f"would not have happened"
+        )
+        transactions.append({
+            "kind": "fee",
+            "date": f["date"].isoformat(),
+            "month": f["month"],
+            "merchant": f["merchant"],
+            "description": f["description"],
+            "category": f["category"],
+            "amount": str(quantize(f["amount"])),
+            "actual_card": f["card_name"],
+            "best_card": None,
+            # Deliberately zero here -- this must never add into the card-driven
+            # guaranteed total the header figure reports. Its own avoidable value
+            # travels separately, as avoidable_amount.
+            "guaranteed_delta": "0.00",
+            "estimated_delta": "0.00",
+            "improved": False,
+            "habit_label": habit_label,
+            "avoidable_amount": str(quantize(f["amount"])),
+        })
+        fee_avoidable.append({
+            "card_name": f["card_name"],
+            "label": habit_label,
+            "amount": str(quantize(f["amount"])),
+            "month": f["month"],
+        })
+
+    return {
+        "months": months,
+        "transactions": transactions,
+        "habit_changes": habit_changes,
+        "fee_avoidable": fee_avoidable,
+    }
 
 
 def _load_ledger() -> dict[str, dict]:

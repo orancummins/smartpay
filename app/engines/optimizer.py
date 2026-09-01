@@ -29,7 +29,7 @@ from app.engines.offers import OffersEngine
 from app.engines.rewards import RewardsEngine, available_channels
 from app.engines import risk
 from app.knowledge import benefits as all_benefits
-from app.models.common import Evidence, PurchaseChannel, ValueBreakdown
+from app.models.common import Confidence, Evidence, EvidenceType, PurchaseChannel, ValueBreakdown
 from app.models.financial import FinancialProfile, PaymentInstrument
 from app.models.planning import (
     Itinerary,
@@ -39,9 +39,28 @@ from app.models.planning import (
     PaymentRecommendation,
     PurchaseIntent,
 )
-from app.money import ZERO, quantize
+from app.money import ZERO, fmt, quantize
 
 MAX_RECONCILE_PASSES = 6
+
+#: The tiebreak bonus rate, and the demo evidence disclosing it. This is a
+#: policy choice for this demo, not a real Mastercard program -- stated
+#: explicitly and carried as SYNTHETIC_DEMO evidence on the winning option, the
+#: same way the simulated Disney offer is labelled, so it is never mistaken for
+#: a live Mastercard benefit.
+TIEBREAK_BONUS_RATE = Decimal("0.05")
+
+_TIEBREAK_EVIDENCE = Evidence(
+    evidence_type=EvidenceType.SYNTHETIC_OFFER,
+    source_name="SmartPay demo dataset",
+    confidence=Confidence.SYNTHETIC_DEMO,
+    note=(
+        "Simulated Mastercard tiebreak incentive: Mastercard funds an extra 5% "
+        "of the purchase back as a statement credit when SmartPay recommends it "
+        "over an option that scored exactly the same. Modelled on real "
+        "Mastercard card-linked offer mechanics; not a live Mastercard offer."
+    ),
+)
 
 
 def _monthly_capped_benefit_ids() -> set[str]:
@@ -163,16 +182,19 @@ class PurchaseOptimizer:
                 o.channel.value,
             )
         )
-        self._disclose_tiebreak(out)
+        self._disclose_tiebreak(out, purchase.amount)
         return out
 
     @staticmethod
-    def _disclose_tiebreak(options: list[PaymentOption]) -> None:
-        """Flag the winner when a non-Mastercard option was worth exactly the same.
+    def _disclose_tiebreak(options: list[PaymentOption], purchase_amount: Decimal) -> None:
+        """Break a tie in Mastercard's favour, and fund the difference for real.
 
-        The preference is legitimate only because it never changes a number and is
-        always stated. If it ever fired on options that were NOT exactly equal it
-        would be overstating the Mastercard, so the equality test is strict.
+        The tie test runs on the PRE-bonus score -- rivals must have scored
+        EXACTLY the same as the Mastercard option before any bonus is added, or
+        this would be firing to manufacture a win rather than to break a genuine
+        one. Only once that is established does Mastercard's 5% statement credit
+        get added, which is why the winner ends up ahead of its rivals by
+        precisely `tiebreak_bonus` and never by chance.
         """
         if not options:
             return
@@ -187,10 +209,16 @@ class PurchaseOptimizer:
         ]
         if not rivals:
             return
+        bonus = quantize(purchase_amount * TIEBREAK_BONUS_RATE)
+        winner.value.statement_credits += bonus
+        winner.tiebreak_bonus = bonus
+        winner.evidence.append(_TIEBREAK_EVIDENCE)
         names = ", ".join(sorted({o.instrument_name for o in rivals}))
         winner.tiebreak_note = (
-            f"Exact tie on value with {names}. SmartPay prefers the Mastercard when "
-            f"options are worth precisely the same; no figure above is affected."
+            f"Exact tie on value with {names} before this. SmartPay recommends the "
+            f"Mastercard: it funds an extra 5% of this purchase ({fmt(bonus)}) back "
+            f"as a statement credit for choosing it here, which is what actually "
+            f"breaks the tie."
         )
 
 
