@@ -1,0 +1,22 @@
+[project]
+name = "smartpay"
+version = "0.1.0"
+description = "SmartPay — deterministic payment intelligence demo, exposed to ChatGPT via MCP"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=2.1.1",
+    "pydantic>=2.13",
+    "pyyaml>=6.0",
+    "rapidfuzz>=3.0",
+    "uvicorn>=0.52",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100

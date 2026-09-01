@@ -1,0 +1,197 @@
+"""Purchase intents, itineraries, and everything the optimiser produces."""
+
+from __future__ import annotations
+
+from datetime import date
+from decimal import Decimal
+
+from pydantic import BaseModel, Field
+
+from app.models.common import (
+    Category,
+    Evidence,
+    PurchaseChannel,
+    RewardCurrency,
+    ValueBreakdown,
+)
+from app.money import ZERO
+
+
+class PurchaseIntent(BaseModel):
+    """PLAN.MD section 14. What the consumer intends to buy."""
+
+    merchant: str
+    category: Category = Category.OTHER
+    amount: Decimal
+    currency: str = "USD"
+    purchase_date: date | None = None
+    location: str = "US"
+    #: How the consumer currently plans to buy it. The optimiser may propose a
+    #: different channel, which is where the portal upgrade comes from.
+    purchase_channel: PurchaseChannel = PurchaseChannel.MERCHANT_DIRECT
+    label: str | None = None
+    metadata: dict = Field(default_factory=dict)
+
+    @property
+    def display_label(self) -> str:
+        return self.label or self.merchant
+
+
+class ItineraryItem(PurchaseIntent):
+    item_id: str
+
+
+class Itinerary(BaseModel):
+    itinerary_id: str
+    title: str
+    items: list[ItineraryItem]
+    start_date: date | None = None
+    end_date: date | None = None
+
+    @property
+    def total(self) -> Decimal:
+        return sum((i.amount for i in self.items), ZERO)
+
+
+class RewardEvaluation(BaseModel):
+    """Result of RewardsEngine.evaluate for one instrument/channel pair."""
+
+    multiplier: Decimal = Decimal("1")
+    points: int = 0
+    currency: RewardCurrency = RewardCurrency.USD_CASHBACK
+    estimated_value: Decimal = ZERO
+    rule_id: str | None = None
+    #: Rules that matched the category but were rejected on channel. Surfacing these
+    #: is what lets SmartPay say "book it through the portal instead".
+    channel_blocked_rule_ids: list[str] = Field(default_factory=list)
+    evidence: list[Evidence] = Field(default_factory=list)
+    explanation: str = ""
+
+
+class OfferEvaluation(BaseModel):
+    offer_id: str
+    merchant_name: str
+    value: Decimal = ZERO
+    is_synthetic: bool = True
+    label: str = ""
+    explanation: str = ""
+    evidence: list[Evidence] = Field(default_factory=list)
+
+
+class BenefitEvaluation(BaseModel):
+    benefit_id: str
+    display_name: str
+    value: Decimal = ZERO
+    unpriced: bool = False
+    explanation: str = ""
+    evidence: list[Evidence] = Field(default_factory=list)
+
+
+class PaymentOption(BaseModel):
+    """One way to pay for one item: an instrument used through a channel."""
+
+    instrument_id: str
+    instrument_name: str
+    channel: PurchaseChannel
+    is_mastercard: bool = False
+    value: ValueBreakdown = ValueBreakdown()
+    reward: RewardEvaluation = RewardEvaluation()
+    offers: list[OfferEvaluation] = Field(default_factory=list)
+    benefits: list[BenefitEvaluation] = Field(default_factory=list)
+    evidence: list[Evidence] = Field(default_factory=list)
+    #: Set when this option only won because of the network tiebreak. Disclosed in
+    #: the output rather than applied silently.
+    tiebreak_note: str | None = None
+
+    @property
+    def score(self) -> Decimal:
+        """Ranking objective: guaranteed dollars plus estimated reward value.
+
+        Explicit and configurable rather than an ad-hoc tie-break, so a judge can
+        challenge the objective directly.
+        """
+        return self.value.total_value
+
+    @property
+    def channel_label(self) -> str:
+        return {
+            PurchaseChannel.CITI_TRAVEL: "via Citi Travel",
+            PurchaseChannel.CHASE_TRAVEL: "via Chase Travel",
+            PurchaseChannel.MERCHANT_DIRECT: "booked direct",
+        }.get(self.channel, self.channel.value)
+
+
+class PaymentRecommendation(BaseModel):
+    """Baseline versus optimal for a single item. PLAN.MD section 21."""
+
+    item_id: str
+    item_label: str
+    merchant: str
+    category: Category
+    amount: Decimal
+    baseline: PaymentOption
+    baseline_probability: Decimal = ZERO
+    baseline_rationale: str = ""
+    recommended: PaymentOption
+    #: recommended.score - baseline.score, split by value type.
+    incremental_guaranteed: Decimal = ZERO
+    incremental_estimated: Decimal = ZERO
+    incremental_points: int = 0
+    rationale: str = ""
+    evidence: list[Evidence] = Field(default_factory=list)
+
+
+class PaymentPlan(BaseModel):
+    """The full itinerary result. PLAN.MD section 34."""
+
+    customer_id: str
+    itinerary_id: str
+    itinerary_title: str
+    itinerary_total: Decimal
+    recommendations: list[PaymentRecommendation]
+    baseline_value: ValueBreakdown = ValueBreakdown()
+    smartpay_value: ValueBreakdown = ValueBreakdown()
+    incremental_guaranteed: Decimal = ZERO
+    incremental_estimated: Decimal = ZERO
+    incremental_points: int = 0
+    priceless: list[dict] = Field(default_factory=list)
+    disclaimers: list[str] = Field(default_factory=list)
+
+
+class FutureSpendForecast(BaseModel):
+    """PLAN.MD section 22. Clearly labelled as a demo adapter."""
+
+    customer_id: str
+    horizon_months: int
+    by_category: dict[Category, Decimal]
+    method: str = "Demo CommerceGPT adapter"
+    drivers: list[str] = Field(default_factory=list)
+    evidence: list[Evidence] = Field(default_factory=list)
+
+    @property
+    def total(self) -> Decimal:
+        return sum(self.by_category.values(), ZERO)
+
+
+class WalletCandidate(BaseModel):
+    product_id: str
+    display_name: str
+    annual_fee: Decimal
+    projected_reward_value: Decimal
+    credits_likely_used: Decimal = ZERO
+    net_annual_value: Decimal = ZERO
+
+
+class WalletRecommendation(BaseModel):
+    """PLAN.MD section 23."""
+
+    customer_id: str
+    action: str                       # "drop" | "add" | "keep" | "shift_spend"
+    headline: str
+    current_wallet_value: Decimal = ZERO
+    recommended_wallet_value: Decimal = ZERO
+    net_annual_incremental_value: Decimal = ZERO
+    candidates: list[WalletCandidate] = Field(default_factory=list)
+    drivers: list[str] = Field(default_factory=list)
+    evidence: list[Evidence] = Field(default_factory=list)
+    disclaimers: list[str] = Field(default_factory=list)

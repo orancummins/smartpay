@@ -1,0 +1,59 @@
+product_id: citi_strata_premier
+display_name: Citi Strata Premier Card
+issuer: citi
+network: mastercard
+network_tier: world_elite
+annual_fee: "95.00"
+foreign_transaction_fee_pct: "0"
+base_currency: citi_thankyou
+base_multiplier: "1"
+
+soft_benefits:
+  - "Points transferable to Citi airline and hotel partners"
+
+evidence: &citi_strata_ev
+  evidence_type: issuer_reward_rule
+  source_name: Citi
+  source_url: "https://www.citi.com/credit-cards/citi-strata-premier-credit-card"
+  verified_at: 2026-09-01
+  confidence: authoritative
+  note: "Citi Strata Premier published earn rates and annual fee"
+
+reward_rules:
+  # PLAN.MD section 15 in action: this is the 10x that must NEVER apply to a
+  # booking made directly with the hotel or attraction.
+  - rule_id: STRATA_PORTAL_10X
+    categories: [hotel, car_rental, attraction]
+    multiplier: "10"
+    reward_currency: citi_thankyou
+    required_channels: [citi_travel]
+    description: "10x on hotels, car rentals and attractions booked on cititravel.com"
+    evidence: *citi_strata_ev
+
+  - rule_id: STRATA_AIR_HOTEL_3X
+    categories: [airfare, hotel]
+    multiplier: "3"
+    reward_currency: citi_thankyou
+    description: "3x on air travel and other hotel purchases"
+    evidence: *citi_strata_ev
+
+  - rule_id: STRATA_RESTAURANT_3X
+    categories: [restaurant]
+    multiplier: "3"
+    reward_currency: citi_thankyou
+    description: "3x at restaurants"
+    evidence: *citi_strata_ev
+
+  - rule_id: STRATA_SUPERMARKET_3X
+    categories: [supermarket, grocery_online]
+    multiplier: "3"
+    reward_currency: citi_thankyou
+    description: "3x at supermarkets"
+    evidence: *citi_strata_ev
+
+  - rule_id: STRATA_GAS_3X
+    categories: [gas]
+    multiplier: "3"
+    reward_currency: citi_thankyou
+    description: "3x at gas and EV charging stations"
+    evidence: *citi_strata_ev

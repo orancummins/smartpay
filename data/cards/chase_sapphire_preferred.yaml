@@ -1,0 +1,59 @@
+product_id: chase_sapphire_preferred
+display_name: Chase Sapphire Preferred
+issuer: chase
+network: visa
+network_tier: none
+annual_fee: "95.00"
+base_currency: chase_ultimate_rewards
+base_multiplier: "1"
+
+soft_benefits:
+  - "Trip cancellation and interruption insurance"
+  - "Primary auto rental collision damage waiver"
+
+evidence: &csp_ev
+  evidence_type: issuer_reward_rule
+  source_name: Chase
+  source_url: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred"
+  verified_at: 2026-09-01
+  confidence: authoritative
+  note: "Chase Sapphire Preferred published earn rates, annual fee and Chase Travel hotel credit"
+
+reward_rules:
+  - rule_id: CSP_PORTAL_5X
+    categories: [hotel, car_rental, attraction, airfare]
+    multiplier: "5"
+    reward_currency: chase_ultimate_rewards
+    required_channels: [chase_travel]
+    description: "5x on travel purchased through Chase Travel"
+    evidence: *csp_ev
+
+  - rule_id: CSP_DINING_3X
+    categories: [restaurant]
+    multiplier: "3"
+    reward_currency: chase_ultimate_rewards
+    description: "3x on dining"
+    evidence: *csp_ev
+
+  # Deliberately NOT supermarket: Chase's 3x grocery is online grocery only.
+  # This distinction is what makes the wallet recommendation honest.
+  - rule_id: CSP_ONLINE_GROCERY_3X
+    categories: [grocery_online, streaming]
+    multiplier: "3"
+    reward_currency: chase_ultimate_rewards
+    description: "3x on online grocery and select streaming services"
+    evidence: *csp_ev
+
+  - rule_id: CSP_GAS_3X
+    categories: [gas]
+    multiplier: "3"
+    reward_currency: chase_ultimate_rewards
+    description: "3x on gas stations and EV charging"
+    evidence: *csp_ev
+
+  - rule_id: CSP_TRAVEL_2X
+    categories: [airfare, hotel, transport, car_rental]
+    multiplier: "2"
+    reward_currency: chase_ultimate_rewards
+    description: "2x on all other travel"
+    evidence: *csp_ev

@@ -1,0 +1,65 @@
+# The rehearsed demo itinerary. PLAN.MD sections 33 and 38: values stay frozen so
+# the number said on stage is reproducible. The engine still accepts arbitrary
+# items from ChatGPT; this is the anchor for the rehearsed run.
+
+itinerary_id: disney_october_2026
+title: "Walt Disney World — 5 nights, family of four, October 2026"
+start_date: 2026-10-12
+end_date: 2026-10-17
+
+items:
+  - item_id: flights
+    label: "Round-trip flights, BOS to MCO, family of four"
+    merchant: american_airlines
+    category: airfare
+    amount: "1420.00"
+    purchase_channel: merchant_direct
+    metadata:
+      origin: BOS
+      destination: MCO
+      travellers: 4
+      checked_bags: 4
+      segments: 2
+
+  - item_id: hotel
+    label: "Disney's Art of Animation Resort, 5 nights"
+    merchant: disney_resort
+    category: hotel
+    amount: "2450.00"
+    purchase_channel: merchant_direct
+    metadata:
+      nights: 5
+      travellers: 4
+
+  - item_id: tickets
+    label: "Walt Disney World 5-day park tickets"
+    merchant: walt_disney_world
+    category: attraction
+    amount: "1780.00"
+    purchase_channel: merchant_direct
+    metadata:
+      travellers: 4
+
+  - item_id: transport
+    label: "Airport transport, scheduled Lyft both ways"
+    merchant: lyft
+    category: rideshare
+    amount: "180.00"
+    purchase_channel: online
+    metadata:
+      airport: true
+      scheduled: true
+
+  - item_id: dining
+    label: "Restaurants and character dining"
+    merchant: disney_dining
+    category: restaurant
+    amount: "950.00"
+    purchase_channel: merchant_direct
+
+  - item_id: incidentals
+    label: "Souvenirs, snacks and incidentals"
+    merchant: disney_retail
+    category: shopping
+    amount: "700.00"
+    purchase_channel: merchant_direct

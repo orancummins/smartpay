@@ -1,0 +1,61 @@
+# Mastercard network benefits. PLAN.MD section 10: represented separately from
+# issuer reward rules, because a network benefit is a different kind of claim.
+# All verified against mastercard.com directly rather than an aggregator -- doing so
+# corrected two details (Instacart is three months, and Peacock is World Elite only).
+
+evidence: &mc_ev
+  evidence_type: mastercard_network_benefit
+  source_name: Mastercard
+  source_url: "https://www.mastercard.com/us/en/personal/find-a-card/card-benefits.html"
+  verified_at: 2026-09-01
+  confidence: authoritative
+  note: "Mastercard published consumer benefits for World / World Elite cards"
+
+benefits:
+  - benefit_id: MC_LYFT_TAKE3_GET5
+    display_name: "Lyft: take 3 rides, get $5"
+    network_tiers: [world, world_elite]
+    merchants: [lyft]
+    categories: [rideshare]
+    benefit_type: statement_credit
+    value: "5.00"
+    min_transactions_per_month: 3
+    monthly_cap: "5.00"
+    valid_to: 2027-01-31
+    description: "$5 Lyft credit after three eligible rides in a calendar month"
+    evidence: *mc_ev
+
+  - benefit_id: MC_WE_LYFT_AIRPORT_10PCT
+    display_name: "10% off scheduled Lyft airport rides"
+    network_tiers: [world_elite]
+    merchants: [lyft]
+    categories: [rideshare]
+    benefit_type: discount_pct
+    value: "10"
+    valid_to: 2027-01-31
+    description: "10% off scheduled rides to or from qualifying airports (World Elite)"
+    evidence: *mc_ev
+
+  - benefit_id: MC_INSTACART_MONTHLY_10
+    display_name: "Instacart+ $10 monthly credit"
+    network_tiers: [world, world_elite]
+    merchants: [instacart]
+    categories: [grocery_online]
+    benefit_type: statement_credit
+    value: "10.00"
+    monthly_cap: "10.00"
+    valid_to: 2027-01-31
+    description: "$10 off the second qualifying order of $10 or more each month, with Instacart+"
+    evidence: *mc_ev
+
+  - benefit_id: MC_WE_PEACOCK_3
+    display_name: "Peacock $3 monthly statement credit"
+    network_tiers: [world_elite]
+    merchants: [peacock]
+    categories: [streaming]
+    benefit_type: statement_credit
+    value: "3.00"
+    monthly_cap: "3.00"
+    valid_to: 2027-12-31
+    description: "$3.00 monthly statement credit on a Peacock Premium plan (World Elite)"
+    evidence: *mc_ev

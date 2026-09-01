@@ -1,0 +1,44 @@
+product_id: chase_freedom_unlimited
+display_name: Chase Freedom Unlimited
+issuer: chase
+network: visa
+network_tier: none
+annual_fee: "0.00"
+base_currency: usd_cashback
+base_multiplier: "1.5"
+
+soft_benefits:
+  - "No annual fee"
+
+evidence: &cfu_ev
+  evidence_type: issuer_reward_rule
+  source_name: Chase
+  source_url: "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited"
+  verified_at: 2026-09-01
+  confidence: authoritative
+  note: "Chase Freedom Unlimited published earn rates and annual fee"
+
+reward_rules:
+  - rule_id: CFU_PORTAL_5PCT
+    categories: [hotel, car_rental, attraction, airfare]
+    multiplier: "5"
+    reward_currency: usd_cashback
+    required_channels: [chase_travel]
+    description: "5% on travel purchased through Chase Travel"
+    evidence: *cfu_ev
+
+  - rule_id: CFU_DINING_DRUGSTORE_3PCT
+    categories: [restaurant, drugstore]
+    multiplier: "3"
+    reward_currency: usd_cashback
+    description: "3% on dining and drugstore purchases"
+    evidence: *cfu_ev
+
+  - rule_id: CFU_LYFT_2PCT
+    categories: [rideshare]
+    merchants: [lyft]
+    multiplier: "2"
+    reward_currency: usd_cashback
+    valid_to: 2027-09-30
+    description: "2% on Lyft purchases through 30 September 2027"
+    evidence: *cfu_ev

@@ -1,0 +1,38 @@
+product_id: citi_aa_platinum_select
+display_name: Citi / AAdvantage Platinum Select World Elite Mastercard
+issuer: citi
+network: mastercard
+network_tier: world_elite
+annual_fee: "99.00"
+annual_fee_waived_first_year: true
+foreign_transaction_fee_pct: "0"
+base_currency: american_airlines_miles
+base_multiplier: "1"
+
+soft_benefits:
+  - "Preferred boarding on American Airlines flights"
+  - "No foreign transaction fees"
+
+evidence: &aa_ev
+  evidence_type: issuer_reward_rule
+  source_name: Citi
+  source_url: "https://www.citi.com/credit-cards/citi-aadvantage-platinum-select-world-elite-mastercard"
+  verified_at: 2026-09-01
+  confidence: authoritative
+  note: "Citi/AAdvantage Platinum Select published earn rates, annual fee and checked bag benefit"
+
+reward_rules:
+  - rule_id: AA_AIRLINE_2X
+    categories: [airfare]
+    merchants: [american_airlines]
+    multiplier: "2"
+    reward_currency: american_airlines_miles
+    description: "2 AAdvantage miles per $1 on eligible American Airlines purchases"
+    evidence: *aa_ev
+
+  - rule_id: AA_DINING_GAS_2X
+    categories: [restaurant, gas]
+    multiplier: "2"
+    reward_currency: american_airlines_miles
+    description: "2 AAdvantage miles per $1 at restaurants and gas stations"
+    evidence: *aa_ev

@@ -1,0 +1,77 @@
+{
+  "itinerary_total": "7480.00",
+  "incremental_guaranteed": "553.00",
+  "incremental_estimated": "359.70",
+  "incremental_points": 35620,
+  "recommendations": [
+    {
+      "recommendation_id": "disney_october_2026:flights",
+      "amount": "1420.00",
+      "baseline_payment": "Chase Sapphire Preferred",
+      "recommended_payment": "Citi / AAdvantage Platinum Select World Elite Mastercard",
+      "recommended_channel": "booked direct",
+      "is_mastercard": true,
+      "guaranteed_savings": "360.00",
+      "estimated_reward_value_delta": "0.00",
+      "points_delta": 0
+    },
+    {
+      "recommendation_id": "disney_october_2026:hotel",
+      "amount": "2450.00",
+      "baseline_payment": "Chase Sapphire Preferred",
+      "recommended_payment": "Citi Strata Premier Card",
+      "recommended_channel": "via Citi Travel",
+      "is_mastercard": true,
+      "guaranteed_savings": "175.00",
+      "estimated_reward_value_delta": "196.00",
+      "points_delta": 19600
+    },
+    {
+      "recommendation_id": "disney_october_2026:tickets",
+      "amount": "1780.00",
+      "baseline_payment": "Chase Sapphire Preferred",
+      "recommended_payment": "Citi Strata Premier Card",
+      "recommended_channel": "via Citi Travel",
+      "is_mastercard": true,
+      "guaranteed_savings": "0.00",
+      "estimated_reward_value_delta": "160.20",
+      "points_delta": 16020
+    },
+    {
+      "recommendation_id": "disney_october_2026:transport",
+      "amount": "180.00",
+      "baseline_payment": "Chase Sapphire Preferred",
+      "recommended_payment": "Citi / AAdvantage Platinum Select World Elite Mastercard",
+      "recommended_channel": "booked direct",
+      "is_mastercard": true,
+      "guaranteed_savings": "18.00",
+      "estimated_reward_value_delta": "0.00",
+      "points_delta": 0
+    },
+    {
+      "recommendation_id": "disney_october_2026:dining",
+      "amount": "950.00",
+      "baseline_payment": "Chase Sapphire Preferred",
+      "recommended_payment": "Citi Strata Premier Card",
+      "recommended_channel": "booked direct",
+      "is_mastercard": true,
+      "guaranteed_savings": "0.00",
+      "estimated_reward_value_delta": "0.00",
+      "points_delta": 0
+    },
+    {
+      "recommendation_id": "disney_october_2026:incidentals",
+      "amount": "700.00",
+      "baseline_payment": "Chase Freedom Unlimited",
+      "recommended_payment": "Citi Double Cash Card",
+      "recommended_channel": "booked direct",
+      "is_mastercard": true,
+      "guaranteed_savings": "0.00",
+      "estimated_reward_value_delta": "3.50",
+      "points_delta": 0
+    }
+  ],
+  "wallet_action": "drop",
+  "wallet_net_incremental": "89.99",
+  "wallet_current_value": "3581.36"
+}

@@ -1,0 +1,63 @@
+# Issuer-specific credits and fee waivers. Scoped by product rather than network
+# tier, and channel-gated where the issuer gates them.
+
+benefits:
+  # The single largest source of guaranteed value in the Disney itinerary, and it
+  # comes from a World Elite Mastercard. Two primary sources: Citi for the benefit
+  # and its companion count, American for the fee it avoids.
+  - benefit_id: AA_FREE_CHECKED_BAG
+    display_name: "First checked bag free on American Airlines"
+    eligible_products: [citi_aa_platinum_select]
+    merchants: [american_airlines]
+    categories: [airfare]
+    benefit_type: fee_waiver
+    value_per_unit: "45.00"
+    unit_source: free_checked_bags
+    description: >-
+      First checked bag free on domestic American itineraries for the cardholder and
+      up to 4 companions on the same reservation. Valued at American's prepaid
+      domestic first-bag fee of $45 per bag per direction.
+    evidence:
+      evidence_type: issuer_reward_rule
+      source_name: "Citi / American Airlines"
+      source_url: "https://news.aa.com/news/news-details/2026/American-Airlines-updates-bag-fees-and-Basic-Economy-fares-OPS-POL-04/default.aspx"
+      verified_at: 2026-09-01
+      confidence: authoritative
+      note: >-
+        Benefit and companion count from the Citi AAdvantage Platinum Select page;
+        $45 prepaid domestic first-bag fee from American's newsroom, effective 2026-04-09.
+
+  - benefit_id: STRATA_HOTEL_100
+    display_name: "$100 off a hotel stay booked on cititravel.com"
+    eligible_products: [citi_strata_premier]
+    categories: [hotel]
+    benefit_type: statement_credit
+    value: "100.00"
+    required_channels: [citi_travel]
+    min_transaction_amount: "500.00"
+    description: "$100 off a single hotel stay of $500 or more booked through cititravel.com, applied at booking"
+    evidence:
+      evidence_type: issuer_reward_rule
+      source_name: Citi
+      source_url: "https://www.citi.com/credit-cards/citi-strata-premier-credit-card"
+      verified_at: 2026-09-01
+      confidence: authoritative
+      note: "Citi Strata Premier annual hotel benefit"
+
+  # Included so the head-to-head is honest: Chase offers a comparable hotel credit.
+  # The Mastercard still wins the line, but on the multiplier, not by omission.
+  - benefit_id: CSP_HOTEL_100
+    display_name: "Up to $100 hotel credit through Chase Travel"
+    eligible_products: [chase_sapphire_preferred]
+    categories: [hotel]
+    benefit_type: statement_credit
+    value: "100.00"
+    required_channels: [chase_travel]
+    description: "Up to $100 in statement credits each anniversary year for hotel stays booked through Chase Travel"
+    evidence:
+      evidence_type: issuer_reward_rule
+      source_name: Chase
+      source_url: "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred"
+      verified_at: 2026-09-01
+      confidence: authoritative
+      note: "Chase Sapphire Preferred annual hotel credit"

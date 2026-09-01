@@ -1,0 +1,28 @@
+product_id: citi_double_cash
+display_name: Citi Double Cash Card
+issuer: citi
+network: mastercard
+network_tier: world
+annual_fee: "0.00"
+base_currency: usd_cashback
+base_multiplier: "2"
+
+soft_benefits:
+  - "No annual fee"
+
+evidence: &dc_ev
+  evidence_type: issuer_reward_rule
+  source_name: Citi
+  source_url: "https://www.citi.com/credit-cards/citi-double-cash-credit-card"
+  verified_at: 2026-09-01
+  confidence: authoritative
+  note: "Citi Double Cash published earn structure (1% on purchase + 1% on payment)"
+
+reward_rules:
+  - rule_id: DC_PORTAL_5PCT
+    categories: [hotel, car_rental, attraction]
+    multiplier: "5"
+    reward_currency: usd_cashback
+    required_channels: [citi_travel]
+    description: "5% total on hotels, car rentals and attractions booked via Citi Travel"
+    evidence: *dc_ev
