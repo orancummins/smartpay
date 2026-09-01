@@ -45,6 +45,8 @@ class BenefitsEngine:
                 continue
             if rule.min_transaction_amount and purchase.amount < rule.min_transaction_amount:
                 continue
+            if rule.domestic_only and not purchase.is_domestic_us:
+                continue
             matches = (
                 (rule.merchants and merchant_key in rule.merchants)
                 or (rule.categories and purchase.category in rule.categories)
@@ -115,7 +117,7 @@ class BenefitsEngine:
                     display_name=rule.display_name,
                     value=rule.value,
                     explanation=(
-                        f"{rule.description}. You met the threshold in "
+                        f"{rule.description}. Alex met the threshold in "
                         f"{len(qualifying)} of {len(months)} observed months "
                         f"({share:.0%}), so this credit is expected to apply."
                     ),

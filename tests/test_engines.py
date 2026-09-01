@@ -190,3 +190,43 @@ def test_baseline_falls_back_when_support_is_thin():
 def test_baseline_probabilities_sum_to_one():
     d = BASELINE.distribution(Category.RESTAURANT, "local_bistro")
     assert sum(d.probabilities.values()) == pytest.approx(Decimal("1"), abs=Decimal("0.0001"))
+
+
+# --- domestic-only benefits -------------------------------------------------
+
+
+def test_checked_bag_benefit_is_domestic_only():
+    """Citi's wording is "domestic American Airlines itineraries".
+
+    The operator running this demo may be outside the US, so ChatGPT can plausibly
+    plan a transatlantic trip. Paying the waiver out on one would overstate the
+    card by $360 -- the single largest figure in the demo.
+    """
+    domestic = buy("american_airlines", Category.AIRFARE, "2400",
+                   travellers=4, checked_bags=4, segments=2,
+                   origin="BOS", destination="MCO")
+    assert any(b.benefit_id == "AA_FREE_CHECKED_BAG"
+               for b in BENEFITS.evaluate_purchase(domestic, INST["citi_aa_platinum_select"]))
+
+    for origin in ("DUB", "LHR", "CDG", "SYD"):
+        international = buy("american_airlines", Category.AIRFARE, "2400",
+                            travellers=4, checked_bags=4, segments=2,
+                            origin=origin, destination="MCO")
+        ids = {b.benefit_id
+               for b in BENEFITS.evaluate_purchase(international, INST["citi_aa_platinum_select"])}
+        assert "AA_FREE_CHECKED_BAG" not in ids, f"{origin} wrongly earned the waiver"
+
+
+def test_non_us_location_also_blocks_a_domestic_benefit():
+    p = buy("american_airlines", Category.AIRFARE, "2400",
+            travellers=4, checked_bags=4, segments=2)
+    p.location = "IE"
+    ids = {b.benefit_id for b in BENEFITS.evaluate_purchase(p, INST["citi_aa_platinum_select"])}
+    assert "AA_FREE_CHECKED_BAG" not in ids
+
+
+def test_explicit_international_flag_blocks_a_domestic_benefit():
+    p = buy("american_airlines", Category.AIRFARE, "2400",
+            travellers=4, checked_bags=4, segments=2, international=True)
+    ids = {b.benefit_id for b in BENEFITS.evaluate_purchase(p, INST["citi_aa_platinum_select"])}
+    assert "AA_FREE_CHECKED_BAG" not in ids

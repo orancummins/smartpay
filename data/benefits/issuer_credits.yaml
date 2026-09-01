@@ -11,6 +11,7 @@ benefits:
     merchants: [american_airlines]
     categories: [airfare]
     benefit_type: fee_waiver
+    domestic_only: true
     value_per_unit: "45.00"
     unit_source: free_checked_bags
     description: >-

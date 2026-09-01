@@ -157,3 +157,19 @@ def test_instructions_tell_the_model_not_to_ask_who():
 
     text = anyio.run(run)
     assert "never ask who the user means" in text
+
+
+def test_instructions_pin_the_consumer_to_the_us():
+    """The operator may be outside the US; Alex is not.
+
+    Without this, a model localises the itinerary to whoever is chatting, and the
+    domestic-only baggage benefit silently drops out of the demo.
+    """
+    async def run():
+        async with Client(mcp, raise_exceptions=True) as c:
+            return c.instructions or ""
+
+    text = anyio.run(run)
+    assert "US-based consumer" in text
+    assert "NOT the person operating this chat" in text
+    assert "Do NOT localise" in text

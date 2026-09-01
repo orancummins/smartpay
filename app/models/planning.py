@@ -16,6 +16,20 @@ from app.models.common import (
 )
 from app.money import ZERO
 
+#: Airports ChatGPT plausibly names for a non-US origin. Not exhaustive -- it does
+#: not need to be, because `location` already gates the common case; this catches
+#: the realistic failure where a model plans from the operator's own city.
+NON_US_AIRPORTS: frozenset[str] = frozenset({
+    "DUB", "ORK", "SNN", "BFS", "LHR", "LGW", "STN", "LTN", "MAN", "EDI", "GLA",
+    "CDG", "ORY", "AMS", "FRA", "MUC", "BER", "ZRH", "GVA", "VIE", "BRU", "CPH",
+    "ARN", "OSL", "HEL", "MAD", "BCN", "LIS", "OPO", "FCO", "MXP", "VCE", "ATH",
+    "PRG", "WAW", "BUD", "IST", "KEF", "YYZ", "YVR", "YUL", "YYC", "MEX", "CUN",
+    "GRU", "GIG", "EZE", "SCL", "BOG", "LIM", "NRT", "HND", "KIX", "ICN", "PVG",
+    "PEK", "CAN", "HKG", "TPE", "SIN", "BKK", "KUL", "CGK", "DEL", "BOM", "SYD",
+    "MEL", "BNE", "AKL", "CHC", "DXB", "AUH", "DOH", "TLV", "JNB", "CPT", "CAI",
+    "NBO", "LOS",
+})
+
 
 class PurchaseIntent(BaseModel):
     """PLAN.MD section 14. What the consumer intends to buy."""
@@ -35,6 +49,25 @@ class PurchaseIntent(BaseModel):
     @property
     def display_label(self) -> str:
         return self.label or self.merchant
+
+    @property
+    def is_domestic_us(self) -> bool:
+        """Whether this is a US-domestic purchase.
+
+        Deliberately conservative: any recognised non-US endpoint, or any location
+        other than US, makes it international. Benefits scoped to domestic travel
+        must not pay out just because we failed to recognise an airport code.
+        """
+        if (self.location or "US").upper() not in {"US", "USA", "UNITED STATES"}:
+            return False
+        meta = self.metadata or {}
+        if meta.get("international") is True:
+            return False
+        endpoints = {
+            str(meta.get(k, "")).strip().upper()
+            for k in ("origin", "destination", "from", "to")
+        }
+        return not (endpoints & NON_US_AIRPORTS)
 
 
 class ItineraryItem(PurchaseIntent):

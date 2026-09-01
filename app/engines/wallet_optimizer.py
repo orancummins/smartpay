@@ -216,7 +216,7 @@ class WalletOptimizer:
             return WalletRecommendation(
                 customer_id=self.profile.customer_id,
                 action="keep",
-                headline="Your current wallet is already well matched to your predicted spend.",
+                headline="Alex's current wallet is already well matched to predicted spend.",
                 current_wallet_value=current_net,
                 recommended_wallet_value=current_net,
                 net_annual_incremental_value=ZERO,
@@ -233,7 +233,7 @@ class WalletOptimizer:
             action="drop",
             headline=(
                 f"Drop {drop.display_name}. Its ${fee:,.0f} annual fee is no longer "
-                f"earning its keep against your predicted spend."
+                f"earning its keep against Alex's predicted spend."
             ),
             current_wallet_value=current_net,
             recommended_wallet_value=quantize(current_net + delta),

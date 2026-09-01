@@ -50,6 +50,10 @@ class BenefitRule(BaseModel):
     required_channels: list[PurchaseChannel] = Field(default_factory=list)
     #: Minimum single-transaction amount, e.g. the $500 hotel stay threshold.
     min_transaction_amount: Decimal = ZERO
+    #: Benefits limited to domestic itineraries. The AAdvantage checked-bag waiver
+    #: says "domestic American Airlines itineraries", so paying it out on a
+    #: transatlantic trip would overstate the card by $360.
+    domestic_only: bool = False
     merchants: list[str] = Field(default_factory=list)
     categories: list[Category] = Field(default_factory=list)
     benefit_type: BenefitType

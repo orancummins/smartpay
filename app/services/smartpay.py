@@ -26,8 +26,7 @@ from app.providers.open_finance import SyntheticAlexProvider
 from app.scenarios import load_scenario
 
 SYNTHETIC_DATA_NOTE = (
-    "This is a synthetic demo profile. The accounts, cards and transaction history "
-    "shown are generated for demonstration and are not real financial data."
+    "Alex is a synthetic demo consumer. Transaction history is generated, not real."
 )
 NETWORK_TIEBREAK_NOTE = (
     "Where two payment options were worth exactly the same, SmartPay preferred the "
@@ -305,7 +304,7 @@ class SmartPayService:
                 "title": experience.title,
                 "why": (
                     f"inferred from {n} {category.value} transactions totalling "
-                    f"{fmt(total)} in your history"
+                    f"{fmt(total)} in Alex's history"
                 ),
             })
         return out

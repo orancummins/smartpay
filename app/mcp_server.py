@@ -35,9 +35,18 @@ optimal way to pay for a purchase or an itinerary.
 
 WHOSE DATA: the consumer is already identified by the connection itself. There is
 no customer parameter and you must never ask who the user means, or ask them to
-name anyone, before calling a tool. Treat "me", "my", "I" and the consumer's own
-name as the same person. If the user says "plan me a trip and work out how I
-should pay", call the tools directly.
+name anyone before calling a tool.
+
+WHO THE CONSUMER IS: Alex, a US-based consumer living in the Boston area, holding
+US-issued cards and banking with two US institutions. Alex is a demo persona and
+is NOT the person operating this chat. Plan US domestic travel departing from the
+US, and price everything in USD. Do NOT localise the itinerary to the operator's
+own country, city or currency, and do not use their location as the origin --
+their location is irrelevant to Alex's finances. Refer to the consumer as Alex.
+
+This matters to the numbers, not just the wording: several card benefits are
+limited to domestic US itineraries, so an international origin genuinely removes
+value that SmartPay would otherwise find.
 
 CRITICAL PRESENTATION RULE: every tool returns a `display_markdown` field that has
 already been formatted. Present that field to the user verbatim. Do not recompute,
@@ -96,7 +105,8 @@ def optimise_purchase(purchase: dict | None = None) -> dict:
 @mcp.tool(
     title="Optimise an itinerary",
     description=(
-        "Work out the best way for the connected consumer to pay for a whole trip. Pass `itinerary` as "
+        "Work out the best way for Alex to pay for a whole trip. Alex is US-based, "
+        "so itineraries should be US domestic and priced in USD. Pass `itinerary` as "
         "{title, start_date, items:[{label, merchant, category, amount, metadata}]}. "
         "Categories: airfare, hotel, attraction, car_rental, restaurant, rideshare, "
         "shopping, other. For flights include metadata {travellers, checked_bags, "

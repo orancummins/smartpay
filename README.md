@@ -96,6 +96,21 @@ These are enforced by tests, not by convention.
 - **Every inference is planted in the data.** SmartPay only suggests the golf
   experience because there are 16 golf transactions in Alex's ledger.
 - **Read-only.** No tool moves money, applies for anything, or changes state.
+- **Domestic-only benefits are enforced.** The AAdvantage checked-bag waiver covers
+  "domestic American Airlines itineraries", so it does not pay out on an
+  international origin — worth $360, and easy to overstate if the model plans the
+  trip from wherever the operator happens to be sitting.
+
+## Running the demo from outside the US
+
+Alex is a US persona. If the operator is elsewhere, ChatGPT will otherwise plan
+the trip from *their* city, which quietly removes the domestic baggage benefit and
+changes the headline number. Two things guard against that:
+
+- Server instructions state that Alex is US-based and is not the person chatting,
+  and that the itinerary must not be localised to the operator.
+- Omitting `itinerary` uses the frozen BOS→MCO scenario, which is the safest
+  option for a rehearsed run.
 
 ## Architecture
 
