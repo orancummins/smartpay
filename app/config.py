@@ -16,12 +16,29 @@ DEMO_CUSTOMER_ID = "alex"
 DEMO_SCENARIO_ID = "disney_october_2026"
 
 HOST = os.environ.get("SMARTPAY_HOST", "127.0.0.1")
-PORT = int(os.environ.get("SMARTPAY_PORT", "9021"))
+PORT = int(os.environ.get("SMARTPAY_PORT", "9022"))
 
-# The ngrok dev domain, e.g. "abc123.ngrok-free.dev". The MCP SDK's DNS-rebinding
-# protection rejects any Host header it has not been told about, and it does not
-# support subdomain wildcards, so the public hostname must be named explicitly.
-PUBLIC_HOST = os.environ.get("SMARTPAY_PUBLIC_HOST", "").strip()
+# Public hostname(s) the server is reached on, comma separated. The MCP SDK's
+# DNS-rebinding protection rejects any Host header it has not been told about, and
+# it does not support subdomain wildcards, so each public hostname must be named
+# explicitly. Accepts a full URL or a bare host, so pasting a tunnel URL works:
+#
+#   SMARTPAY_PUBLIC_HOST=https://abc.ngrok-free.dev
+#   SMARTPAY_PUBLIC_HOST=abc.ngrok-free.dev,xyz.trycloudflare.com
+#
+# Get this wrong and /health returns 200 while /mcp returns 421 -- it looks healthy
+# and is not.
+def _hosts(raw: str) -> list[str]:
+    out = []
+    for part in raw.split(","):
+        host = part.strip().removeprefix("https://").removeprefix("http://")
+        host = host.split("/")[0].strip()
+        if host:
+            out.append(host)
+    return out
+
+
+PUBLIC_HOSTS = _hosts(os.environ.get("SMARTPAY_PUBLIC_HOST", ""))
 
 # Escape hatch for debugging a tunnel. Data is entirely synthetic, so this is not
 # a meaningful exposure, but it stays opt-in rather than the default.

@@ -1,13 +1,24 @@
 #!/usr/bin/env bash
 # One-command demo startup. PLAN.MD section 36 (Phase 8).
 #
-#   ./run_demo.sh              start server + tunnel
-#   ./run_demo.sh --local      server only, no tunnel
+#   ./run_demo.sh              start server only (the OpenAI tunnel reaches it
+#                              over loopback, so nothing else is needed)
+#   ./run_demo.sh --ngrok      also open an ngrok tunnel, as a fallback
+#
+# The demo connects through the OpenAI MCP control-plane tunnel:
+#
+#   tunnel-client run --profile smartpay
+#
+# configured at https://platform.openai.com/settings/organization/tunnels and
+# pointed at http://127.0.0.1:<PORT>/mcp. Because tunnel-client dials loopback,
+# the Host header is already allowed and SMARTPAY_PUBLIC_HOST is NOT required.
+# It is only needed for a tunnel that forwards its own public hostname (ngrok,
+# Cloudflare); without it there, /mcp returns 421 while /health returns 200.
 #
 set -euo pipefail
 cd "$(dirname "$0")"
 
-PORT="${SMARTPAY_PORT:-9021}"
+PORT="${SMARTPAY_PORT:-9022}"
 VENV=".venv/bin/python"
 
 if [[ ! -x "$VENV" ]]; then
@@ -27,8 +38,17 @@ $VENV -m pytest tests/ -q
 cleanup() { kill $(jobs -p) 2>/dev/null || true; }
 trap cleanup EXIT
 
-if [[ "${1:-}" == "--local" ]]; then
-  echo "Serving on http://127.0.0.1:${PORT}/mcp"
+if [[ "${1:-}" != "--ngrok" ]]; then
+  cat <<BANNER
+
+  SmartPay is live on http://127.0.0.1:${PORT}/mcp
+
+  If the OpenAI tunnel is running (tunnel-client run --profile smartpay) it will
+  reach this over loopback and ChatGPT can call the tools. Check it with:
+
+      curl -s http://127.0.0.1:8080/readyz
+
+BANNER
   exec $VENV -m app.mcp_server
 fi
 

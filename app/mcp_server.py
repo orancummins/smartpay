@@ -159,8 +159,7 @@ def build_app():
         "localhost",
         "127.0.0.1",
     ]
-    if config.PUBLIC_HOST:
-        allowed_hosts.append(config.PUBLIC_HOST)
+    allowed_hosts.extend(config.PUBLIC_HOSTS)
 
     security = TransportSecuritySettings(
         enable_dns_rebinding_protection=not config.ALLOW_ANY_HOST,

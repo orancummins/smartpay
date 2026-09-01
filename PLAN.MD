@@ -974,7 +974,7 @@ Run the server locally using Streamable HTTP.
 Target local endpoint:
 
 ```text
-http://localhost:9021/mcp
+http://localhost:9022/mcp
 ```
 
 The server should also expose:

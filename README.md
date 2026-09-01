@@ -16,14 +16,36 @@ curated rules and returned as pre-rendered markdown that ChatGPT presents verbat
 ./run_demo.sh
 ```
 
-That creates the virtualenv, generates Alex's dataset if missing, runs the test
-suite, starts the MCP server and opens an ngrok tunnel, then prints the connector
-URL to paste into ChatGPT (Settings → Connectors → Developer mode).
+Creates the virtualenv, generates Alex's dataset if missing, runs the test suite,
+and serves MCP on `http://127.0.0.1:9022/mcp`.
 
-Server only, no tunnel:
+### Reaching ChatGPT
+
+The demo uses the **OpenAI MCP control-plane tunnel**. In a second terminal:
 
 ```bash
-./run_demo.sh --local
+tunnel-client run --profile smartpay
+```
+
+The tunnel is registered at
+<https://platform.openai.com/settings/organization/tunnels> and its profile
+(`~/.config/tunnel-client/smartpay.yaml`) points at `http://127.0.0.1:9022/mcp`.
+It dials outbound, so nothing is exposed to the public internet.
+
+Check both halves:
+
+```bash
+curl -s http://127.0.0.1:9022/health   # SmartPay
+curl -s http://127.0.0.1:8080/readyz   # tunnel
+```
+
+`tunnel-client` connects over loopback, so the Host header is already allowed and
+**`SMARTPAY_PUBLIC_HOST` is not needed**. It is only required for a tunnel that
+forwards its own public hostname — ngrok or Cloudflare. Miss it there and `/mcp`
+returns `421` while `/health` returns `200`, which looks healthy and is not:
+
+```bash
+SMARTPAY_PUBLIC_HOST=https://your-host.example.com ./run_demo.sh --ngrok
 ```
 
 ## The demo
