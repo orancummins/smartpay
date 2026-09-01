@@ -12,6 +12,7 @@ from starlette.routing import Route
 from starlette.staticfiles import StaticFiles
 
 from app import config, history, runtime
+from app.admin_dashboard import render_admin_dashboard
 from app.dashboard import render_alex_dashboard
 from app.providers.open_finance import SyntheticAlexProvider
 
@@ -26,6 +27,10 @@ async def demo_alex(_: Request) -> HTMLResponse:
 async def demo_alex_json(_: Request) -> JSONResponse:
     profile = provider.get_profile(config.DEMO_CUSTOMER_ID)
     return JSONResponse(profile.model_dump(mode="json"))
+
+
+async def admin_dashboard(_: Request) -> HTMLResponse:
+    return HTMLResponse(render_admin_dashboard())
 
 
 async def query_history(_: Request) -> JSONResponse:
@@ -53,6 +58,7 @@ async def health(_: Request) -> JSONResponse:
 app = Starlette(
     routes=[
         Route("/health", health),
+        Route("/admin", admin_dashboard),
         Route("/", demo_alex),
         Route("/history.json", query_history),
         Route("/demo/alex", demo_alex),

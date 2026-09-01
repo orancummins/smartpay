@@ -24,6 +24,9 @@ Open `http://127.0.0.1:9023/demo/alex` for Alex's Open Finance dashboard. It
 shows every connected account, card, reward rule, benefit and transaction used
 by SmartPay.
 
+Open `http://127.0.0.1:9023/admin` for SmartPay Admin, Mastercard's internal
+portfolio analytics and Flipper campaign studio.
+
 ### Reaching ChatGPT
 
 The demo uses the **OpenAI MCP control-plane tunnel**. In a second terminal:

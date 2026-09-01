@@ -10,7 +10,7 @@ import anyio
 import pytest
 from mcp.client.client import Client
 
-from app.dashboard_server import demo_alex, demo_alex_json
+from app.dashboard_server import admin_dashboard, demo_alex, demo_alex_json
 from app.mcp_server import mcp
 
 EXPECTED_TOOLS = {
@@ -304,6 +304,26 @@ def test_demo_alex_json_remains_available_for_debugging():
 
     assert payload["customer_id"] == "alex"
     assert len(payload["accounts"]) == 7
+
+
+def test_smartpay_admin_renders_analytics_and_flipper_campaigns():
+    response = anyio.run(admin_dashboard, None)
+    html = response.body.decode()
+
+    assert response.media_type == "text/html"
+    assert "SmartPay Admin" in html
+    assert "Portfolio performance" in html
+    assert "12.8M" in html
+    assert "ChatGPT" in html
+    assert "Gemini" in html
+    assert "Grok" in html
+    assert "Flipper" in html
+    assert "Campaign studio" in html
+    assert "Competitor card portfolio" in html
+    assert "Contactless" in html
+    assert "E-commerce" in html
+    assert "In-store" in html
+    assert 'id="campaign-form"' in html
 
 
 def test_card_art_carries_no_placeholder_cardholder_name():

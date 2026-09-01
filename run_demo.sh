@@ -45,6 +45,7 @@ if [[ "${1:-}" != "--ngrok" ]]; then
   SmartPay is live.
 
     Alex dashboard : http://127.0.0.1:${DASHBOARD_PORT}/demo/alex
+    SmartPay Admin : http://127.0.0.1:${DASHBOARD_PORT}/admin
     MCP server     : http://127.0.0.1:${PORT}/mcp
 
   If the OpenAI tunnel is running (tunnel-client run --profile smartpay) it will
@@ -98,6 +99,7 @@ cat <<BANNER
   SmartPay is live.
 
     Alex dashboard         : http://127.0.0.1:${DASHBOARD_PORT}/demo/alex
+    SmartPay Admin         : http://127.0.0.1:${DASHBOARD_PORT}/admin
     ChatGPT connector URL : ${PUBLIC_URL}/mcp
     Health                : ${PUBLIC_URL}/health
     Local                 : http://127.0.0.1:${PORT}/mcp
