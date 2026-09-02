@@ -41,3 +41,10 @@ I want to simplify the User UI.
 On the whopper offer, make this a more beautiful area (not a section with a surround) with the card evolving in it (e.g. Hawaiian)
 
 Have Offers collapsed. Have the spending profile smaller in size (looks inconsistent), have the detailed card benefits collapsed, have every transaction collapsed, add a first Hawaiian logo to 'Financial institutions & accounts connected' section. Make the First Hawaiian card larger in the whopper offer.
+In Admin Tool have a better logo for Flipper (at minimum remove the white arrow)
+
+This banner number is always too low: Recurring wallet opportunity
+
+$99.00
+
+Identified from reviewing your current cards against your predicted spend — see the wallet advice below. Make the Mastercard First Hawaiian card in the whopper offer much bigger and use real colour card art (green). I notice a Visa recommendation 'Use Chase Sapphire Preferred instead of Citi Strata Premier Card', this can never happen, just don't call out this card. 
