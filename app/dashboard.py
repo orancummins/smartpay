@@ -344,13 +344,6 @@ def _flipper_section(offer_list: list[dict]) -> str:
             100,
             round(Decimal(o["progress_spend_amount"]) / Decimal(o["required_spend_amount"]) * 100),
         )
-        # The card art itself is the progress indicator: washed-out grey at zero
-        # usage, resolving into its real colour as the cardholder actually uses
-        # it -- "evolving" toward the reward rather than a static picture next
-        # to a number. Driven by the lower of the two requirements so the art
-        # never looks "nearly there" while one threshold is still barely started.
-        progress = min(txn_pct, spend_pct) / 100
-        status = "Ready to redeem" if o["complete"] else "In progress"
         pulsing = not o["complete"]
         classes = "flipper-hero" + (" complete" if o["complete"] else "") + (
             " pulsing" if pulsing else ""
@@ -364,10 +357,9 @@ def _flipper_section(offer_list: list[dict]) -> str:
             if art else f'<div class="flipper-hero-art placeholder">{_t(o["card"])}</div>'
         )
         heroes.append(f"""
-        <section class="{classes}" aria-labelledby="flipper-h-{i}" style="--progress:{progress:.3f}">
+        <section class="{classes}" aria-labelledby="flipper-h-{i}">
           <div class="flipper-hero-glow" aria-hidden="true"></div>
           <div class="flipper-hero-copy">
-            <span class="flipper-status">{_t(status)}</span>
             {headline_html}
             <div class="flipper-badge"><b>{_money(Decimal(o['cashback_value']))}</b><small>CASH BACK</small></div>
             <h3 id="flipper-h-{i}">{_t(o['display_name'])} — {_t(o['card'])}</h3>
@@ -1399,7 +1391,7 @@ a{color:inherit}
    fixed dark colours rather than the light/dark theme tokens, the same way
    the card art itself carries the visual weight regardless of site theme. */
 .flipper-hero{position:relative;overflow:hidden;display:grid;
-  grid-template-columns:1.3fr 1fr;gap:36px;align-items:center;border-radius:26px;
+  grid-template-columns:1fr 1.15fr;gap:36px;align-items:center;border-radius:26px;
   padding:44px 48px;margin-bottom:24px;color:#f6f5f3;
   background:radial-gradient(120% 160% at 100% 0%,#2a2130,transparent 60%),
     linear-gradient(135deg,#15161f,#1c1e2b 55%,#231920)}
@@ -1408,14 +1400,8 @@ a{color:inherit}
   background:radial-gradient(circle,color-mix(in srgb,var(--brand) 55%,transparent),transparent 70%);
   filter:blur(10px);opacity:.55}
 .flipper-hero-copy{position:relative;z-index:1}
-.flipper-hero .flipper-status{display:inline-block;font-size:10.5px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;color:#f6f5f3;
-  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
-  border-radius:999px;padding:4px 10px}
-.flipper-hero.complete .flipper-status{color:#e8fff4;background:rgba(27,175,122,.22);
-  border-color:rgba(27,175,122,.5)}
 .flipper-headline{font-size:27px;font-weight:760;letter-spacing:-.02em;line-height:1.28;
-  margin:14px 0 18px;max-width:32ch}
+  margin:0 0 18px;max-width:32ch}
 .flipper-badge{display:flex;align-items:baseline;gap:7px;margin-bottom:16px}
 .flipper-badge b{font-size:46px;font-weight:800;letter-spacing:-.03em;
   background:linear-gradient(96deg,#ffffff,var(--brand-2));
@@ -1431,12 +1417,8 @@ a{color:inherit}
   background:linear-gradient(90deg,var(--brand),var(--brand-2))}
 .flipper-meta{color:rgba(246,245,243,.6);font-size:12.5px;margin-top:14px;line-height:1.5}
 .flipper-hero-card{position:relative;z-index:1;display:flex;justify-content:center}
-.flipper-hero-art{width:100%;max-width:260px;border-radius:18px;object-fit:contain;
-  box-shadow:0 30px 70px -12px rgba(0,0,0,.6);transform:rotate(-5deg);
-  filter:grayscale(calc(100% - (var(--progress,0) * 100%)))
-         saturate(calc(35% + (var(--progress,0) * 90%)))
-         brightness(calc(.85 + (var(--progress,0) * .2)));
-  transition:filter 1.4s ease}
+.flipper-hero-art{width:100%;max-width:420px;border-radius:18px;object-fit:contain;
+  box-shadow:0 34px 80px -12px rgba(0,0,0,.62);transform:rotate(-5deg)}
 .flipper-hero-art.placeholder{aspect-ratio:1.58;display:flex;align-items:center;
   justify-content:center;text-align:center;font-size:14px;font-weight:650;padding:0 16px;
   background:rgba(255,255,255,.08);color:rgba(246,245,243,.7)}
@@ -1452,7 +1434,7 @@ a{color:inherit}
 @media (max-width:820px){
   .flipper-hero{grid-template-columns:1fr;padding:32px 26px}
   .flipper-hero-card{order:-1}
-  .flipper-hero-art{max-width:200px}
+  .flipper-hero-art{max-width:300px}
 }
 
 /* Priceless -- real catalogue offers matched to Alex's history */
