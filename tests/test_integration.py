@@ -172,7 +172,7 @@ def test_flipper_offer_appears_in_the_wallet_response_not_per_transaction(servic
     flipper = result["data"]["flipper_offers"]
     assert flipper, "expected the demo Flipper campaign to surface"
     offer = flipper[0]
-    assert Decimal(offer["cashback_value"]) >= Decimal("500")
+    assert Decimal(offer["cashback_value"]) >= Decimal("100")
     assert "Mastercard Flipper campaign" in result["disclaimers"][0] or any(
         "Flipper campaign" in d for d in result["disclaimers"]
     )

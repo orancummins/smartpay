@@ -18,12 +18,12 @@ offers:
     card_product_id: first_hawaiian_priority_destinations
     required_transaction_count: 10
     required_spend_amount: "750.00"
-    cashback_value: "500.00"
+    cashback_value: "100.00"
     window_days: 90
     description: >-
       Make 10 purchases totalling $750 or more on your First Hawaiian
       Priority Destinations World Elite Mastercard within any rolling 90
-      days and get $500 cash back -- funded by Mastercard, credited once
+      days and get $100 cash back -- funded by Mastercard, credited once
       the threshold is reached. Counts every purchase on the card, not one
       specific merchant or transaction, and only ever aimed at a card that
       is barely being used.
