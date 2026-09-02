@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Square crop of mastercard.svg for use as a favicon: same paths, unchanged,
+     just a taller (square) viewBox so the mark sits centered without being
+     squeezed into a wide, non-square tab icon slot. -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 -22.25 131.4 131.4" style="enable-background:new 0 -22.25 131.4 131.4;" xml:space="preserve">
+<style type="text/css">
+	.st2{fill:#FF5F00;}
+	.st3{fill:#EB001B;}
+	.st4{fill:#F79E1B;}
+</style>
+<rect x="49.9" y="15.1" class="st2" width="31.5" height="56.6"/>
+<path class="st3" d="M51.9,43.5c0-11.5,5.4-21.7,13.7-28.3c-6.1-4.8-13.8-7.7-22.2-7.7c-19.9,0-36,16.1-36,36s16.1,36,36,36
+	c8.4,0,16.1-2.9,22.2-7.7C57.3,65.2,51.9,54.9,51.9,43.5z"/>
+<path class="st4" d="M123.9,43.5c0,19.9-16.1,36-36,36c-8.4,0-16.1-2.9-22.2-7.7c8.4-6.6,13.7-16.8,13.7-28.3s-5.4-21.7-13.7-28.3
+	c6.1-4.8,13.8-7.7,22.2-7.7C107.8,7.5,123.9,23.6,123.9,43.5z"/>
+</svg>

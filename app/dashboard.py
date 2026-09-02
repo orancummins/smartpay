@@ -1578,7 +1578,9 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Alex · SmartPay by Mastercard</title>
-<link rel="icon" href="/static/logos/mastercard.svg" type="image/svg+xml">
+<link rel="icon" href="/static/logos/mastercard-favicon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="/static/logos/mastercard.svg" type="image/svg+xml">
+<link rel="mask-icon" href="/static/logos/mastercard-favicon.svg" color="#EB001B">
 <style>{CSS}</style>
 </head>
 <body data-latest="{_t(active_key)}|{_t(latest.get('asked_at') or '')}">
