@@ -21,6 +21,16 @@ items:
       checked_bags: 4
       segments: 2
 
+  - item_id: grandparent_flight
+    label: "One-way flight, grandparent joining for the second half of the trip"
+    merchant: jetblue
+    category: airfare
+    amount: "220.00"
+    purchase_channel: merchant_direct
+    metadata:
+      destination: MCO
+      travellers: 1
+
   - item_id: hotel
     label: "Disney's Art of Animation Resort, 5 nights"
     merchant: disney_resort

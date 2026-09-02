@@ -22,15 +22,15 @@ def service():
 def test_alex_profile_builds(service):
     result = service.get_financial_profile("alex")
     assert result["display_markdown"].startswith("## Financial profile")
-    assert result["data"]["account_count"] == 7
-    assert "Chase, Citi" in result["data"]["institutions"]
+    assert result["data"]["account_count"] == 8
+    assert result["data"]["institutions"] == "Chase, Citi, First Hawaiian"
     assert result["disclaimers"], "synthetic data must always be disclosed"
 
 
-def test_wallet_lists_five_cards(service):
+def test_wallet_lists_six_cards(service):
     cards = service.get_wallet("alex")["data"]["cards"]
-    assert len(cards) == 5
-    assert sum(1 for c in cards if "Mastercard" in c["network"]) == 3
+    assert len(cards) == 6
+    assert sum(1 for c in cards if "Mastercard" in c["network"]) == 4
 
 
 def test_disney_itinerary_matches_golden_totals(service):
@@ -82,13 +82,21 @@ def test_offers_are_real_and_labelled(service):
         assert o["label"] == "Mastercard card-linked offer"
 
 
-def test_sourced_reward_programs_stay_off_alex_without_an_issuer_match(service):
-    """Alex banks with Citi and Chase; neither runs an earn program in the sourced US
-    rewards catalogue. The issuer-matched layer must therefore leave his plan
-    untouched -- it must never attach another issuer's program to his cards."""
+def test_sourced_reward_programs_never_attach_to_a_non_matching_issuer(service):
+    """Alex banks with Citi, Chase and First Hawaiian; only First Hawaiian runs an
+    earn program in the sourced US rewards catalogue. The issuer-matched layer
+    must surface a real program on his First Hawaiian card -- the frozen scenario's
+    grandparent flight genuinely wins on it -- but never attach it, or invent one,
+    for a Citi or Chase card that does not run it."""
     data = service.optimise_itinerary()["data"]
+    for r in data["recommendations"]:
+        for rp in r["reward_programs"]:
+            assert "First Hawaiian" in r["recommended_payment"], (
+                f"{rp['program']} attached to {r['recommended_payment']}, "
+                "which does not run it"
+            )
     programs = [rp for r in data["recommendations"] for rp in r["reward_programs"]]
-    assert programs == []
+    assert programs, "expected the grandparent-flight line to win on a real program"
 
 
 def test_guaranteed_and_estimated_are_never_merged(service):

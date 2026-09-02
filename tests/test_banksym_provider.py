@@ -109,19 +109,20 @@ def test_spend_totals_match_to_the_cent(live, fixture_profile):
     assert by_category(profile) == by_category(fixture_profile)
 
 
-def test_all_five_cards_are_matched_to_their_products(live):
+def test_all_six_cards_are_matched_to_their_products(live):
     profile = live.get_profile("alex")
     cards = {i.instrument_id for i in profile.instruments if i.is_card}
     assert cards == {
         "citi_strata_premier", "citi_double_cash", "citi_aa_platinum_select",
         "chase_sapphire_preferred", "chase_freedom_unlimited",
+        "first_hawaiian_priority_destinations_world_elite",
     }
 
 
-def test_both_institutions_are_aggregated(live):
-    """Alex banks with two institutions; Open Finance has to reassemble one picture."""
+def test_all_institutions_are_aggregated(live):
+    """Alex banks with three institutions; Open Finance has to reassemble one picture."""
     profile = live.get_profile("alex")
-    assert {a.institution for a in profile.accounts} == {"citi", "chase"}
+    assert {a.institution for a in profile.accounts} == {"citi", "chase", "first_hawaiian"}
 
 
 def test_identical_recommendations_from_a_live_api(live, fixture_profile):
@@ -214,7 +215,7 @@ def test_fdx_polymorphic_accounts_are_both_read(live):
     types = {a.account_type for a in profile.accounts}
     assert AccountType.CHECKING in types, "depositAccount entries were dropped"
     assert AccountType.CREDIT_CARD in types, "locAccount entries were dropped"
-    assert sum(1 for a in profile.accounts if a.account_type is AccountType.CREDIT_CARD) == 5
+    assert sum(1 for a in profile.accounts if a.account_type is AccountType.CREDIT_CARD) == 6
 
 
 def test_card_liability_balances_are_read_as_positive_amounts_owed(live):
@@ -295,7 +296,10 @@ def test_card_payments_actually_reduce_the_card_balance(live, fixture_profile):
             f"show something close to the full annual total instead"
         )
         checked += 1
-    assert checked == 5, "expected to check all five cards"
+    # First Hawaiian carries no transactions of its own (a newly-opened card),
+    # so it never appears in expected_outstanding -- 5 is every card WITH real
+    # spend history, not Alex's full 6-card wallet.
+    assert checked == 5, "expected to check all five cards with real spend history"
 
 
 def test_credit_limits_agree_between_fixture_and_banksym(live, fixture_profile):

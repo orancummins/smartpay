@@ -54,6 +54,13 @@
       "display_name": "Chase Freedom Unlimited",
       "account_type": "credit_card",
       "mask": "2094"
+    },
+    {
+      "account_id": "acct_fhb_priority_destinations",
+      "institution": "first_hawaiian",
+      "display_name": "First Hawaiian Priority Destinations World Elite",
+      "account_type": "credit_card",
+      "mask": "6603"
     }
   ],
   "card_accounts": {
@@ -61,7 +68,8 @@
     "acct_citi_double_cash": "citi_double_cash",
     "acct_citi_aa": "citi_aa_platinum_select",
     "acct_chase_csp": "chase_sapphire_preferred",
-    "acct_chase_cfu": "chase_freedom_unlimited"
+    "acct_chase_cfu": "chase_freedom_unlimited",
+    "acct_fhb_priority_destinations": "first_hawaiian_priority_destinations_world_elite"
   },
   "transactions": [
     {

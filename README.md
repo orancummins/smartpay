@@ -129,7 +129,7 @@ changes the headline number. Two things guard against that:
 ## Open Finance via BankSym (FDX)
 
 By default SmartPay reads Alex from the frozen fixture. It can equally read the same
-profile from [BankSym](../banksym), where Citi and Chase exist as two separate bank
+profile from [BankSym](../banksym), where Citi, Chase and First Hawaiian exist as three separate bank
 tenants serving **FDX**, the US open banking standard:
 
 ```bash
@@ -137,7 +137,7 @@ tenants serving **FDX**, the US open banking standard:
 ./run.sh start
 
 # in this repo, once
-python scripts/seed_banksym.py          # creates Citi + Chase, imports 644 transactions
+python scripts/seed_banksym.py          # creates Citi + Chase + First Hawaiian, imports 645 transactions
 SMARTPAY_PROVIDER=banksym ./run_demo.sh
 ```
 
@@ -166,9 +166,9 @@ Three things the BankSym path does that a real FDX integration must:
   deposit look like spending and invert the entire profile.
 - **Dispatches on polymorphic envelopes.** Deposits arrive as `depositAccount` /
   `depositTransaction`, credit cards as `locAccount` / `locTransaction`. Handling
-  only one silently drops five of Alex's seven accounts.
+  only one silently drops six of Alex's eight accounts.
 
-- **Aggregates across institutions.** Citi and Chase are separate tenants with
+- **Aggregates across institutions.** Citi, Chase and First Hawaiian are separate tenants with
   separate customer ids; one financial picture is reassembled from both.
 - **Classifies raw postings.** FDX returns money movements, not meaning.
   Nothing in the payload says "this is a card repayment, exclude it from spend" —
@@ -214,7 +214,7 @@ Organised as a presentation surface, in six numbered sections plus a closing bea
 2. **Potential future savings identified** — the breakdown behind figure 2: a
    recurring wallet opportunity plus every distinct trip or purchase question
    SmartPay has been asked, with the latest one shown in full line-item detail.
-3. **Financial institutions & accounts connected** — Citi and Chase, logos
+3. **Financial institutions & accounts connected** — Citi, Chase and First Hawaiian, logos
    prominent, every account listed underneath.
 4. **Recent activity** — the most recent real transactions across every account.
 5. **Here's all the information you've shared** — the complete accounts and
@@ -293,8 +293,10 @@ app/
                       banksym (live Open Finance), future_spend
 data/
   alex/               frozen, committed transaction history
-  cards/              five card products, with evidence on every rule
-  mastercard/         network benefits, the simulated offer, Priceless
+  cards/              six card products, with evidence on every rule
+  mastercard/         network benefits, real card-linked offers and issuer
+                      rewards programs (both sourced from Mastercard platform
+                      exports), Priceless
   itineraries/        the frozen rehearsed scenario
 ```
 

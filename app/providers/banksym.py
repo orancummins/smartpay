@@ -54,6 +54,7 @@ MASK_TO_PRODUCT = {
     "3160": "citi_aa_platinum_select",
     "5518": "chase_sapphire_preferred",
     "2094": "chase_freedom_unlimited",
+    "6603": "first_hawaiian_priority_destinations_world_elite",
 }
 
 #: FDX accountType -> SmartPay account type.

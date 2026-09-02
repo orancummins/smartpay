@@ -106,6 +106,28 @@ def test_retrospective_history_agrees_with_accumulated_savings():
     assert history["months"] == sorted(history["months"])
 
 
+def test_mastercard_transactions_surface_what_actually_applied():
+    """A transaction already on its best card must not read as "nothing
+    happened here" just because no card switch is needed -- if it was paid on
+    a Mastercard and a real benefit, offer or issuer rewards program fired,
+    the annotated history must say so."""
+    profile = SyntheticAlexProvider().get_profile("alex")
+    history = analytics.retrospective_history(profile)
+
+    card_txns = [t for t in history["transactions"] if t["kind"] == "card"]
+    lit = [
+        t for t in card_txns
+        if t["actual_is_mastercard"]
+        and (t["actual_benefits"] or t["actual_offers"] or t["actual_reward_programs"])
+    ]
+    assert lit, "expected at least one real Mastercard benefit/offer to surface"
+    # A card-linked offer or benefit must never attach to a purchase made on a
+    # non-Mastercard card -- these mechanics are Mastercard-network only.
+    for t in card_txns:
+        if not t["actual_is_mastercard"]:
+            assert not t["actual_offers"], "an offer attached to a non-Mastercard transaction"
+
+
 def test_habit_changes_never_claim_a_card_switch_that_did_not_happen():
     """A guaranteed gap can come from the booking channel alone (the same card,
     booked through its own issuer portal instead of direct). The label must say

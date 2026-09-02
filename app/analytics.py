@@ -96,6 +96,7 @@ def _purchase_records(profile: FinancialProfile) -> list[dict]:
             "category": txn.category.value,
             "amount": txn.amount,
             "actual_card": actual_instrument.display_name,
+            "actual_is_mastercard": actual_instrument.is_mastercard,
             "best_card": best.instrument_name,
             "best_instrument_id": best.instrument_id,
             # A guaranteed gap can come from the channel alone -- the same card
@@ -107,6 +108,29 @@ def _purchase_records(profile: FinancialProfile) -> list[dict]:
             "best_channel": best.channel.value,
             "guaranteed_delta": best.value.guaranteed_value - actual.value.guaranteed_value,
             "estimated_delta": best.value.estimated_reward_value - actual.value.estimated_reward_value,
+            # What actually fired on the card Alex actually used -- shown so a
+            # transaction that was ALREADY on its best card doesn't read as
+            # "nothing happened here" when a real Mastercard benefit or sourced
+            # reward program did apply. Offers are included for display only:
+            # excluded from every dollar total above per this function's own
+            # redemption-cap rationale, but naming one that fired on a single
+            # real transaction is not the aggregate-overstatement risk that is.
+            "actual_benefits": [
+                {"label": b.display_name, "value": str(b.value)}
+                for b in actual.benefits if b.value > 0
+            ],
+            "actual_reward_programs": [
+                {
+                    "label": rp.label, "issuer": rp.issuer_name,
+                    "program": rp.display_name, "points": rp.points,
+                    "value": str(rp.estimated_value),
+                }
+                for rp in actual.reward_programs
+            ],
+            "actual_offers": [
+                {"label": o.label, "merchant": o.merchant_name, "value": str(o.value)}
+                for o in actual.offers
+            ],
         })
 
     _RECORDS_CACHE[profile.customer_id] = records
@@ -266,11 +290,15 @@ def retrospective_history(profile: FinancialProfile) -> dict:
             "category": r["category"],
             "amount": str(quantize(r["amount"])),
             "actual_card": r["actual_card"],
+            "actual_is_mastercard": r["actual_is_mastercard"],
             "best_card": r["best_card"],
             "guaranteed_delta": str(quantize(guaranteed_delta if improved else ZERO)),
             "estimated_delta": str(quantize(estimated_delta)),
             "improved": improved,
             "habit_label": habit_label,
+            "actual_benefits": r["actual_benefits"],
+            "actual_reward_programs": r["actual_reward_programs"],
+            "actual_offers": r["actual_offers"],
         })
         if improved:
             key = (

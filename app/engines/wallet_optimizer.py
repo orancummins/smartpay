@@ -21,6 +21,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from app.engines.rewards import RewardsEngine, available_channels
+from app.engines.rewards_programs import RewardsProgramsEngine
 from app.knowledge import benefits as all_benefits, card_products
 from app.models.common import (
     Category,
@@ -47,6 +48,7 @@ class WalletOptimizer:
     def __init__(self, profile: FinancialProfile) -> None:
         self.profile = profile
         self.rewards = RewardsEngine()
+        self.reward_programs = RewardsProgramsEngine()
 
     def _reward_value(
         self, wallet: list[PaymentInstrument], forecast: FutureSpendForecast
@@ -65,9 +67,18 @@ class WalletOptimizer:
                 purchase = PurchaseIntent(
                     merchant=category.value, category=category, amount=spend
                 )
+                # A sourced issuer rewards program (see app.engines.rewards_programs)
+                # is additive on top of the card's own published earn -- omitting it
+                # here made a card's real total rate look weaker than it is, which
+                # is what silently recommended dropping a card with a genuine,
+                # sourced bonus this engine just never counted.
+                program_value = sum(
+                    (p.estimated_value for p in self.reward_programs.evaluate(purchase, instrument)),
+                    ZERO,
+                )
                 for channel in available_channels(category, instrument):
                     evaluation = self.rewards.evaluate(purchase, instrument, channel)
-                    best = max(best, evaluation.estimated_value)
+                    best = max(best, evaluation.estimated_value + program_value)
             total += best
         return quantize(total)
 

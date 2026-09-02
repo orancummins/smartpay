@@ -1,0 +1,51 @@
+product_id: first_hawaiian_priority_destinations_world_elite
+display_name: "First Hawaiian Priority Destinations® World Elite Credit Card"
+issuer: first_hawaiian
+network: mastercard
+network_tier: world_elite
+annual_fee: "99.00"
+annual_fee_waived_first_year: true
+foreign_transaction_fee_pct: "0"
+base_currency: loyalty_points
+base_multiplier: "1"
+
+soft_benefits:
+  - "No foreign transaction fees"
+
+evidence: &fhb_ev
+  evidence_type: issuer_reward_rule
+  source_name: First Hawaiian Bank
+  source_url: "https://www.fhb.com/en/personal/credit-cards/priority-destinations-world-elite"
+  verified_at: 2026-09-02
+  confidence: authoritative
+  note: >-
+    First Hawaiian Bank Priority Destinations World Elite published earn rates,
+    annual fee and network tier. Base multiplier and category rates set so that
+    base + the sourced issuer bonus program (see data/mastercard/rewards_catalog.json,
+    issuer_key first_hawaiian) reconstruct the card's own published total rates of
+    5x Priority Miles on travel and 2x on dining -- the bonus program is never
+    restated as this card's own base rate, per app.engines.rewards_programs.
+
+late_payment_fee: "40.00"
+late_payment_fee_evidence:
+  evidence_type: issuer_reward_rule
+  source_name: First Hawaiian Bank
+  source_url: "https://www.fhb.com/sites/default/files/2020-10/PriorityDestinationsCreditCardCombinedRatesDisclosures.pdf"
+  verified_at: 2026-09-02
+  confidence: authoritative
+  note: "Late payment penalty fee of up to $40, disclosed on First Hawaiian Bank's published Priority Destinations combined rates and disclosures PDF."
+
+reward_rules:
+  - rule_id: FHB_PD_WE_TRAVEL_2X
+    categories: [airfare, hotel, attraction, car_rental]
+    multiplier: "2"
+    reward_currency: loyalty_points
+    description: "2 Priority Miles per $1 on travel (base rate; the sourced First Hawaiian bonus program adds the rest of the published 5x)"
+    evidence: *fhb_ev
+
+  - rule_id: FHB_PD_WE_DINING_1X
+    categories: [restaurant]
+    multiplier: "1"
+    reward_currency: loyalty_points
+    description: "1 Priority Mile per $1 at restaurants (base rate; the sourced First Hawaiian bonus program adds the rest of the published 2x)"
+    evidence: *fhb_ev
