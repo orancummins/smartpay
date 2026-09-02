@@ -69,8 +69,13 @@ def record_from_recommendation(
 
     Keyed on coupon_id (the same recommendation_id the rest of the app already
     uses) so re-asking the same question refreshes the coupon -- a new expiry,
-    the same identity -- rather than piling up duplicates. Clip state survives
-    a refresh either way, since that is the one thing a real user chose.
+    the same identity -- rather than piling up duplicates.
+
+    New coupons start already clipped: SmartPay found the discount and is
+    handing it over, not making the consumer perform a "clip" action to
+    receive something that is already theirs. If a real user later unclips
+    one on purpose, re-asking the same question must not silently flip it
+    back -- so an *existing* coupon's clip state always survives a refresh.
     """
     coupons = _load()
     existing = coupons.get(coupon_id, {})
@@ -83,7 +88,7 @@ def record_from_recommendation(
         "discount_percent": str(discount_percent),
         "issued_on": issued_on.isoformat(),
         "expires_on": (issued_on + timedelta(days=VALID_FOR_DAYS)).isoformat(),
-        "clipped": existing.get("clipped", False),
+        "clipped": existing.get("clipped", True),
     }
     _save(coupons)
 

@@ -165,3 +165,23 @@ def test_late_fee_is_annotated_as_its_own_avoidable_amount_never_added_to_guaran
     assert total == accumulated["guaranteed"], (
         "adding the fee annotation must not change the card-driven guaranteed total"
     )
+
+
+def test_savings_by_card_sums_to_the_same_guaranteed_total():
+    """savings_by_card is the same reduction accumulated_savings performs, just
+    not collapsed down to a single top_driver -- the two must never disagree.
+    """
+    profile = SyntheticAlexProvider().get_profile("alex")
+    accumulated = analytics.accumulated_savings(profile)
+    by_card = analytics.savings_by_card(profile)
+
+    assert by_card, "expected at least one card to have won something historically"
+    assert sum(by_card.values(), Decimal(0)) == accumulated["guaranteed"]
+    assert all(v > Decimal("0") for v in by_card.values())
+
+
+def test_savings_by_card_is_keyed_by_instrument_id_not_display_name():
+    profile = SyntheticAlexProvider().get_profile("alex")
+    by_card = analytics.savings_by_card(profile)
+    known_ids = {i.instrument_id for i in profile.instruments if i.is_card}
+    assert set(by_card) <= known_ids

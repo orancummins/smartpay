@@ -97,6 +97,7 @@ def _purchase_records(profile: FinancialProfile) -> list[dict]:
             "amount": txn.amount,
             "actual_card": actual_instrument.display_name,
             "best_card": best.instrument_name,
+            "best_instrument_id": best.instrument_id,
             # A guaranteed gap can come from the channel alone -- the same card
             # booked through its own issuer portal instead of direct earns Alex a
             # bonus it never paid out on the historical merchant-direct purchase.
@@ -145,6 +146,25 @@ def accumulated_savings(profile: FinancialProfile) -> dict:
     }
     _CACHE[profile.customer_id] = result
     return result
+
+
+def savings_by_card(profile: FinancialProfile) -> dict[str, Decimal]:
+    """Guaranteed dollars attributable to each card being the best choice,
+    across Alex's real 12-month ledger -- keyed by instrument_id rather than
+    display name so a caller can join it straight back to a card product
+    (and from there, to that product's real application page).
+
+    This is the evidence behind "this card would have earned you $X based on
+    your historic spend": the same reduction accumulated_savings performs,
+    just not collapsed down to a single top_driver.
+    """
+    totals: dict[str, Decimal] = {}
+    for r in _purchase_records(profile):
+        if r["guaranteed_delta"] > ZERO:
+            totals[r["best_instrument_id"]] = (
+                totals.get(r["best_instrument_id"], ZERO) + r["guaranteed_delta"]
+            )
+    return {k: quantize(v) for k, v in totals.items()}
 
 
 #: Human phrasing for a booking channel. Covers every PurchaseChannel value,

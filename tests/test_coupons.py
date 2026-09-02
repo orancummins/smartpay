@@ -20,7 +20,36 @@ def test_record_and_load_active_round_trips():
     assert len(active) == 1
     assert active[0]["coupon_id"] == "trip:dining"
     assert active[0]["merchant"] == "local_bistro"
-    assert active[0]["clipped"] is False
+
+
+def test_new_coupons_start_already_clipped():
+    """SmartPay found the discount and is handing it over -- the consumer
+    should not have to perform a "clip" action to receive something that is
+    already theirs."""
+    coupons.record_from_recommendation(
+        coupon_id="trip:dining", merchant="local_bistro", item_label="Dinner",
+        approx_amount=Decimal("120.00"), card_name="Citi Strata Premier Card",
+        discount_percent=Decimal("5.00"), issued_on=date.today(),
+    )
+    assert coupons.load_active(date.today())[0]["clipped"] is True
+
+
+def test_a_real_unclip_survives_reissuing_the_same_recommendation():
+    coupons.record_from_recommendation(
+        coupon_id="trip:dining", merchant="local_bistro", item_label="Dinner",
+        approx_amount=Decimal("120.00"), card_name="Citi Strata Premier Card",
+        discount_percent=Decimal("5.00"), issued_on=date.today(),
+    )
+    coupons.set_clipped("trip:dining", False)
+
+    coupons.record_from_recommendation(
+        coupon_id="trip:dining", merchant="local_bistro", item_label="Dinner",
+        approx_amount=Decimal("120.00"), card_name="Citi Strata Premier Card",
+        discount_percent=Decimal("5.00"), issued_on=date.today(),
+    )
+    assert coupons.load_active(date.today())[0]["clipped"] is False, (
+        "re-asking the same question must not silently re-clip a coupon the user unclipped"
+    )
 
 
 def test_expired_coupons_are_excluded_from_load_active():
@@ -109,8 +138,11 @@ def test_dashboard_renders_an_active_coupon_as_a_clip_card():
     assert "Mastercard offers for you" in html
     assert "Local Bistro" in html
     assert "5.00%" in html or "5%" in html
-    assert "Clip coupon" in html
     assert 'data-coupon-id="trip:dining"' in html
+    # Auto-clipped: the card renders already in its clipped state, not
+    # waiting on the consumer to press a button for something already theirs.
+    assert 'class="coupon clipped"' in html
+    assert '<span>Clipped</span>' in html
 
 
 def test_dashboard_omits_the_coupons_panel_when_there_are_none():

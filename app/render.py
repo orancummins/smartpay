@@ -8,6 +8,8 @@ are the figures Python computed.
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from app.models.planning import PaymentPlan, WalletRecommendation
 from app.money import fmt, fmt_points
 
@@ -48,11 +50,31 @@ def upside_sentence(
     return f"{recommended_name} earns {' and '.join(parts)} than {baseline_name} on this purchase."
 
 
-def payment_plan_markdown(plan: PaymentPlan) -> str:
+def payment_plan_markdown(plan: PaymentPlan, apply_offers: dict[str, dict] | None = None) -> str:
+    apply_offers = apply_offers or {}
     lines: list[str] = [
         f"## SmartPay payment plan — {plan.itinerary_title}",
         "",
         f"**Itinerary total:** {fmt(plan.itinerary_total)}",
+    ]
+
+    # A funded discount is the headline, not a footnote -- surfaced before the
+    # table so it cannot be missed, in addition to the per-row marker below.
+    tiebreak_lines = [
+        f"- **{r.item_label}**: {r.recommended.instrument_name} funds an extra "
+        f"**{fmt(r.recommended.tiebreak_bonus)}** back as a statement credit, "
+        f"already included in the guaranteed total below."
+        for r in plan.recommendations if r.recommended.tiebreak_bonus > 0
+    ]
+    if tiebreak_lines:
+        lines += [
+            "",
+            "> 🟠 **Mastercard-funded discount on this response.** SmartPay found an "
+            "exact tie and Mastercard funded the difference to win it:",
+            *[f"> {line}" for line in tiebreak_lines],
+        ]
+
+    lines += [
         "",
         "| Item | Amount | Alex would normally pay with | SmartPay recommends | Guaranteed | Est. rewards |",
         "|---|---:|---|---|---:|---:|",
@@ -62,7 +84,7 @@ def payment_plan_markdown(plan: PaymentPlan) -> str:
     for r in plan.recommendations:
         marker = ""
         if r.recommended.tiebreak_note:
-            marker, tied = " \\*", True
+            marker, tied = " \\* 🟠", True
         lines.append(
             f"| {r.item_label} | {fmt(r.amount)} | {r.baseline.instrument_name} "
             f"({r.baseline_probability:.0%} of the time) | "
@@ -91,6 +113,7 @@ def payment_plan_markdown(plan: PaymentPlan) -> str:
         "",
     ]
 
+    seen_apply_cards: set[str] = set()
     for r in plan.recommendations:
         upside = upside_sentence(
             r.recommended.instrument_name, r.baseline.instrument_name,
@@ -106,6 +129,18 @@ def payment_plan_markdown(plan: PaymentPlan) -> str:
         line = f"- **{r.item_label}** — {upside}"
         if details:
             line += " (" + "; ".join(details) + ")"
+        # Named once per card, not once per line -- the same card can win
+        # several items in one itinerary, and repeating the pitch would read
+        # like spam rather than a single, real offer.
+        offer = apply_offers.get(r.item_id)
+        if offer and offer["card"] not in seen_apply_cards:
+            seen_apply_cards.add(offer["card"])
+            line += (
+                f" **New to {offer['card']}?** Based on Alex's real last 12 months of "
+                f"spend, this card would have earned an extra "
+                f"{fmt(Decimal(offer['historic_savings']))}. "
+                f"[Apply for {offer['card']}]({offer['url']})."
+            )
         lines.append(line)
 
     risk_notes: list[str] = []

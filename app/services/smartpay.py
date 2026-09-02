@@ -18,7 +18,7 @@ from app.engines.baseline import BaselineEngine
 from app.engines.optimizer import ItineraryOptimizer, PurchaseOptimizer
 from app.engines.categorizer import categorise
 from app.engines.wallet_optimizer import WalletOptimizer
-from app.knowledge import priceless as all_priceless
+from app.knowledge import card_products, priceless as all_priceless
 from app.models.common import Category, RewardCurrency
 from app.models.planning import Itinerary, ItineraryItem, PaymentPlan, PurchaseIntent
 from app.money import ZERO, fmt, quantize
@@ -179,6 +179,29 @@ class SmartPayService:
         if any(r.recommended.tiebreak_note for r in plan.recommendations):
             plan.disclaimers.append(NETWORK_TIEBREAK_NOTE)
 
+        # Where a line genuinely switches to a Mastercard the consumer does not
+        # already carry the baseline card for, point at that product's own real
+        # application page and quantify it with the same historic-spend evidence
+        # accumulated_savings is built from -- never a fabricated "you'd save"
+        # figure, and never shown if either the product or the number is missing.
+        by_card = analytics.savings_by_card(profile)
+        products = card_products()
+        apply_offers: dict[str, dict] = {}
+        for r in plan.recommendations:
+            if not r.recommended.is_mastercard:
+                continue
+            if r.recommended.instrument_id == r.baseline.instrument_id:
+                continue
+            product = products.get(r.recommended.instrument_id)
+            historic = by_card.get(r.recommended.instrument_id)
+            if not product or not product.evidence.source_url or not historic or historic <= ZERO:
+                continue
+            apply_offers[r.item_id] = {
+                "card": product.display_name,
+                "url": product.evidence.source_url,
+                "historic_savings": str(historic),
+            }
+
         # A compact payload on purpose. The full model dump runs to ~43KB because
         # every option carries its evidence, and that much JSON crowds out the
         # rendered table in ChatGPT's context. Detail stays available on demand
@@ -221,6 +244,7 @@ class SmartPayService:
                         {"label": o.label, "merchant": o.merchant_name, "value": str(o.value)}
                         for o in r.recommended.offers
                     ],
+                    "apply_offer": apply_offers.get(r.item_id),
                 }
                 for r in plan.recommendations
             ],
@@ -271,7 +295,7 @@ class SmartPayService:
                 "baseline_rationale": r.baseline_rationale,
                 "evidence": [e.model_dump(mode="json") for e in r.evidence],
             }
-        return _envelope(render.payment_plan_markdown(plan), data, plan.disclaimers)
+        return _envelope(render.payment_plan_markdown(plan, apply_offers), data, plan.disclaimers)
 
     def optimise_wallet(self, customer_id: str = config.DEMO_CUSTOMER_ID) -> dict:
         profile = self.provider.get_profile(customer_id)

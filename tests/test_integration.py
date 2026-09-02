@@ -244,6 +244,72 @@ def test_tiebreak_funds_a_real_5_percent_statement_credit(service):
     assert result["data"]["incremental_guaranteed"] == "600.50"
 
 
+# --- apply-for-a-Mastercard CTA, evidence-backed -----------------------------
+
+
+def test_apply_offer_is_only_attached_on_a_genuine_switch_to_a_mastercard(service):
+    """No offer on a line that already matches the baseline, and never on a
+    line that recommends a Visa -- an "apply" pitch has to follow a real
+    switch, not decorate every row."""
+    result = service.optimise_itinerary()
+    for r in result["data"]["recommendations"]:
+        if r["apply_offer"] is not None:
+            assert r["is_mastercard"]
+            assert r["baseline_payment"] != r["recommended_payment"]
+
+
+def test_apply_offer_links_to_the_products_own_verified_evidence(service):
+    from app.knowledge import card_products
+
+    result = service.optimise_itinerary()
+    offers = [r["apply_offer"] for r in result["data"]["recommendations"] if r["apply_offer"]]
+    assert offers, "expected at least one apply offer in the known Disney scenario"
+    products_by_name = {p.display_name: p for p in card_products().values()}
+    for offer in offers:
+        product = products_by_name[offer["card"]]
+        assert offer["url"] == product.evidence.source_url
+        assert offer["url"].startswith("https://")
+
+
+def test_apply_offer_savings_figure_matches_savings_by_card(service):
+    from decimal import Decimal
+
+    from app import analytics
+    from app.knowledge import card_products
+    from app.providers.open_finance import SyntheticAlexProvider
+
+    result = service.optimise_itinerary()
+    profile = SyntheticAlexProvider().get_profile("alex")
+    by_card = analytics.savings_by_card(profile)
+    products = card_products()
+    ids_by_name = {p.display_name: pid for pid, p in products.items()}
+
+    for r in result["data"]["recommendations"]:
+        offer = r["apply_offer"]
+        if not offer:
+            continue
+        instrument_id = ids_by_name[offer["card"]]
+        assert Decimal(offer["historic_savings"]) == by_card[instrument_id]
+
+
+def test_markdown_highlights_the_funded_discount_before_the_table(service):
+    result = service.optimise_itinerary()
+    md = result["display_markdown"]
+    assert "Mastercard-funded discount on this response" in md
+    assert md.index("Mastercard-funded discount") < md.index("| Item |")
+
+
+def test_markdown_names_the_same_apply_card_only_once(service):
+    """The same card can win several lines in one itinerary; the apply pitch
+    must appear once, not once per line, or it reads as spam."""
+    result = service.optimise_itinerary()
+    md = result["display_markdown"]
+    for r in result["data"]["recommendations"]:
+        offer = r["apply_offer"]
+        if offer:
+            assert md.count(f"[Apply for {offer['card']}]") == 1
+
+
 def test_tiebreak_never_overrides_a_better_non_mastercard_option():
     """A Visa that genuinely wins must still win. Constructed so Chase leads outright."""
     from app.engines.optimizer import PurchaseOptimizer

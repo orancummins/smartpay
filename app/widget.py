@@ -125,9 +125,15 @@ p{margin:0}
 .tag{display:inline-block;font-size:10px;font-weight:650;padding:1px 6px;border-radius:99px;
   border:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));color:var(--brand-ink);
   margin-left:5px}
-.tag.tie{border-style:dashed;color:var(--ink-3);border-color:var(--line)}
 .risk-note{margin-top:6px;font-size:11px;color:var(--warn);background:var(--warn-bg);
   padding:5px 9px;border-radius:8px}
+.tie-banner{margin-top:6px;font-size:11.5px;font-weight:650;color:#fff;
+  background:linear-gradient(96deg,var(--brand),var(--brand-2));
+  padding:6px 10px;border-radius:8px}
+.apply-note{margin-top:6px;font-size:11px;color:var(--ink-2);background:var(--good-bg);
+  padding:6px 9px;border-radius:8px;line-height:1.5}
+.apply-note a{color:var(--good);font-weight:650;text-decoration:none}
+.apply-note a:hover{text-decoration:underline}
 
 .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 button{font:inherit;font-size:12.5px;font-weight:600;border-radius:9px;cursor:pointer;
@@ -190,23 +196,41 @@ function envelope() {
 }
 
 function renderRows(plan) {
+  const seenApplyCards = new Set();
   return (plan.recommendations || []).map((r) => {
     const gain = Number(r.guaranteed_savings || 0);
     const est = Number(r.estimated_reward_value_delta || 0);
     const portal = r.recommended_channel && r.recommended_channel !== 'booked direct'
       ? `<span class="tag">${esc(r.recommended_channel)}</span>` : '';
-    const tie = r.tiebreak_note
-      ? `<span class="tag tie" title="${esc(r.tiebreak_note)}">tie &middot; +5% Mastercard credit</span>`
-      : '';
     const riskNotes = [r.late_fee_warning, r.payoff_recommendation].filter(Boolean)
       .map((note) => `<div class="risk-note">${esc(note)}</div>`).join('');
+    // A funded discount is the headline of the row it appears on, not a
+    // small chip -- it is real money Mastercard is putting in, not a
+    // stated preference.
+    const tieBanner = r.tiebreak_note
+      ? `<div class="tie-banner">🟠 Mastercard funds an extra ${money(gain)} back as a ` +
+        `statement credit to win this tie</div>`
+      : '';
+    // Named once per card across the whole response, not once per line --
+    // the same card can win several items, and repeating the pitch would
+    // read like spam rather than a single, real offer.
+    let applyNote = '';
+    if (r.apply_offer && !seenApplyCards.has(r.apply_offer.card)) {
+      seenApplyCards.add(r.apply_offer.card);
+      const o = r.apply_offer;
+      applyNote = `<div class="apply-note">New to ${esc(o.card)}? Based on Alex's real last ` +
+        `12 months of spend, it would have earned an extra ${money(o.historic_savings)}. ` +
+        `<a href="${esc(o.url)}" target="_blank" rel="noopener noreferrer">Apply here</a></div>`;
+    }
     return `
       <div class="row${gain > 0 ? ' win' : ''}">
         <div>
           <div class="item">${esc(r.item)}</div>
           <div class="swap"><b>${esc(r.baseline_payment)}</b> &rarr;
-            <span class="to">${esc(r.recommended_payment)}</span>${portal}${tie}</div>
+            <span class="to">${esc(r.recommended_payment)}</span>${portal}</div>
+          ${tieBanner}
           ${riskNotes}
+          ${applyNote}
         </div>
         <div class="val">
           <span class="gain">${money(gain)}</span>

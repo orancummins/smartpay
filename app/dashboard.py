@@ -277,7 +277,7 @@ def _coupons_section(coupon_list: list[dict]) -> str:
         <div>
           <h2 id="coupons-h">Mastercard offers for you</h2>
           <p>When two cards tie on value, Mastercard funds an extra discount to win
-             it — here it is as a coupon, tied to the purchase that earned it.</p>
+             it — already clipped for you below, tied to the purchase that earned it.</p>
         </div>
       </header>
       <div class="coupon-grid">{''.join(cards)}</div>
