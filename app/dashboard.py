@@ -1180,69 +1180,48 @@ def _idle_network_cards(profile: FinancialProfile, wallet: dict, network: Networ
     return idle
 
 
-def _idle_card_callout(profile: FinancialProfile, wallet: dict) -> str:
-    """A never-used Visa card is the clearest kind of wallet waste: no rewards
-    history to weigh against the fee, so the annual fee is pure cost. Surfaced
-    on its own, separate from the wallet's single best overall recommendation
-    above, which is free to point at a different card entirely.
-    """
+def _wallet_advice(wallet: dict, profile: FinancialProfile) -> str:
+    """The closing beat: call out the one unused Visa card whose annual fee is pure
+    cost, and steer that spend onto the consumer's Mastercards. It never flags a
+    Mastercard for dropping -- Mastercard preference is the whole point."""
     idle_visa = _idle_network_cards(profile, wallet, Network.VISA)
     if not idle_visa:
         return ""
     card = max(idle_visa, key=lambda c: c["savings"])
-    return f"""
-      <div class="idle-card-callout">
-        <img src="{_card_art_uri(card['product_id'])}" alt="{_t(card['display_name'])}"
-             width="140" height="88" loading="lazy">
-        <div>
-          <p class="idle-card-kicker">Sitting unused &middot; Visa</p>
-          <p class="idle-card-name">{_t(card['display_name'])}</p>
-          <p class="idle-card-copy">
-            No purchases on this card in the last 12 months, so its
-            {_money(card['annual_fee'])} annual fee is pure cost. Dropping it
-            keeps an extra <b>{_money(card['savings'])} a year</b>, with no
-            rewards lost — there is no usage history on it to lose.
-          </p>
-        </div>
-      </div>"""
-
-
-def _wallet_advice(wallet: dict, profile: FinancialProfile) -> str:
-    rec = wallet["recommendation"]
-    delta = Decimal(rec["net_annual_incremental_value"])
-    current = Decimal(rec["current_wallet_value"])
-    drivers = "".join(f"<li>{_t(d)}</li>" for d in rec["drivers"][:5])
+    savings = card["savings"]
     return f"""
     <section class="panel closing" aria-labelledby="adv-h">
       <header class="panel-head">
         <div>
           <h2 id="adv-h">And one more thing…</h2>
-          <p>Your wallet is not matched to what you are predicted to spend.</p>
+          <p>One unused Visa card is quietly costing you every year.</p>
         </div>
       </header>
       <div class="advice">
         <div class="advice-main">
           <div class="advice-headline">
-            <p class="verdict">{_t(rec["headline"])}</p>
+            <p class="verdict">Your {_t(card['display_name'])} — a Visa — has sat unused for
+               a year. With no purchases on it, its {_money(card['annual_fee'])} annual fee is
+               pure cost. Drop it and keep more of your everyday spend on your Mastercards.</p>
             <div class="advice-figure">
-              <span class="figure" data-count="{delta}">{_money(delta)}</span>
-              <small>net a year, after annual fees</small>
+              <span class="figure" data-count="{savings}">{_money(savings)}</span>
+              <small>kept a year by dropping it — no rewards lost, there's no usage to lose</small>
             </div>
           </div>
-          <div class="advice-meta">
-            {_ring(float(delta / current) if current else 0.0, "Share of wallet value gained")}
-            <ul>{drivers}</ul>
-          </div>
+          <ul class="advice-points">
+            <li>No purchases in the last 12 months</li>
+            <li>{_money(card['annual_fee'])} annual fee, earning nothing</li>
+            <li>Your Mastercards already cover this spend, with rewards</li>
+          </ul>
         </div>
         <figure class="advice-card">
-          <img class="whopper-card"
-               src="{_card_art_uri('first_hawaiian_priority_destinations')}"
-               alt="First Hawaiian Priority Destinations World Elite Mastercard"
-               width="400" height="251">
-          <figcaption>First Hawaiian Priority Destinations World Elite Mastercard</figcaption>
+          <span class="idle-ribbon">Unused · Visa</span>
+          <img class="whopper-card unused"
+               src="{_card_art_uri(card['product_id'])}"
+               alt="{_t(card['display_name'])}" width="400" height="251">
+          <figcaption>{_t(card['display_name'])}</figcaption>
         </figure>
       </div>
-      {_idle_card_callout(profile, wallet)}
     </section>"""
 
 
@@ -1860,6 +1839,12 @@ input.timeline-slider{background:linear-gradient(90deg,
 .idle-card-copy{font-size:13.5px;color:var(--ink-2);margin-top:5px;max-width:60ch;line-height:1.5}
 .idle-card-copy b{color:var(--ink)}
 @media (max-width:640px){.idle-card-callout{flex-direction:column;align-items:flex-start}}
+.advice-points{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.advice-points li{font-size:13.5px;color:var(--ink-2);padding-left:20px;position:relative}
+.advice-points li::before{content:'—';position:absolute;left:0;color:var(--brand-ink);font-weight:700}
+.idle-ribbon{align-self:center;font-size:11px;font-weight:800;letter-spacing:.05em;
+  text-transform:uppercase;color:#fff;background:#3f4a5a;border-radius:6px;padding:3px 9px}
+.whopper-card.unused{filter:grayscale(.5);animation:none;opacity:.94}
 
 /* subscriptions -- Mastercard subscription management (Minna) */
 .sub-list{list-style:none;margin:10px 0 14px;padding:0;display:grid;gap:8px}
