@@ -301,7 +301,7 @@ def _ring(pct: float, label: str) -> str:
 # Section 1 -- header: name, potential savings over last year, further potential savings
 # ---------------------------------------------------------------------------
 
-def _header(full_name: str, accumulated: dict, wallet_annual: Decimal) -> str:
+def _header(full_name: str, accumulated: dict, wallet_value: Decimal) -> str:
     return f"""
     <section class="hero" aria-labelledby="hero-h">
       <p class="eyebrow">SmartPay · Open Finance profile</p>
@@ -316,10 +316,11 @@ def _header(full_name: str, accumulated: dict, wallet_annual: Decimal) -> str:
              {_t(accumulated['transaction_count'])} transactions.</p>
         </div>
         <div class="stat accent2">
-          <dt>Recurring wallet opportunity</dt>
-          <dd class="figure" data-count="{wallet_annual}">{_money(wallet_annual)}</dd>
-          <p>Identified from reviewing your current cards against your predicted
-             spend — see the wallet advice below.</p>
+          <dt>The right card, every time</dt>
+          <dd class="figure" data-count="{wallet_value}">{_money(wallet_value)}</dd>
+          <p>Rewards and statement credits SmartPay projects across your predicted
+             spend over the next 12 months when every purchase goes to the best
+             card already in your wallet — net of annual fees.</p>
         </div>
       </div>
     </section>"""
@@ -2226,7 +2227,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
   </div>
 </header>
 <main class="wrap">
-  {_header(full_name, accumulated, potential["wallet_annual"])}
+  {_header(full_name, accumulated, Decimal(wallet["recommendation"]["current_wallet_value"]))}
   {_flipper_section(flipper_list)}
   {_potential_section(potential, entries, active_key)}
   {_retrospective_section(retrospective, accumulated, projected)}
