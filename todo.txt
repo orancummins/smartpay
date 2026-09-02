@@ -36,3 +36,8 @@ I want to simplify the User UI.
 4. Move 'what could you have saved' to be directly under 'Potential future savings identified'
 5. Merge 'Your card benefits etc' into 'Here's all the information you've shared'. 
 6. On 'Here's all the information you've shared' have the spending categorisation collapsed
+
+
+On the whopper offer, make this a more beautiful area (not a section with a surround) with the card evolving in it (e.g. Hawaiian)
+
+Have Offers collapsed. Have the spending profile smaller in size (looks inconsistent), have the detailed card benefits collapsed, have every transaction collapsed, add a first Hawaiian logo to 'Financial institutions & accounts connected' section. Make the First Hawaiian card larger in the whopper offer.
