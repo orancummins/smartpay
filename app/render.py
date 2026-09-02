@@ -10,8 +10,14 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from app import config
 from app.models.planning import PaymentPlan, WalletRecommendation
 from app.money import fmt, fmt_points
+
+DASHBOARD_LINK = (
+    f"[Alex, here's your SmartPay dashboard where you can optimise how you "
+    f"spend]({config.DASHBOARD_URL})"
+)
 
 VALUATION_FOOTNOTE = (
     "Points and cash back are valued at 1.0 cent per point. Guaranteed value is "
@@ -187,6 +193,8 @@ def payment_plan_markdown(plan: PaymentPlan, apply_offers: dict[str, dict] | Non
         lines += ["", "---", ""]
         lines += [f"_{d}_" for d in plan.disclaimers]
 
+    lines += ["", DASHBOARD_LINK]
+
     return "\n".join(lines)
 
 
@@ -231,6 +239,7 @@ def wallet_markdown(rec: WalletRecommendation, flipper: list[dict] | None = None
     if rec.disclaimers:
         lines += ["", "---", ""]
         lines += [f"_{d}_" for d in rec.disclaimers]
+    lines += ["", DASHBOARD_LINK]
     return "\n".join(lines)
 
 

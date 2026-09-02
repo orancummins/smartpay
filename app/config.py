@@ -26,6 +26,13 @@ HOST = os.environ.get("SMARTPAY_HOST", "127.0.0.1")
 PORT = int(os.environ.get("SMARTPAY_PORT", "9022"))
 DASHBOARD_PORT = int(os.environ.get("SMARTPAY_DASHBOARD_PORT", "9023"))
 
+# Where the consumer-facing dashboard lives, for links surfaced inside a chat
+# response. The demo runs presenter and browser on the same machine, so the
+# loopback URL is directly clickable; override for a tunnelled dashboard.
+DASHBOARD_URL = os.environ.get(
+    "SMARTPAY_DASHBOARD_URL", f"http://{HOST}:{DASHBOARD_PORT}/demo/alex"
+)
+
 # Public hostname(s) the server is reached on, comma separated. The MCP SDK's
 # DNS-rebinding protection rejects any Host header it has not been told about, and
 # it does not support subdomain wildcards, so each public hostname must be named

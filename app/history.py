@@ -25,8 +25,8 @@ from app import config
 #: Runtime state, not project data -- gitignored, and safe to delete.
 HISTORY_PATH = config.ROOT / ".runtime" / "queries.json"
 
-#: Enough to show what was asked recently without the page becoming a log viewer.
-MAX_ENTRIES = 12
+#: The dashboard remembers the last 5 distinct chats, oldest dropped first.
+MAX_ENTRIES = 5
 
 
 def _now() -> str:
