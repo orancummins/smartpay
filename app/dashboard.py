@@ -113,7 +113,20 @@ def _rate(value: Decimal) -> str:
     """A multiplier as a plain number: 10, not Decimal's 1E+1; 0.5, not 0.50."""
     return f"{value.normalize():f}"
 
-ISSUER_LOGO = {"citi": "/static/logos/citi.svg", "chase": "/static/logos/chase.svg"}
+#: First Hawaiian has no vendored SVG mark; a compact inline monogram stands in so
+#: its accounts card carries a logo like Citi and Chase do.
+_FHB_LOGO = "data:image/svg+xml;base64," + base64.b64encode(
+    b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 66 40">'
+    b'<rect width="66" height="40" rx="7" fill="#0f4c4a"/>'
+    b'<text x="33" y="27" font-family="Georgia,serif" font-size="18" font-weight="700"'
+    b' fill="#ffffff" text-anchor="middle">FHB</text></svg>'
+).decode()
+
+ISSUER_LOGO = {
+    "citi": "/static/logos/citi.svg",
+    "chase": "/static/logos/chase.svg",
+    "first hawaiian": _FHB_LOGO,
+}
 ISSUER_NAME = {"citi": "Citi", "chase": "Chase", "first hawaiian": "First Hawaiian"}
 
 #: Validated categorical palette (see the dataviz reference). Adjacent-pair safe in
@@ -905,26 +918,31 @@ def _shared_data_section(profile: FinancialProfile) -> str:
           <div class="chart-wrap" role="list">{_bar_chart(labelled)}</div>
         </details>
 
-        <h3 class="sub-h">Every transaction shared ({_t(len(txns))})</h3>
-        <p class="sub-lede">Every raw ledger entry Open Finance returned, nothing
-           held back. Rows dimmed and marked <b>Card payment</b>,
-           <b>ATM withdrawal</b> or <b>Income</b> are not counted as spend anywhere
-           on this page -- counting a card repayment as a purchase would double-count
-           money already counted when it was first spent.</p>
-        <div class="table-wrap scroll">
-          <table class="data-table">
-            <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th>
-              <th>Account</th><th>Amount</th></tr></thead>
-            <tbody>{txn_rows}</tbody>
-          </table>
-        </div>
+        <details class="mini-collapse">
+          <summary class="sub-h collapse-summary">Every transaction shared ({_t(len(txns))})</summary>
+          <p class="sub-lede">Every raw ledger entry Open Finance returned, nothing
+             held back. Rows dimmed and marked <b>Card payment</b>,
+             <b>ATM withdrawal</b> or <b>Income</b> are not counted as spend anywhere
+             on this page -- counting a card repayment as a purchase would double-count
+             money already counted when it was first spent.</p>
+          <div class="table-wrap scroll">
+            <table class="data-table">
+              <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th>
+                <th>Account</th><th>Amount</th></tr></thead>
+              <tbody>{txn_rows}</tbody>
+            </table>
+          </div>
+        </details>
 
         <h3 class="sub-h">Your card benefits, rewards, offers &amp; terms</h3>
         <p class="sub-lede">{_t(sum(1 for i in profile.instruments if i.is_card))} cards,
            read live over FDX from
            {_t(len({a.institution for a in profile.accounts}))} institutions.</p>
         {_wallet_carousel(profile)}
-        {_card_detail_tables(profile)}
+        <details class="mini-collapse">
+          <summary class="sub-h collapse-summary">Detailed card benefits &amp; rules</summary>
+          {_card_detail_tables(profile)}
+        </details>
         {_offers_and_terms(profile)}
       </div>
     </section>"""
@@ -1119,7 +1137,7 @@ def _offers_and_terms(profile: FinancialProfile) -> str:
     )
 
     return f"""
-      {f'<h3 class="sub-h">Offers</h3>{offer_lede}<ul class="offer-list">{offer_rows}</ul>' if offer_rows else ''}
+      {f'<details class="mini-collapse"><summary class="sub-h collapse-summary">Merchant offers for you on your Mastercard</summary>{offer_lede}<ul class="offer-list">{offer_rows}</ul></details>' if offer_rows else ''}
       <h3 class="sub-h">Every rule, and where it came from</h3>
       <p class="sub-lede">Read off live issuer and network pages. Nothing here is estimated.</p>
       <table class="data-table">
@@ -1146,17 +1164,26 @@ def _wallet_advice(wallet: dict) -> str:
         </div>
       </header>
       <div class="advice">
-        <div class="advice-headline">
-          <p class="verdict">{_t(rec["headline"])}</p>
-          <div class="advice-figure">
-            <span class="figure" data-count="{delta}">{_money(delta)}</span>
-            <small>net a year, after annual fees</small>
+        <div class="advice-main">
+          <div class="advice-headline">
+            <p class="verdict">{_t(rec["headline"])}</p>
+            <div class="advice-figure">
+              <span class="figure" data-count="{delta}">{_money(delta)}</span>
+              <small>net a year, after annual fees</small>
+            </div>
+          </div>
+          <div class="advice-meta">
+            {_ring(float(delta / current) if current else 0.0, "Share of wallet value gained")}
+            <ul>{drivers}</ul>
           </div>
         </div>
-        <div class="advice-meta">
-          {_ring(float(delta / current) if current else 0.0, "Share of wallet value gained")}
-          <ul>{drivers}</ul>
-        </div>
+        <figure class="advice-card">
+          <img class="whopper-card"
+               src="{_card_art_uri('first_hawaiian_priority_destinations')}"
+               alt="First Hawaiian Priority Destinations World Elite Mastercard"
+               width="400" height="251">
+          <figcaption>First Hawaiian Priority Destinations World Elite Mastercard</figcaption>
+        </figure>
       </div>
     </section>"""
 
@@ -1573,6 +1600,8 @@ input.timeline-slider{background:linear-gradient(90deg,
 
 /* charts */
 .chart-wrap{overflow-x:auto}
+.mini-collapse .chart-wrap{max-width:600px}
+.chart{width:100%;max-width:600px;height:auto}
 .chart{width:100%;min-width:520px;height:auto;display:block}
 .bar-track{fill:var(--line);opacity:.5}
 .bar{transition:opacity .16s}
@@ -1679,7 +1708,16 @@ input.timeline-slider{background:linear-gradient(90deg,
 .closing{background:linear-gradient(150deg,color-mix(in srgb,var(--brand) 7%,var(--surface)),
   color-mix(in srgb,var(--brand-2) 5%,var(--surface)));
   border-color:color-mix(in srgb,var(--brand) 24%,var(--line))}
-.advice{display:grid;grid-template-columns:1.5fr 1fr;gap:28px;align-items:center}
+.advice{display:grid;grid-template-columns:1.4fr .95fr;gap:32px;align-items:center}
+.advice-main{display:grid;gap:22px;min-width:0}
+.advice-card{margin:0;display:flex;flex-direction:column;align-items:center;gap:10px}
+.whopper-card{width:100%;max-width:400px;border-radius:16px;
+  box-shadow:0 22px 55px -18px rgba(15,76,74,.55),0 2px 10px rgba(0,0,0,.18);
+  animation:whopperFloat 6s ease-in-out infinite}
+.advice-card figcaption{font-size:12px;color:var(--ink-3);text-align:center;max-width:340px}
+@keyframes whopperFloat{0%,100%{transform:translateY(0) rotate(-1.2deg)}
+  50%{transform:translateY(-9px) rotate(1.2deg)}}
+@media (prefers-reduced-motion:reduce){.whopper-card{animation:none}}
 .verdict{font-size:20px;font-weight:620;letter-spacing:-.02em;max-width:34ch}
 .advice-figure{margin-top:14px}
 .advice-figure .figure{font-size:44px;font-weight:700;letter-spacing:-.03em;
