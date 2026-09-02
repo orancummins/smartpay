@@ -279,11 +279,23 @@ def _flipper_section(offer_list: list[dict]) -> str:
             round(Decimal(o["progress_spend_amount"]) / Decimal(o["required_spend_amount"]) * 100),
         )
         status = "Ready to redeem" if o["complete"] else "In progress"
+        # Pulses only while unclaimed -- the point is to catch the eye toward
+        # an action still worth taking, not to keep animating a reward already
+        # earned. A card with no headline (a future, differently-intentioned
+        # campaign) still renders correctly with the lead line simply absent.
+        pulsing = not o["complete"]
+        classes = "flipper-card" + (" complete" if o["complete"] else "") + (
+            " pulsing" if pulsing else ""
+        )
+        headline_html = (
+            f'<p class="flipper-headline">{_t(o["headline"])}</p>' if o.get("headline") else ""
+        )
         cards.append(f"""
-        <article class="flipper-card{' complete' if o['complete'] else ''}">
+        <article class="{classes}">
           <div class="flipper-badge"><b>{_money(Decimal(o['cashback_value']))}</b><small>CASH BACK</small></div>
           <div class="flipper-body">
             <span class="flipper-status">{_t(status)}</span>
+            {headline_html}
             <h3>{_t(o['display_name'])}</h3>
             <p>{_t(o['card'])} — funded by Mastercard once you reach the threshold below</p>
             <div class="flipper-progress">
@@ -682,15 +694,16 @@ def _potential_section(
     potential: dict,
     entries: list[dict],
     active_key: str,
-    flipper_list: list[dict] | None = None,
     priceless_offers: list[dict] | None = None,
 ) -> str:
     """Every distinct question SmartPay has been asked, most recent first, each
     collapsed to a one-line summary that expands to the full per-item detail. The
-    Mastercard offers and the ChatGPT-research banner live here too, since they are
-    all forward-looking value tied to what the consumer has been researching.
+    ChatGPT-research banner lives here too, since it is forward-looking value tied
+    to what the consumer has been researching. The Flipper offer does NOT: it is a
+    standing, general campaign the consumer should not have to expand a collapsed
+    panel to notice, so it renders as its own always-visible section instead --
+    see render_alex_dashboard.
     """
-    flipper_list = flipper_list or []
     items_html = "".join(
         _enquiry_item(e, i, e.get("key") == active_key) for i, e in enumerate(entries)
     )
@@ -710,8 +723,7 @@ def _potential_section(
         </svg>
       </button>
       <div class="expand-body" id="future-body" hidden>
-        {_research_banner(flipper_list, priceless_offers or [])}
-        {_flipper_section(flipper_list)}
+        {_research_banner(priceless_offers or [])}
         <div class="chips-row">
           <span class="kv"><b>{_money(potential['wallet_annual'])}</b>
             <small>Recurring wallet opportunity</small></span>
@@ -1188,13 +1200,22 @@ a{color:inherit}
 
 /* Flipper offers -- a large, general Mastercard-funded cash back campaign */
 .flipper-panel .panel-head{margin-bottom:18px}
-.flipper-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.flipper-grid{display:grid;grid-template-columns:1fr;gap:16px}
 .flipper-card{position:relative;display:flex;flex-direction:column;background:var(--surface-2);
-  border:1px solid color-mix(in srgb,var(--brand) 30%,var(--line));border-radius:14px;
-  padding:18px 18px 16px;gap:10px}
+  border:1.5px solid color-mix(in srgb,var(--brand) 30%,var(--line));border-radius:14px;
+  padding:22px 26px;gap:10px}
 .flipper-card.complete{border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
+.flipper-card.pulsing{animation:flippertone 2.6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){
+  .flipper-card.pulsing{animation:none;
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 35%,transparent)}
+}
+@keyframes flippertone{
+  0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--brand) 32%,transparent)}
+  50%{box-shadow:0 0 0 9px transparent}
+}
 .flipper-badge{display:flex;align-items:baseline;gap:5px}
-.flipper-badge b{font-size:28px;font-weight:800;letter-spacing:-.02em;
+.flipper-badge b{font-size:34px;font-weight:800;letter-spacing:-.02em;
   background:linear-gradient(96deg,var(--brand),var(--brand-2));
   -webkit-background-clip:text;background-clip:text;color:transparent}
 .flipper-badge small{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink-3)}
@@ -1203,9 +1224,11 @@ a{color:inherit}
   border-radius:999px;padding:3px 9px}
 .flipper-card.complete .flipper-status{color:var(--good);background:var(--good-bg);
   border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
-.flipper-body h3{font-size:16px;font-weight:660;margin-top:6px}
+.flipper-headline{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.3;
+  margin-top:8px;color:var(--ink)}
+.flipper-body h3{font-size:14px;font-weight:620;color:var(--ink-2);margin-top:6px}
 .flipper-body p{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.4}
-.flipper-progress{display:grid;gap:8px;margin-top:10px}
+.flipper-progress{display:grid;gap:8px;margin-top:12px;max-width:520px}
 .flipper-progress-row{display:grid;gap:4px;font-size:12px;color:var(--ink-2)}
 .flipper-track{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
 .flipper-track i{display:block;height:100%;border-radius:4px;
@@ -1821,15 +1844,14 @@ SCRIPT = """
 """
 
 
-def _research_banner(flipper_list: list[dict], priceless_offers: list[dict]) -> str:
-    """Full-width label framing the offers below as tied to recent ChatGPT research.
-    Only shown when there is at least one offer to frame."""
-    if not flipper_list and not priceless_offers:
+def _research_banner(priceless_offers: list[dict]) -> str:
+    """Full-width label framing the Priceless offers below as tied to recent
+    ChatGPT research. Only shown when there is at least one to frame."""
+    if not priceless_offers:
         return ""
     return """
     <div class="research-banner">
-      Discounts &amp; Priceless experiences, matched to what you've recently
-      researched through ChatGPT
+      Priceless experiences, matched to what you've recently researched through ChatGPT
     </div>"""
 
 
@@ -1913,7 +1935,8 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 </header>
 <main class="wrap">
   {_header(full_name, accumulated, potential["total"])}
-  {_potential_section(potential, entries, active_key, flipper_list, priceless_offers)}
+  {_flipper_section(flipper_list)}
+  {_potential_section(potential, entries, active_key, priceless_offers)}
   {_retrospective_section(retrospective, accumulated, projected)}
   {_priceless_section(priceless_offers)}
   {_shared_data_section(profile)}

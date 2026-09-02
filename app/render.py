@@ -204,6 +204,9 @@ def wallet_markdown(rec: WalletRecommendation, flipper: list[dict] | None = None
     if flipper:
         lines += ["### Mastercard offers for you", ""]
         for f in flipper:
+            if f.get("headline"):
+                lines.append(f"**{f['headline']}**")
+                lines.append("")
             headline = (
                 f"**{f['display_name']}** — {fmt(Decimal(f['cashback_value']))} cash back "
                 f"on {f['card']}"

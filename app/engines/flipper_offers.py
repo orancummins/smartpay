@@ -56,6 +56,7 @@ def _progress(profile: FinancialProfile, offer: FlipperOffer, on: date) -> dict 
     return {
         "offer_id": offer.offer_id,
         "display_name": offer.display_name,
+        "headline": offer.headline,
         "card": instrument.display_name,
         "card_product_id": offer.card_product_id,
         "cashback_value": str(offer.cashback_value),

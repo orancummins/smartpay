@@ -251,7 +251,15 @@ class FlipperOffer(BaseModel):
 
     offer_id: str
     display_name: str
+    #: A short, punchy lead line for the UI -- distinct from display_name (a
+    #: campaign's proper name) and description (the fine print). Optional so
+    #: a future campaign with a different intent (e.g. rewarding an already
+    #: loyal cardholder) is never forced into "use this more" phrasing.
+    headline: str = ""
     #: The one card this campaign targets -- app.models.financial.CardProduct.product_id.
+    #: Aiming a "use this more" campaign at a card the consumer already uses
+    #: heavily would be backwards, so this should always be a card with real,
+    #: low observed usage -- a data-curation rule, not one this model enforces.
     card_product_id: str
     required_transaction_count: int
     required_spend_amount: Decimal

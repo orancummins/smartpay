@@ -4,20 +4,29 @@
 # Mastercard offer -- so it carries SYNTHETIC_DEMO provenance, the same
 # honesty discipline as the tiebreak mechanic it replaces in the dashboard's
 # "Mastercard offers for you" panel.
+#
+# Targets First Hawaiian on purpose: of Alex's real 12-month ledger, it is
+# the one Mastercard with zero usage (see app.engines.flipper_offers and
+# tests/test_engines.py for the check that this stays true). A "use this
+# card more" campaign only makes sense aimed at a card nobody is using --
+# aiming it at Alex's heavily-used Double Cash card would be backwards.
 
 offers:
-  - offer_id: FLIPPER_DOUBLE_CASH_EVERYDAY_SPEND
-    display_name: "Everyday Spend Cashback"
-    card_product_id: citi_double_cash
-    required_transaction_count: 40
-    required_spend_amount: "3000.00"
+  - offer_id: FLIPPER_FIRST_HAWAIIAN_KICKSTART
+    display_name: "Get Started Cashback"
+    headline: "Use this Mastercard more, and we'll give you a whopping cashback!"
+    card_product_id: first_hawaiian_priority_destinations
+    required_transaction_count: 10
+    required_spend_amount: "750.00"
     cashback_value: "500.00"
     window_days: 90
     description: >-
-      Make 40 purchases totalling $3,000 or more on your Citi Double Cash
-      Card within any rolling 90 days and get $500 cash back -- funded by
-      Mastercard, credited once the threshold is reached. Counts every
-      purchase on the card, not one specific merchant or transaction.
+      Make 10 purchases totalling $750 or more on your First Hawaiian
+      Priority Destinations World Elite Mastercard within any rolling 90
+      days and get $500 cash back -- funded by Mastercard, credited once
+      the threshold is reached. Counts every purchase on the card, not one
+      specific merchant or transaction, and only ever aimed at a card that
+      is barely being used.
     provenance:
       status: synthetic_demo
       modelled_on: smartpay_flipper_campaign_builder
@@ -29,4 +38,5 @@ offers:
       note: >-
         A demo Mastercard growth campaign configured through SmartPay's own
         Flipper admin tool, modelled on real card-issuer spend-threshold
-        cash back mechanics. Not a live Mastercard offer.
+        cash back mechanics, targeted at a specific underused card to
+        stimulate usage. Not a live Mastercard offer.

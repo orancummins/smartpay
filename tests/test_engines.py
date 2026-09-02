@@ -12,6 +12,7 @@ from app.engines.rewards import RewardsEngine, available_channels
 from app.engines.rewards_programs import RewardsProgramsEngine
 from app.models.common import Category, PurchaseChannel
 from app.models.planning import PurchaseIntent
+from app.money import fmt
 from app.providers.open_finance import SyntheticAlexProvider
 
 PROFILE = SyntheticAlexProvider().get_profile("alex")
@@ -479,17 +480,36 @@ def test_merchant_scoped_benefit_does_not_leak_to_the_same_category_elsewhere():
 def test_flipper_offer_counts_every_purchase_not_one_transaction():
     """A Flipper campaign is general: every purchase on its target card counts
     toward the threshold, never scoped to one merchant or transaction the way
-    a card-linked Offer is."""
+    a card-linked Offer is. The demo campaign targets First Hawaiian, which is
+    real -- computed from Alex's actual ledger, not a single flagged row."""
     from app.engines import flipper_offers
 
     result = flipper_offers.evaluate(PROFILE)
     assert result, "expected the demo Flipper campaign to evaluate for Alex"
     offer = result[0]
-    assert offer["card"] == "Citi Double Cash Card"
-    # Real progress: at least a handful of Alex's genuine Double Cash purchases
-    # feed the count, not a single flagged transaction.
-    assert offer["progress_transaction_count"] > 1
-    assert Decimal(offer["progress_spend_amount"]) > 0
+    assert offer["card"] == "First Hawaiian Priority Destinations World Elite Mastercard"
+    assert offer["headline"]
+    assert offer["progress_transaction_count"] == 0
+    assert Decimal(offer["progress_spend_amount"]) == 0
+
+
+def test_flipper_offer_only_targets_a_card_alex_barely_uses():
+    """A "use this Mastercard more" campaign aimed at a card Alex already uses
+    heavily would be backwards -- the whole point is to stimulate usage on one
+    that currently has none. Guards the data-curation rule in
+    data/mastercard/flipper_offers.yaml, not just today's specific numbers."""
+    from app.knowledge import flipper_offers as all_flipper_offers
+
+    for offer in all_flipper_offers():
+        instrument = next(
+            i for i in PROFILE.instruments if i.instrument_id == offer.card_product_id
+        )
+        txns = [t for t in PROFILE.spend_transactions if t.account_id == instrument.account_id]
+        total = sum((t.amount for t in txns), Decimal(0))
+        assert total <= Decimal("100"), (
+            f"{offer.offer_id} targets {instrument.display_name}, which has "
+            f"{fmt(total)} of real usage -- too much for a 'use this more' campaign"
+        )
 
 
 def test_flipper_offer_is_absent_for_a_card_alex_does_not_hold():
