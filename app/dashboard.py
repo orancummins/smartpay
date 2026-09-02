@@ -365,27 +365,31 @@ def _priceless_section(offers: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Retrospective slider -- "what could you have saved?" -- expandable, just
-# under the header. Everything under .retro-body is computed and rendered by
-# JS from the embedded JSON: one source of truth (analytics.retrospective_history)
-# instead of a server-rendered default that client-side math could drift from.
+# Timeline slider -- "what could you have saved?" past on the left, a mocked
+# Mastercard CommerceGPT forecast on the right, "today" in the middle. Rows carry
+# their own data-* window info so the client math reads straight from the DOM.
 # ---------------------------------------------------------------------------
 
-def _retrospective_section(history: dict, accumulated: dict) -> str:
-    months = history["months"]
-    n_months = len(months) or 1
+def _retrospective_section(history: dict, accumulated: dict, projected: dict) -> str:
+    past_months = history["months"]
+    future_months = projected["months"]
+    n_past = len(past_months) or 1
+    n_future = len(future_months) or 1
     fee_total = sum((Decimal(f["amount"]) for f in history["fee_avoidable"]), Decimal(0))
-    # Most recent first, matching the recent-activity convention elsewhere on the
-    # page. Both the rendered rows and the JSON payload below iterate this same
-    # sorted list, in the same order, so the Nth <li> always corresponds to the
-    # Nth entry in the JS array -- the slider toggles visibility by index alone.
-    txns = sorted(history["transactions"], key=lambda t: t["date"], reverse=True)
+
+    def past_mi(month: str) -> int:
+        # -1 = most recent past month, -n_past = oldest.
+        return past_months.index(month) - len(past_months) if month in past_months else -n_past
+
+    def future_mi(month: str) -> int:
+        # +1 = next month, +n_future = furthest projected.
+        return future_months.index(month) + 1 if month in future_months else n_future
+
+    past_txns = sorted(history["transactions"], key=lambda t: t["date"], reverse=True)
+    future_txns = sorted(projected["transactions"], key=lambda t: t["date"])
 
     def _mc_chips(t: dict) -> str:
-        """What actually fired on the Mastercard Alex actually used here --
-        shown even when this row is already on its best option, so a
-        Mastercard purchase that earned something real never reads as if
-        nothing happened just because no card switch was needed."""
+        """What actually fired on the Mastercard Alex actually used here."""
         if not t.get("actual_is_mastercard"):
             return ""
         items = (
@@ -399,14 +403,22 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
             return ""
         return f'<ul class="rt-mc">{"".join(f"<li>{i}</li>" for i in items)}</ul>'
 
-    def _row(t: dict) -> str:
+    def _data_attrs(t: dict, side: str, mi: int) -> str:
+        return (
+            f'data-side="{side}" data-mi="{mi}" data-kind="{_t(t["kind"])}" '
+            f'data-guaranteed="{t["guaranteed_delta"]}" '
+            f'data-avoidable="{t.get("avoidable_amount", "0.00")}" '
+            f'data-improved="{"1" if t["improved"] else "0"}" '
+            f'data-habit="{_t(t["habit_label"] or "")}" data-category="{_t(t["category"])}"'
+        )
+
+    def _row(t: dict, mi: int) -> str:
         is_fee = t["kind"] == "fee"
         flagged = is_fee or t["improved"]
         display_amount = t["avoidable_amount"] if is_fee else t["guaranteed_delta"]
         category_label = "Late fee" if is_fee else _label(t["category"])
         change_line = (
-            f'<span class="rt-change">{_t(t["habit_label"])}</span>'
-            if t["habit_label"] else ""
+            f'<span class="rt-change">{_t(t["habit_label"])}</span>' if t["habit_label"] else ""
         )
         mc_chips = _mc_chips(t)
         classes = (
@@ -414,7 +426,7 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
             + (" mc-lit" if mc_chips else "")
         )
         return f"""
-      <li class="{classes}" data-month="{_t(t['month'])}" data-guaranteed="{t['guaranteed_delta']}">
+      <li class="{classes}" {_data_attrs(t, "past", mi)}>
         <span class="rt-date">{_t(t['date'][5:])}</span>
         <span class="rt-merchant">{_t(t['description'].title())}</span>
         <span class="rt-category">{category_label}</span>
@@ -424,28 +436,33 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
         {mc_chips}
       </li>"""
 
-    txn_rows = "".join(_row(t) for t in txns)
+    def _future_row(t: dict, mi: int) -> str:
+        change_line = (
+            f'<span class="rt-change">{_t(t["habit_label"])}</span>' if t["habit_label"] else ""
+        )
+        classes = "retro-txn projected" + (" improved" if t["improved"] else "")
+        return f"""
+      <li class="{classes}" {_data_attrs(t, "future", mi)}>
+        <span class="rt-date">{_t(t['date'][:7])}</span>
+        <span class="rt-merchant">{_t(t['description'].title())}</span>
+        <span class="rt-category">{_label(t['category'])}</span>
+        <span class="rt-card">{_t(t['best_card'])}</span>
+        <span class="rt-delta">{_money(t['guaranteed_delta']) if t['improved'] else '—'}</span>
+        {change_line}
+      </li>"""
 
-    payload = json.dumps({
-        "months": months,
-        "transactions": [
-            {
-                "kind": t["kind"],
-                "month": t["month"],
-                "guaranteed_delta": t["guaranteed_delta"],
-                "estimated_delta": t["estimated_delta"],
-                "avoidable_amount": t.get("avoidable_amount", "0.00"),
-                "category": t["category"],
-                "improved": t["improved"],
-                "habit_label": t["habit_label"],
-            }
-            for t in txns
-        ],
-    })
-    # A merchant/description string ending up containing "</script>" would close
-    # the tag early; escaping the slash is the standard guard for JSON embedded
-    # in a script tag.
-    payload = payload.replace("</", "<\\/")
+    past_rows = "".join(_row(t, past_mi(t["month"])) for t in past_txns)
+    future_rows = "".join(_future_row(t, future_mi(t["month"])) for t in future_txns)
+
+    # Only window sizes travel as JSON now; every per-row number lives on the row
+    # itself as data-*, so the slider math reads straight from the DOM.
+    payload = json.dumps({"past_months": n_past, "future_months": n_future})
+
+    fee_note = (
+        f'''<small class="retro-fee-total" id="retro-fee-total-wrap">
+           + <span id="retro-fee-total">{_money(fee_total)}</span> in late fees you could
+           have avoided with autopay</small>''' if history["fee_avoidable"] else ''
+    )
 
     return f"""
     <section class="panel expandable retro" aria-labelledby="retro-h">
@@ -453,8 +470,9 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
               aria-controls="retro-body">
         <div class="expand-toggle-text">
           <h2 id="retro-h">What could you have saved?</h2>
-          <p>Drag back through the last {_t(n_months)} months to see the total, and
-             exactly which habits would have to change to reach it.</p>
+          <p>Rewind through your history on the left, or let Mastercard CommerceGPT
+             project the next {_t(n_future)} months on the right — and see the uplift
+             from paying smarter, either way.</p>
         </div>
         <span class="expand-figure">{_money(accumulated['guaranteed'])}</span>
         <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
@@ -463,37 +481,61 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
         </svg>
       </button>
       <div class="expand-body" id="retro-body" hidden>
-        <noscript><p class="sub-lede">Enable JavaScript to use the savings slider.</p></noscript>
+        <noscript><p class="sub-lede">Enable JavaScript to use the timeline slider.</p></noscript>
 
-        <div class="retro-slider-row">
-          <label for="retro-slider" class="retro-slider-label">
-            Months of adoption: <b id="retro-slider-value">{_t(n_months)}</b> of {_t(n_months)}
-          </label>
-          <input type="range" min="1" max="{_t(n_months)}" value="{_t(n_months)}"
-                 id="retro-slider" class="retro-slider">
+        <div class="timeline" id="timeline">
+          <div class="timeline-head">
+            <span class="tl-end past">{_t(n_past)} months of history</span>
+            <span class="tl-now">Today</span>
+            <span class="tl-end future">CommerceGPT · next {_t(n_future)} months</span>
+          </div>
+          <input type="range" min="-{_t(n_past)}" max="{_t(n_future)}" value="0" step="1"
+                 id="retro-slider" class="retro-slider timeline-slider"
+                 aria-label="Scrub between spending history and CommerceGPT forecast">
+          <div class="ai-predict" id="ai-predict" aria-hidden="true">
+            <span class="ai-orb"></span>
+            <span class="ai-predict-text">Mastercard CommerceGPT is predicting your next
+              {_t(n_future)} months…</span>
+          </div>
+        </div>
+
+        <div class="tl-figures">
+          <div class="tl-fig past" id="lookback-fig">
+            <span class="tl-fig-tag">Looking back</span>
+            <span class="figure" id="retro-total">{_money(accumulated['guaranteed'])}</span>
+            <small>guaranteed you could have saved, across
+               <span id="retro-txn-count">0</span> transactions{fee_note}</small>
+          </div>
+          <div class="tl-fig future" id="forecast-fig">
+            <span class="tl-fig-tag"><span class="ai-badge">CommerceGPT</span> forecast
+              <span class="ai-mock">mocked</span></span>
+            <span class="figure" id="forecast-total">$0</span>
+            <small>projected uplift over the next <span id="forecast-months">{_t(n_future)}</span>
+               months on <span id="forecast-spend">{_money(projected['projected_spend'])}</span>
+               of predicted spend if you pay smarter</small>
+          </div>
         </div>
 
         <div class="retro-summary" id="retro-summary">
-          <div class="retro-summary-figure">
-            <span class="figure" id="retro-total">{_money(accumulated['guaranteed'])}</span>
-            <small>guaranteed, across <span id="retro-txn-count">0</span> transactions in this
-               window</small>
-            {f'''<small class="retro-fee-total" id="retro-fee-total-wrap">
-               + <span id="retro-fee-total">{_money(fee_total)}</span> in late fees you could
-               have avoided with autopay</small>''' if history["fee_avoidable"] else ''}
-          </div>
           <div>
             <h3 class="sub-h" style="margin-top:0">Spending habits that would need to change</h3>
             <ul class="habit-list" id="habit-list"></ul>
           </div>
         </div>
 
-        <h3 class="sub-h">Annotated transaction history</h3>
-        <p class="sub-lede">Every scored purchase and late fee from the window above. Each
-           highlighted row spells out the specific change -- switch card, switch how you book,
-           or turn on autopay -- and exactly what it would have been worth. Dimmed rows are
-           outside the selected window or were already on the best option.</p>
-        <ul class="retro-txn-list" id="retro-txn-list">{txn_rows}</ul>
+        <h3 class="sub-h">CommerceGPT forecast — your projected spend
+          <span class="ai-mock">simulation</span></h3>
+        <p class="sub-lede">Your recent habits replayed forward and scored the same way SmartPay
+           scores the past. A deterministic mock, not a live prediction — the same "pay with a
+           better card, or book it differently" uplift, applied to what CommerceGPT expects
+           you to spend.</p>
+        <ul class="retro-txn-list future-list pending" id="future-txn-list">{future_rows}</ul>
+
+        <h3 class="sub-h">Your spending history</h3>
+        <p class="sub-lede">Every scored purchase and late fee. Each highlighted row spells out
+           the specific change — switch card, switch how you book, or turn on autopay — and what
+           it would have been worth. Dimmed rows sit outside the selected window.</p>
+        <ul class="retro-txn-list" id="retro-txn-list">{past_rows}</ul>
       </div>
     </section>
     <script type="application/json" id="retro-data">{payload}</script>"""
@@ -1191,6 +1233,49 @@ a{color:inherit}
   border:1px solid color-mix(in srgb,var(--brand) 18%,transparent);
   border-radius:14px;padding:14px 20px;margin:6px 0}
 
+/* history <-> mocked CommerceGPT forecast timeline */
+.timeline{position:relative;margin:4px 0 20px}
+.timeline-head{display:flex;justify-content:space-between;align-items:center;gap:8px;
+  font-size:12px;font-weight:650;color:var(--ink-3);margin-bottom:10px}
+.tl-end.future{color:var(--brand-ink)}
+.tl-now{font-weight:750;color:var(--ink);text-transform:uppercase;letter-spacing:.06em;
+  border:1px solid var(--line);border-radius:999px;padding:2px 10px;background:var(--surface)}
+input.timeline-slider{background:linear-gradient(90deg,
+  color-mix(in srgb,var(--ink-3) 38%,transparent) 0 50%,
+  color-mix(in srgb,var(--brand) 45%,transparent) 50% 100%)}
+.ai-predict{display:none;align-items:center;gap:10px;margin-top:12px;font-size:13px;
+  font-weight:620;color:var(--brand-ink)}
+.ai-predict.on{display:flex}
+.ai-orb{width:16px;height:16px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 30% 30%,var(--brand),var(--brand-2));
+  animation:aipulse 1s ease-out infinite}
+@keyframes aipulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--brand) 45%,transparent)}
+  70%{box-shadow:0 0 0 13px transparent}100%{box-shadow:0 0 0 0 transparent}}
+
+.tl-figures{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+.tl-fig{border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+  display:flex;flex-direction:column;gap:5px;transition:opacity .2s,border-color .2s}
+.tl-fig.future{border-color:color-mix(in srgb,var(--brand) 28%,var(--line))}
+.tl-fig .figure{font-size:30px;font-weight:720;letter-spacing:-.02em}
+.tl-fig.future .figure{background:linear-gradient(96deg,var(--brand),var(--brand-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.tl-fig small{font-size:12.5px;color:var(--ink-3);line-height:1.45}
+.tl-fig-tag{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.timeline.focus-past~.tl-figures .tl-fig.future{opacity:.4}
+.timeline.focus-future~.tl-figures .tl-fig.past{opacity:.4}
+.ai-badge{font-size:10px;font-weight:800;letter-spacing:.04em;color:#fff;
+  background:linear-gradient(96deg,var(--brand),var(--brand-2));border-radius:6px;padding:2px 6px}
+.ai-mock{font-size:10px;font-weight:700;letter-spacing:.03em;color:var(--ink-3);
+  border:1px dashed var(--line);border-radius:6px;padding:1px 6px;text-transform:uppercase}
+.retro-txn.projected{opacity:0;transform:translateY(6px);
+  transition:opacity .35s ease,transform .35s ease}
+.retro-txn.projected.revealed{opacity:1;transform:none}
+.retro-txn.projected.revealed.out-of-window{opacity:.3}
+.retro-txn.projected .rt-delta{color:var(--brand-ink);font-weight:640}
+.future-list .retro-txn.projected.improved{background:color-mix(in srgb,var(--brand) 6%,transparent)}
+@media (max-width:640px){.tl-figures{grid-template-columns:1fr}}
+
 /* generic expandable panel -- retro, enquiries, institutions, shared data all
    use this same toggle/body pair so one delegated click handler covers all of
    them (see the SCRIPT block). */
@@ -1616,61 +1701,99 @@ SCRIPT = """
     }).catch(function(){ /* offline: the click still reflects locally */ });
   });
 
-  // Retrospective slider ("what could you have saved?")
+  // Timeline slider: spending history on the left, a mocked Mastercard
+  // CommerceGPT forecast on the right, "today" in the middle. Every per-row
+  // number lives on the row as data-*, so this reads straight from the DOM.
   var retroSection=document.querySelector('.retro');
   if(retroSection){
-    var dataEl=document.getElementById('retro-data');
-    var DATA = dataEl ? JSON.parse(dataEl.textContent) : {months:[],transactions:[]};
+    var cfgEl=document.getElementById('retro-data');
+    var CFG = cfgEl ? JSON.parse(cfgEl.textContent) : {past_months:1, future_months:1};
     var slider=document.getElementById('retro-slider');
-    var rows=document.querySelectorAll('#retro-txn-list .retro-txn');
+    var timeline=document.getElementById('timeline');
+    var rows=Array.prototype.slice.call(document.querySelectorAll('.retro-txn'));
+    var reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+    var predicted=false;
 
-    function update(monthsBack){
-      var months = DATA.months;
-      var cutoff = Math.max(months.length - monthsBack, 0);
-      var windowMonths = {};
-      months.slice(cutoff).forEach(function(m){ windowMonths[m] = true; });
+    function update(v){
+      var pastWindow = v < 0 ? -v : CFG.past_months;
+      var futureWindow = v > 0 ? v : CFG.future_months;
+      timeline.classList.toggle('focus-past', v < 0);
+      timeline.classList.toggle('focus-future', v > 0);
 
-      var total = 0, count = 0, feeTotal = 0;
-      var habits = {}; // label -> {count, total}
-      DATA.transactions.forEach(function(t, i){
-        var inWindow = !!windowMonths[t.month];
-        var row = rows[i];
-        if(row) row.classList.toggle('out-of-window', !inWindow);
+      var pastTotal=0, pastCount=0, feeTotal=0, futureTotal=0, habits={};
+      rows.forEach(function(row){
+        var mi = parseInt(row.dataset.mi, 10);
+        var side = row.dataset.side;
+        var inWindow = side==='past' ? (-mi <= pastWindow) : (mi <= futureWindow);
+        row.classList.toggle('out-of-window', !inWindow);
         if(!inWindow) return;
-        count++;
-        total += parseFloat(t.guaranteed_delta || 0);
-        if(t.kind === 'fee'){
-          feeTotal += parseFloat(t.avoidable_amount || 0);
-        } else if(t.improved && t.habit_label){
-          var h = habits[t.habit_label] || {count:0, total:0, category:t.category};
-          h.count++; h.total += parseFloat(t.guaranteed_delta || 0);
-          habits[t.habit_label] = h;
+        var g = parseFloat(row.dataset.guaranteed || 0);
+        if(side==='past'){
+          pastCount++;
+          if(row.dataset.kind==='fee'){ feeTotal += parseFloat(row.dataset.avoidable||0); }
+          else {
+            pastTotal += g;
+            if(row.dataset.improved==='1' && row.dataset.habit){
+              var h = habits[row.dataset.habit] || {count:0,total:0};
+              h.count++; h.total += g; habits[row.dataset.habit]=h;
+            }
+          }
+        } else {
+          futureTotal += g;
         }
       });
 
-      document.getElementById('retro-slider-value').textContent = monthsBack;
-      document.getElementById('retro-txn-count').textContent = count;
-      document.getElementById('retro-total').textContent = money(total);
-      var feeEl = document.getElementById('retro-fee-total');
-      if(feeEl) feeEl.textContent = money(feeTotal);
+      document.getElementById('retro-txn-count').textContent = pastCount;
+      document.getElementById('retro-total').textContent = money(pastTotal);
+      var feeEl=document.getElementById('retro-fee-total'); if(feeEl) feeEl.textContent = money(feeTotal);
+      document.getElementById('forecast-months').textContent = (v>0 ? futureWindow : CFG.future_months);
+      retroSection.dataset.futureTotal = futureTotal;
+      // The forecast figure is driven by the predict animation the first time;
+      // after that (or under reduced motion) the slider keeps it in sync.
+      if(predicted || reduce) document.getElementById('forecast-total').textContent = money(futureTotal);
 
-      var list = document.getElementById('habit-list');
-      var ranked = Object.keys(habits).map(function(label){
-        return {label:label, count:habits[label].count, total:habits[label].total,
-                category:habits[label].category};
-      }).sort(function(a,b){ return b.total - a.total; }).slice(0, 8);
+      var list=document.getElementById('habit-list');
+      var ranked=Object.keys(habits).map(function(l){return {label:l,count:habits[l].count,total:habits[l].total};})
+        .sort(function(a,b){return b.total-a.total;}).slice(0,8);
       list.innerHTML = ranked.length ? ranked.map(function(h){
-        return '<li class="habit-row">'
-          + '<span class="habit-label">'+esc(h.label)+'</span>'
-          + '<span class="habit-count">'+h.count+'&times;</span>'
-          + '<span class="habit-value">'+money(h.total)+'</span>'
-          + '</li>';
-      }).join('') : '<li class="habit-row empty">No habit change needed in this window --'
-        + ' every purchase was already on its best card.</li>';
+        return '<li class="habit-row"><span class="habit-label">'+esc(h.label)+'</span>'
+          +'<span class="habit-count">'+h.count+'&times;</span>'
+          +'<span class="habit-value">'+money(h.total)+'</span></li>';
+      }).join('') : '<li class="habit-row empty">No habit change needed in this window.</li>';
     }
 
-    slider.addEventListener('input', function(){ update(parseInt(slider.value, 10)); });
-    update(parseInt(slider.value, 10));
+    function predictFuture(){
+      if(predicted) return; predicted=true;
+      var futureRows = rows.filter(function(r){return r.dataset.side==='future';});
+      var target = parseFloat(retroSection.dataset.futureTotal || 0);
+      var forecastEl = document.getElementById('forecast-total');
+      if(reduce){
+        futureRows.forEach(function(r){ r.classList.add('revealed'); });
+        forecastEl.textContent = money(target);
+        return;
+      }
+      var ai=document.getElementById('ai-predict');
+      if(ai) ai.classList.add('on');
+      futureRows.forEach(function(r,i){ setTimeout(function(){ r.classList.add('revealed'); }, 80 + i*20); });
+      var t0=null, dur=1500;
+      (function step(ts){ if(!t0)t0=ts; var p=Math.min((ts-t0)/dur,1), e=1-Math.pow(1-p,3);
+        forecastEl.textContent = money(target*e);
+        if(p<1){ requestAnimationFrame(step); }
+        else { forecastEl.textContent = money(target); if(ai) ai.classList.remove('on'); }
+      })();
+    }
+
+    slider.addEventListener('input', function(){ update(parseInt(slider.value,10)); });
+    update(0);
+    if(reduce){ predictFuture(); }
+    // Kick off the CommerceGPT prediction the first time the panel is opened.
+    var toggle=document.getElementById('retro-toggle');
+    if(toggle){ toggle.addEventListener('click', function(){
+      setTimeout(function(){
+        var body=document.getElementById('retro-body');
+        if(body && !body.hidden) predictFuture();
+      }, 280);
+    }); }
   }
 })();
 """
@@ -1723,6 +1846,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 
     accumulated = analytics.accumulated_savings(profile)
     retrospective = analytics.retrospective_history(profile)
+    projected = analytics.projected_history(profile)
     potential = analytics.potential_future_savings(
         Decimal(wallet["recommendation"]["net_annual_incremental_value"])
     )
@@ -1771,7 +1895,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
   {_research_banner(active_coupons, priceless_offers)}
   {_coupons_section(active_coupons)}
   {_priceless_section(priceless_offers)}
-  {_retrospective_section(retrospective, accumulated)}
+  {_retrospective_section(retrospective, accumulated, projected)}
   {_shared_data_section(profile)}
   {_benefits_section(profile)}
   {_wallet_advice(wallet)}

@@ -366,6 +366,67 @@ def retrospective_history(profile: FinancialProfile) -> dict:
     }
 
 
+def projected_history(profile: FinancialProfile) -> dict:
+    """Mocked Mastercard CommerceGPT forward projection.
+
+    Replays the last 12 months of real spend into the next 12 (same merchants and
+    cadence), grown by the same modest category assumptions the demo CommerceGPT
+    adapter uses, and scores the identical "what if you paid smarter" uplift
+    retrospective_history finds looking back. A deterministic simulation, never a
+    live prediction -- labelled as such everywhere it surfaces.
+    """
+    from datetime import timedelta
+
+    from app.models.common import Category
+    from app.providers.future_spend import DEFAULT_GROWTH, GROWTH
+
+    records = _purchase_records(profile)
+    shift = timedelta(days=364)  # ~1 year, preserving weekday/cadence alignment
+
+    transactions: list[dict] = []
+    total_guaranteed = ZERO
+    total_estimated = ZERO
+    projected_spend = ZERO
+    for r in records:
+        growth = GROWTH.get(Category(r["category"]), DEFAULT_GROWTH)
+        future_date = r["date"] + shift
+        amount = quantize(r["amount"] * growth)
+        guaranteed = quantize(r["guaranteed_delta"] * growth) if r["guaranteed_delta"] > ZERO else ZERO
+        estimated = quantize(r["estimated_delta"] * growth)
+        improved = guaranteed > ZERO
+        projected_spend += amount
+        total_guaranteed += guaranteed
+        total_estimated += estimated
+        transactions.append({
+            "kind": "projected",
+            "date": future_date.isoformat(),
+            "month": future_date.strftime("%Y-%m"),
+            "merchant": r["merchant"],
+            "description": r["description"],
+            "category": r["category"],
+            "amount": str(amount),
+            "actual_card": r["actual_card"],
+            "actual_is_mastercard": r["actual_is_mastercard"],
+            "best_card": r["best_card"],
+            "guaranteed_delta": str(guaranteed),
+            "estimated_delta": str(estimated),
+            "improved": improved,
+            "habit_label": _habit_change_label(
+                r["category"], r["actual_card"], r["best_card"],
+                r["actual_channel"], r["best_channel"],
+            ) if improved else None,
+        })
+
+    months = sorted({t["month"] for t in transactions})
+    return {
+        "months": months,
+        "transactions": transactions,
+        "total_guaranteed": str(quantize(total_guaranteed)),
+        "total_estimated": str(quantize(total_estimated)),
+        "projected_spend": str(quantize(projected_spend)),
+    }
+
+
 def _load_ledger() -> dict[str, dict]:
     try:
         data = json.loads(LEDGER_PATH.read_text())
