@@ -130,6 +130,17 @@ ISSUER_LOGO = {
 }
 ISSUER_NAME = {"citi": "Citi", "chase": "Chase", "first hawaiian": "First Hawaiian"}
 
+#: Disney+ wordmark for the Minna subscription offer -- an inline mark in the
+#: brand's navy/blue so no external asset is fetched.
+_DISNEY_PLUS_LOGO = "data:image/svg+xml;base64," + base64.b64encode(
+    b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 40">'
+    b'<rect width="128" height="40" rx="7" fill="#0c1450"/>'
+    b'<text x="14" y="28" font-family="Georgia,\'Times New Roman\',serif" font-size="21"'
+    b' font-style="italic" font-weight="700" fill="#ffffff">Disney</text>'
+    b'<text x="104" y="20" font-family="Arial,Helvetica,sans-serif" font-size="16"'
+    b' font-weight="700" fill="#3fc9ff">+</text></svg>'
+).decode()
+
 #: Validated categorical palette (see the dataviz reference). Adjacent-pair safe in
 #: both modes; three light slots sit under 3:1, so every bar carries a direct label.
 SERIES_LIGHT = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100",
@@ -1267,6 +1278,14 @@ def _subscriptions_section(data: dict) -> str:
         </svg>
       </button>
       <div class="expand-body" id="subs-body" hidden>
+        <div class="sub-promo">
+          <img class="sub-promo-logo" src="{_DISNEY_PLUS_LOGO}" alt="Disney+">
+          <div class="sub-promo-copy">
+            <h4>Subscribe to Disney+ with a Mastercard</h4>
+            <p>Get <b>50% off for 6 months</b> when you pay with any Mastercard.</p>
+          </div>
+          <span class="sub-promo-cta">Mastercard offer</span>
+        </div>
         <div class="chips-row">
           <span class="kv"><b id="subs-monthly">{_money(data['monthly_total'])}</b><small>Total per month</small></span>
           <span class="kv"><b id="subs-annual">{_money(data['annual_total'])}</b><small>Per year</small></span>
@@ -1849,7 +1868,21 @@ input.timeline-slider{background:linear-gradient(90deg,
 .sub-cancel{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
   border-radius:999px;height:34px;padding:0 16px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .sub-cancel:hover{color:var(--brand-ink);border-color:var(--brand-ink)}
-@media (max-width:640px){.sub-row{grid-template-columns:1fr auto}.sub-cancel{grid-column:1/-1}}
+.sub-promo{display:flex;align-items:center;gap:16px;margin:2px 0 16px;
+  border:1px solid color-mix(in srgb,var(--brand) 30%,var(--line));border-radius:14px;
+  padding:14px 16px;background:linear-gradient(96deg,
+    color-mix(in srgb,var(--brand) 7%,var(--surface)),
+    color-mix(in srgb,var(--brand-2) 7%,var(--surface)))}
+.sub-promo-logo{width:104px;height:33px;border-radius:6px;flex:none;object-fit:contain}
+.sub-promo-copy{flex:1;min-width:0}
+.sub-promo-copy h4{font-size:15px;font-weight:660;margin:0}
+.sub-promo-copy p{font-size:13px;color:var(--ink-2);margin:3px 0 0}
+.sub-promo-copy b{color:var(--brand-ink)}
+.sub-promo-cta{flex:none;font-size:11px;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:#fff;border-radius:999px;padding:6px 12px;
+  background:linear-gradient(96deg,var(--brand),var(--brand-2))}
+@media (max-width:640px){.sub-row{grid-template-columns:1fr auto}.sub-cancel{grid-column:1/-1}
+  .sub-promo{flex-wrap:wrap}.sub-promo-cta{order:3}}
 
 footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:13px;display:grid;gap:6px}
 
