@@ -130,15 +130,10 @@ ISSUER_LOGO = {
 }
 ISSUER_NAME = {"citi": "Citi", "chase": "Chase", "first hawaiian": "First Hawaiian"}
 
-#: Disney+ wordmark for the Minna subscription offer -- an inline mark in the
-#: brand's navy/blue so no external asset is fetched.
-_DISNEY_PLUS_LOGO = "data:image/svg+xml;base64," + base64.b64encode(
-    b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 40">'
-    b'<rect width="128" height="40" rx="7" fill="#0c1450"/>'
-    b'<text x="14" y="28" font-family="Georgia,\'Times New Roman\',serif" font-size="21"'
-    b' font-style="italic" font-weight="700" fill="#ffffff">Disney</text>'
-    b'<text x="104" y="20" font-family="Arial,Helvetica,sans-serif" font-size="16"'
-    b' font-weight="700" fill="#3fc9ff">+</text></svg>'
+#: Disney+ wordmark for the Minna subscription offer, inlined from the vendored
+#: brand asset so no external request is made.
+_DISNEY_PLUS_LOGO = "data:image/png;base64," + base64.b64encode(
+    (config.ROOT / "app" / "static" / "logos" / "disney-plus.png").read_bytes()
 ).decode()
 
 #: Validated categorical palette (see the dataviz reference). Adjacent-pair safe in
@@ -1873,7 +1868,7 @@ input.timeline-slider{background:linear-gradient(90deg,
   padding:14px 16px;background:linear-gradient(96deg,
     color-mix(in srgb,var(--brand) 7%,var(--surface)),
     color-mix(in srgb,var(--brand-2) 7%,var(--surface)))}
-.sub-promo-logo{width:104px;height:33px;border-radius:6px;flex:none;object-fit:contain}
+.sub-promo-logo{width:116px;height:auto;flex:none;object-fit:contain}
 .sub-promo-copy{flex:1;min-width:0}
 .sub-promo-copy h4{font-size:15px;font-weight:660;margin:0}
 .sub-promo-copy p{font-size:13px;color:var(--ink-2);margin:3px 0 0}
