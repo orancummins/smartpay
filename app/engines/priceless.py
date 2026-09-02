@@ -87,6 +87,13 @@ def _rank_key(experience: PricelessExperience, home_city: str | None = None):
     )
 
 
+def _links_to_offer(experience: PricelessExperience) -> bool:
+    """True only when we hold a real, offer-specific Priceless URL -- a
+    /product/ page rather than a generic collection or search filter -- so
+    every surfaced card links straight to the actual offer."""
+    return "/product/" in (experience.source_url or "")
+
+
 def _to_dict(experience: PricelessExperience, why: str) -> dict:
     return {
         "experience_id": experience.experience_id,
@@ -130,6 +137,8 @@ def historic_matches(
     by_category: dict[Category, list[PricelessExperience]] = collections.defaultdict(list)
     for experience in all_priceless():
         if not _eligible(experience, tiers, on):
+            continue
+        if not _links_to_offer(experience):
             continue
         for category in experience.affinity_categories:
             if counts[category] >= MIN_SUPPORTING_TRANSACTIONS:

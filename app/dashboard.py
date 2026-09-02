@@ -424,7 +424,7 @@ def _priceless_card(offer: dict) -> str:
         <p class="priceless-why">{_t(offer.get('why', ''))}</p>
         <div class="priceless-foot">
           <span class="priceless-price">{price}</span>
-          {f'<a href="{_t(offer["source_url"])}" target="_blank" rel="noopener noreferrer">Priceless.com</a>' if offer.get('source_url') else ''}
+          {f'<a href="{_t(offer["source_url"])}" target="_blank" rel="noopener noreferrer">View on Priceless.com</a>' if offer.get('source_url') else ''}
         </div>
       </div>
     </article>"""
