@@ -43,6 +43,8 @@ CARD_ACCOUNTS = {
     "acct_chase_cfu": "chase_freedom_unlimited",
     # Recently added by Alex; held but not yet used, so it carries no spend history.
     "acct_fhb_priority": "first_hawaiian_priority_destinations",
+    # Opened for a Marriott stay that never happened; sits in the wallet unused.
+    "acct_chase_marriott": "chase_marriott_bonvoy_boundless",
 }
 
 ACCOUNTS = [
@@ -63,6 +65,9 @@ ACCOUNTS = [
     {"account_id": "acct_fhb_priority", "institution": "first hawaiian",
      "display_name": "First Hawaiian Priority Destinations World Elite Mastercard",
      "account_type": AccountType.CREDIT_CARD, "mask": "4028"},
+    {"account_id": "acct_chase_marriott", "institution": "chase",
+     "display_name": "Marriott Bonvoy Boundless Credit Card",
+     "account_type": AccountType.CREDIT_CARD, "mask": "6671"},
 ]
 
 # Merchant catalogue: (merchant_key, display name, low, high)

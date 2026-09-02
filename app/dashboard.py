@@ -28,9 +28,9 @@ from functools import lru_cache
 
 from app import config
 from app.knowledge import benefits
-from app.models.common import RewardCurrency
+from app.models.common import Network, RewardCurrency
 from app.models.financial import Account, FinancialProfile, PaymentInstrument
-from app.money import fmt
+from app.money import fmt, quantize
 from app.render import upside_sentence
 
 CARD_ART = {
@@ -40,6 +40,7 @@ CARD_ART = {
     "chase_sapphire_preferred": "/static/cards/chase_sapphire_preferred.png",
     "chase_freedom_unlimited": "/static/cards/chase_freedom_unlimited.png",
     "first_hawaiian_priority_destinations": "/static/cards/first_hawaiian_priority_destinations.webp",
+    "chase_marriott_bonvoy_boundless": "/static/cards/chase_marriott_bonvoy_boundless.png",
 }
 
 #: How a real historical purchase could be optimised, by mechanism -- so the
@@ -1150,7 +1151,63 @@ def _offers_and_terms(profile: FinancialProfile) -> str:
 # "And one more thing..." -- always last
 # ---------------------------------------------------------------------------
 
-def _wallet_advice(wallet: dict) -> str:
+def _idle_network_cards(profile: FinancialProfile, wallet: dict, network: Network) -> list[dict]:
+    """Cards on the given network with zero spend transactions in the last 12
+    months, each paired with the real dollar saving from dropping it -- the
+    same "drop this card" candidate the wallet optimiser already scored, never
+    a re-derived or approximate figure.
+    """
+    spent_on = {t.account_id for t in profile.spend_transactions}
+    candidates = {c["product_id"]: c for c in wallet["recommendation"]["candidates"]}
+    current = Decimal(wallet["recommendation"]["current_wallet_value"])
+
+    idle = []
+    for inst in profile.instruments:
+        product = inst.product
+        if product is None or product.network is not network:
+            continue
+        if inst.account_id in spent_on:
+            continue
+        candidate = candidates.get(inst.instrument_id)
+        if candidate is None:
+            continue
+        idle.append({
+            "product_id": product.product_id,
+            "display_name": product.display_name,
+            "annual_fee": product.annual_fee,
+            "savings": quantize(Decimal(candidate["net_annual_value"]) - current),
+        })
+    return idle
+
+
+def _idle_card_callout(profile: FinancialProfile, wallet: dict) -> str:
+    """A never-used Visa card is the clearest kind of wallet waste: no rewards
+    history to weigh against the fee, so the annual fee is pure cost. Surfaced
+    on its own, separate from the wallet's single best overall recommendation
+    above, which is free to point at a different card entirely.
+    """
+    idle_visa = _idle_network_cards(profile, wallet, Network.VISA)
+    if not idle_visa:
+        return ""
+    card = max(idle_visa, key=lambda c: c["savings"])
+    return f"""
+      <div class="idle-card-callout">
+        <img src="{_card_art_uri(card['product_id'])}" alt="{_t(card['display_name'])}"
+             width="140" height="88" loading="lazy">
+        <div>
+          <p class="idle-card-kicker">Sitting unused &middot; Visa</p>
+          <p class="idle-card-name">{_t(card['display_name'])}</p>
+          <p class="idle-card-copy">
+            No purchases on this card in the last 12 months, so its
+            {_money(card['annual_fee'])} annual fee is pure cost. Dropping it
+            keeps an extra <b>{_money(card['savings'])} a year</b>, with no
+            rewards lost — there is no usage history on it to lose.
+          </p>
+        </div>
+      </div>"""
+
+
+def _wallet_advice(wallet: dict, profile: FinancialProfile) -> str:
     rec = wallet["recommendation"]
     delta = Decimal(rec["net_annual_incremental_value"])
     current = Decimal(rec["current_wallet_value"])
@@ -1185,6 +1242,7 @@ def _wallet_advice(wallet: dict) -> str:
           <figcaption>First Hawaiian Priority Destinations World Elite Mastercard</figcaption>
         </figure>
       </div>
+      {_idle_card_callout(profile, wallet)}
     </section>"""
 
 
@@ -1728,6 +1786,17 @@ input.timeline-slider{background:linear-gradient(90deg,
 .advice-meta ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .advice-meta li{font-size:13.5px;color:var(--ink-2)}
 
+.idle-card-callout{display:flex;gap:18px;align-items:center;margin-top:26px;
+  padding-top:24px;border-top:1px solid color-mix(in srgb,var(--brand) 20%,var(--line))}
+.idle-card-callout img{width:140px;height:88px;object-fit:contain;border-radius:10px;
+  box-shadow:0 10px 24px -12px rgba(15,76,74,.45);flex:none}
+.idle-card-kicker{font-size:11.5px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--warn)}
+.idle-card-name{font-size:16px;font-weight:660;margin-top:3px}
+.idle-card-copy{font-size:13.5px;color:var(--ink-2);margin-top:5px;max-width:60ch;line-height:1.5}
+.idle-card-copy b{color:var(--ink)}
+@media (max-width:640px){.idle-card-callout{flex-direction:column;align-items:flex-start}}
+
 footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:13px;display:grid;gap:6px}
 
 /* motion */
@@ -2095,7 +2164,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
   {_retrospective_section(retrospective, accumulated, projected)}
   {_priceless_section(priceless_offers)}
   {_shared_data_section(profile)}
-  {_wallet_advice(wallet)}
+  {_wallet_advice(wallet, profile)}
   <footer class="foot">
     <p>Alex Morgan is a synthetic demo consumer. Accounts, cards and transaction
        history are generated for demonstration and are not real financial data.</p>

@@ -110,6 +110,7 @@ class RewardCurrency(StrEnum):
     #: Generic issuer loyalty points, used by sourced issuer rewards programs whose
     #: specific currency the catalogue does not name.
     LOYALTY_POINTS = "loyalty_points"
+    MARRIOTT_BONVOY_POINTS = "marriott_bonvoy_points"
 
 
 class Network(StrEnum):

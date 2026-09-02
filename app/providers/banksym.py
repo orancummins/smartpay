@@ -55,6 +55,7 @@ MASK_TO_PRODUCT = {
     "5518": "chase_sapphire_preferred",
     "2094": "chase_freedom_unlimited",
     "4028": "first_hawaiian_priority_destinations",
+    "6671": "chase_marriott_bonvoy_boundless",
 }
 
 #: FDX accountType -> SmartPay account type.

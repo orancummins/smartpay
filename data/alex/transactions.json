@@ -61,6 +61,13 @@
       "display_name": "First Hawaiian Priority Destinations World Elite Mastercard",
       "account_type": "credit_card",
       "mask": "4028"
+    },
+    {
+      "account_id": "acct_chase_marriott",
+      "institution": "chase",
+      "display_name": "Marriott Bonvoy Boundless Credit Card",
+      "account_type": "credit_card",
+      "mask": "6671"
     }
   ],
   "card_accounts": {
@@ -69,7 +76,8 @@
     "acct_citi_aa": "citi_aa_platinum_select",
     "acct_chase_csp": "chase_sapphire_preferred",
     "acct_chase_cfu": "chase_freedom_unlimited",
-    "acct_fhb_priority": "first_hawaiian_priority_destinations"
+    "acct_fhb_priority": "first_hawaiian_priority_destinations",
+    "acct_chase_marriott": "chase_marriott_bonvoy_boundless"
   },
   "transactions": [
     {

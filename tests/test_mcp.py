@@ -201,11 +201,11 @@ def test_demo_alex_renders_the_dashboard():
     assert "via Citi Travel" in html
     assert "First checked bag free on American Airlines" in html
 
-    # All six cards, each with its art inlined as a data URI so it renders
+    # All seven cards, each with its art inlined as a data URI so it renders
     # without a mounted /static route.
-    assert html.count('class="wallet-card art-') == 6
-    assert html.count('<div class="card-art">') == 6
-    assert html.count('src="data:image/') >= 6
+    assert html.count('class="wallet-card art-') == 7
+    assert html.count('<div class="card-art">') == 7
+    assert html.count('src="data:image/') >= 7
     for card in ("Citi Strata Premier Card", "Chase Sapphire Preferred",
                  "First Hawaiian Priority Destinations World Elite Mastercard"):
         assert card in html
@@ -321,7 +321,7 @@ def test_demo_alex_json_remains_available_for_debugging():
     payload = json.loads(response.body)
 
     assert payload["customer_id"] == "alex"
-    assert len(payload["accounts"]) == 8
+    assert len(payload["accounts"]) == 9
 
 
 def test_smartpay_admin_renders_analytics_and_flipper_campaigns():
@@ -356,7 +356,7 @@ def test_card_art_carries_no_placeholder_cardholder_name():
 
     cards = Path(__file__).resolve().parent.parent / "app" / "static" / "cards"
     shipped = [p for p in cards.glob("*") if p.suffix in {".png", ".webp"}]
-    assert len(shipped) == 6
+    assert len(shipped) == 7
 
     originals = cards / "_original"
     assert originals.is_dir(), "originals must be kept so the edit stays reversible"

@@ -79,6 +79,10 @@ REWARD_VALUATIONS: dict[str, Decimal] = {
     "american_airlines_miles": Decimal("0.01"),
     "usd_cashback": Decimal("1.00"),
     "loyalty_points": Decimal("0.01"),
+    # Marriott Bonvoy points trade well below the generic 1.0 cent loyalty-points
+    # default -- third-party valuation guides (e.g. The Points Guy) put them at
+    # roughly 0.7-0.9 cents in 2026; 0.8 cents is the commonly cited midpoint.
+    "marriott_bonvoy_points": Decimal("0.008"),
 }
 
 VALUATION_NOTE = (

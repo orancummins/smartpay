@@ -38,6 +38,7 @@ CREDIT_LIMITS: dict[str, Decimal] = {
     "chase_sapphire_preferred": Decimal("16000"),
     "chase_freedom_unlimited": Decimal("11000"),
     "first_hawaiian_priority_destinations": Decimal("12000"),
+    "chase_marriott_bonvoy_boundless": Decimal("10000"),
 }
 
 _ACCOUNTS = TypeAdapter(list[Account])

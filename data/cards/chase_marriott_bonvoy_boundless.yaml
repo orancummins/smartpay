@@ -1,0 +1,41 @@
+product_id: chase_marriott_bonvoy_boundless
+display_name: Marriott Bonvoy Boundless Credit Card
+issuer: chase
+network: visa
+network_tier: none
+annual_fee: "95.00"
+base_currency: marriott_bonvoy_points
+base_multiplier: "2"
+
+soft_benefits:
+  - "6x Marriott Bonvoy points at over 7,000 participating Marriott hotels"
+  - "Annual free night award (up to 35,000 points) each account anniversary"
+  - "Complimentary Marriott Bonvoy Silver Elite status"
+
+evidence: &marriott_ev
+  evidence_type: issuer_reward_rule
+  source_name: Chase
+  source_url: "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless"
+  verified_at: 2026-09-02
+  confidence: authoritative
+  note: "Chase Marriott Bonvoy Boundless published earn rates and annual fee, verified directly against chase.com."
+
+late_payment_fee: "40.00"
+late_payment_fee_evidence:
+  evidence_type: issuer_reward_rule
+  source_name: Chase
+  source_url: "https://sites.chase.com/services/creatives/pricingandterms.html/content/dam/pricingandterms/LGC61498.html"
+  verified_at: 2026-09-02
+  confidence: authoritative
+  note: "Late payment fee disclosed in Chase's published Pricing & Terms document, verified via the Chase Freedom Unlimited card. Chase's standard penalty fee structure applies across its consumer card products."
+
+reward_rules:
+  - rule_id: MARRIOTT_DINING_GAS_SUPERMARKET_3X
+    categories: [restaurant, gas, supermarket]
+    multiplier: "3"
+    reward_currency: marriott_bonvoy_points
+    description: >-
+      3x combined at restaurants, gas stations and supermarkets (Chase caps
+      this bonus at the first $6,000/yr combined spend; SmartPay does not
+      model spend-based rate caps, so this rule applies uncapped)
+    evidence: *marriott_ev

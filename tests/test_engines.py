@@ -339,7 +339,8 @@ def test_wallet_annual_fee_deduction():
     wallet = [i for i in PROFILE.instruments if i.is_card]
 
     fees = optimizer._annual_fees(wallet)
-    assert fees == Decimal("388.00")  # 95 Strata + 99 AAdvantage + 95 CSP + 99 First Hawaiian
+    # 95 Strata + 99 AAdvantage + 95 CSP + 99 First Hawaiian + 95 Marriott
+    assert fees == Decimal("483.00")
 
     net, rewards, credits, _ = optimizer._value_of(wallet, forecast)
     assert net == rewards + credits - fees, "annual fees are not deducted"
