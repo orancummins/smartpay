@@ -336,7 +336,7 @@ def test_smartpay_admin_renders_analytics_and_flipper_campaigns():
     assert "Gemini" in html
     assert "Grok" in html
     assert "Flipper" in html
-    assert "Campaign studio" in html
+    assert "Campaigns" in html
     assert "Competitor card portfolio" in html
     # Default campaign type: a flat cash back reward for a spend threshold
     # reached across any purchases -- never a percentage tied to one merchant.

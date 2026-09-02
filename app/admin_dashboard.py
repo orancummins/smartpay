@@ -33,7 +33,7 @@ _PAGE = """<!doctype html>
 <body>
 <div class="app">
   <header class="topbar"><div class="brand"><span class="brand-mark"><i></i></span>SmartPay <span class="admin-label">ADMIN</span></div><div class="top-actions"><span class="live"><i></i> Live portfolio data</span><span class="avatar">MC</span></div></header>
-  <nav class="nav" aria-label="Admin sections"><button class="nav-button active" data-view="dashboard">Dashboard</button><button class="nav-button" data-view="campaigns">Campaign studio</button></nav>
+  <nav class="nav" aria-label="Admin sections"><button class="nav-button active" data-view="dashboard">Dashboard</button><button class="nav-button" data-view="campaigns">Campaigns</button></nav>
   <main class="shell">
     <section class="view active" id="dashboard">
       <div class="page-head"><div><p class="eyebrow">Mastercard internal</p><h1>Portfolio performance</h1><p>SmartPay adoption, engagement and conversion across the AI ecosystem.</p></div><select class="date-control" aria-label="Reporting period"><option>Last 12 months</option><option>Last 90 days</option><option>Year to date</option></select></div>
