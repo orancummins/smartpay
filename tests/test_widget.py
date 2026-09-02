@@ -117,8 +117,9 @@ def test_the_resource_is_a_complete_document():
     ).contents[0].text
     assert html.startswith("<!doctype html>")
     assert html.rstrip().endswith("</html>")
-    # Large, because the card art is inlined; guard against it ballooning further.
-    assert len(html) < 600_000
+    # Large, because the card art and the small Priceless widget photos are
+    # both inlined; guard against it ballooning further.
+    assert len(html) < 900_000
 
 
 def test_asset_inlining_is_missing_file_tolerant():

@@ -285,6 +285,61 @@ def _coupons_section(coupon_list: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Priceless -- real Mastercard Priceless catalogue offers, matched to what
+# Alex's real spend history already supports. See app.engines.priceless for
+# the matching/ranking rules and app.priceless_images for where the photos
+# come from.
+# ---------------------------------------------------------------------------
+
+def _priceless_card(offer: dict) -> str:
+    # Defensive .get() throughout: an enquiry recorded before this richer
+    # shape existed only ever carried {experience_id, title, why}, and old
+    # history entries on disk must still render, not crash the page.
+    category = offer.get("category") or "Experience"
+    price = (
+        f"From {_money(offer['price_amount'])}" if offer.get("price_amount") else "Priceless"
+    )
+    if offer.get("image_url"):
+        visual = f'<div class="priceless-img" style="background-image:url(\'{_t(offer["image_url"])}\')"></div>'
+    else:
+        # No verified photo for this one -- a plain category plate, never a
+        # fabricated or mismatched image standing in for a real place.
+        visual = f'<div class="priceless-img placeholder"><span>{_t(category)}</span></div>'
+    city_line = f" · {_t(offer['city'])}" if offer.get("city") else ""
+    return f"""
+    <article class="priceless-card">
+      {visual}
+      <div class="priceless-body">
+        <span class="priceless-cat">{_t(category)}{city_line}</span>
+        <h4>{_t(offer.get('title', 'Priceless experience'))}</h4>
+        <p class="priceless-why">{_t(offer.get('why', ''))}</p>
+        <div class="priceless-foot">
+          <span class="priceless-price">{price}</span>
+          {f'<a href="{_t(offer["source_url"])}" target="_blank" rel="noopener noreferrer">Priceless.com</a>' if offer.get('source_url') else ''}
+        </div>
+      </div>
+    </article>"""
+
+
+def _priceless_section(offers: list[dict]) -> str:
+    if not offers:
+        return ""
+    cards = "".join(_priceless_card(o) for o in offers)
+    return f"""
+    <section class="panel priceless-panel" aria-labelledby="priceless-h">
+      <header class="panel-head">
+        <div>
+          <h2 id="priceless-h">Priceless offers for you</h2>
+          <p>Real Mastercard Priceless experiences, matched to what Alex's own last 12
+             months of spend already shows a taste for — what you could have availed
+             of, not a generic catalogue browse.</p>
+        </div>
+      </header>
+      <div class="priceless-grid">{cards}</div>
+    </section>"""
+
+
+# ---------------------------------------------------------------------------
 # Retrospective slider -- "what could you have saved?" -- expandable, just
 # under the header. Everything under .retro-body is computed and rendered by
 # JS from the embedded JSON: one source of truth (analytics.retrospective_history)
@@ -477,6 +532,13 @@ def _enquiry_item(entry: dict, index: int, is_active: bool) -> str:
     body_id = f"enq-body-{index}"
     if plan:
         plan_rows, _peak = _plan_rows(plan)
+        priceless_offers = plan.get("priceless") or []
+        priceless_block = (
+            f"""
+          <h3 class="sub-h">Priceless offers for this trip</h3>
+          <div class="priceless-grid">{"".join(_priceless_card(o) for o in priceless_offers)}</div>"""
+            if priceless_offers else ""
+        )
         detail = f"""
           <div class="chips-row">
             <span class="kv"><b>{_money(plan["incremental_guaranteed"])}</b>
@@ -486,7 +548,8 @@ def _enquiry_item(entry: dict, index: int, is_active: bool) -> str:
             <span class="kv"><b>{int(plan["incremental_points"]):,}</b>
               <small>Extra points on this enquiry</small></span>
           </div>
-          <div class="plan">{plan_rows}</div>"""
+          <div class="plan">{plan_rows}</div>
+          {priceless_block}"""
     else:
         detail = '<p class="sub-lede">No detail recorded for this enquiry.</p>'
     return f"""
@@ -1056,6 +1119,29 @@ a{color:inherit}
 .coupon-clip.on span::before{content:'✓ '}
 .coupon.clipped{opacity:.75}
 
+/* Priceless -- real catalogue offers matched to Alex's history */
+.priceless-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.priceless-card{border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  background:var(--surface-2);display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s}
+.priceless-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.priceless-img{aspect-ratio:16/10;background-size:cover;background-position:center;
+  background-color:var(--line)}
+.priceless-img.placeholder{display:grid;place-items:center;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 12%,var(--surface)),
+  color-mix(in srgb,var(--brand-2) 10%,var(--surface)))}
+.priceless-img.placeholder span{font-size:12px;font-weight:650;letter-spacing:.04em;
+  color:var(--ink-3);text-transform:uppercase}
+.priceless-body{padding:14px 15px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.priceless-cat{font-size:11px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--brand-ink)}
+.priceless-body h4{font-size:15px;font-weight:660;line-height:1.3}
+.priceless-why{font-size:12.5px;color:var(--ink-3);line-height:1.4}
+.priceless-foot{margin-top:auto;padding-top:8px;display:flex;justify-content:space-between;
+  align-items:center;font-size:12px}
+.priceless-price{font-weight:650;color:var(--ink-2)}
+.priceless-foot a{color:var(--brand-ink);font-weight:600;text-decoration:none}
+.priceless-foot a:hover{text-decoration:underline}
+
 /* generic expandable panel -- retro, enquiries, institutions, shared data all
    use this same toggle/body pair so one delegated click handler covers all of
    them (see the SCRIPT block). */
@@ -1532,11 +1618,13 @@ SCRIPT = """
 def render_alex_dashboard(profile: FinancialProfile) -> str:
     """Render the full dashboard for the demo consumer."""
     from app import analytics, coupons, history
+    from app.engines import priceless as priceless_engine
     from app.services.smartpay import SmartPayService
 
     service = SmartPayService()
     wallet = service.optimise_wallet()["data"]
     active_coupons = coupons.load_active(date.today())
+    priceless_offers = priceless_engine.historic_matches(profile)
 
     entries = history.load()
     if entries and entries[0].get("plan"):
@@ -1604,6 +1692,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 <main class="wrap">
   {_header(full_name, accumulated, potential["total"])}
   {_coupons_section(active_coupons)}
+  {_priceless_section(priceless_offers)}
   {_retrospective_section(retrospective, accumulated)}
   {_potential_section(potential, entries, active_key)}
   {_institutions_section(profile)}

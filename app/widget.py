@@ -44,6 +44,24 @@ def data_uri(relative: str) -> str:
 
 
 @lru_cache(maxsize=1)
+def _priceless_assets() -> dict[str, str]:
+    """The small "-widget" copies app.priceless_images writes at cache time --
+    resizing happens once, offline, there; this just inlines whichever of
+    those already-small files exist, keyed by filename so the JS can look one
+    up straight from an offer's own image_url without knowing the cache
+    layout. Never the full-size dashboard copies: those alone would multiply
+    this component's payload several times over.
+    """
+    folder = STATIC / "priceless"
+    if not folder.exists():
+        return {}
+    return {
+        path.name: data_uri(f"priceless/{path.name}")
+        for path in sorted(folder.glob("*-widget.jpg"))
+    }
+
+
+@lru_cache(maxsize=1)
 def _assets() -> str:
     """Every image the component can show, keyed the way the plan data names them."""
     return json.dumps(
@@ -62,6 +80,7 @@ def _assets() -> str:
                 "Chase Sapphire Preferred": data_uri("cards/chase_sapphire_preferred.png"),
                 "Chase Freedom Unlimited": data_uri("cards/chase_freedom_unlimited.png"),
             },
+            "priceless": _priceless_assets(),
         }
     )
 
@@ -161,6 +180,15 @@ button.primary{background:linear-gradient(96deg,var(--brand),var(--brand-2));
   background:var(--surface-2)}
 .cards img{width:100%;height:auto;display:block;padding:9px}
 .cards figcaption{font-size:11px;padding:0 9px 9px;color:var(--ink-2);line-height:1.35}
+.priceless{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.priceless figure{margin:0;border:1px solid var(--line);border-radius:11px;overflow:hidden;
+  background:var(--surface-2)}
+.priceless img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.priceless .ph{width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;
+  background:var(--line);color:var(--ink-3);font-size:11px;text-align:center;padding:8px}
+.priceless figcaption{padding:8px 9px 9px}
+.priceless .p-title{font-size:12px;font-weight:650;line-height:1.3}
+.priceless .p-why{font-size:11px;color:var(--ink-2);line-height:1.35;margin-top:2px}
 .empty{padding:22px;text-align:center;color:var(--ink-3);font-size:13px}
 """
 
@@ -264,9 +292,24 @@ function renderDetail(plan) {
     .map((n) => `<figure><img src="${ASSETS.cards[n]}" alt="${esc(n)}">
       <figcaption>${esc(n)}</figcaption></figure>`).join('');
 
+  // Every entry traces to Alex's real spend history or this trip's own
+  // destination (see app.engines.priceless) -- never asserted with no reason,
+  // so the "why" is shown here, not just the title and photo.
+  const priceless = (plan.priceless || []).map((p) => {
+    const img = p.widget_image_filename && ASSETS.priceless[p.widget_image_filename]
+      ? `<img src="${ASSETS.priceless[p.widget_image_filename]}" alt="${esc(p.title)}">`
+      : `<div class="ph">${esc(p.category || 'Priceless')}</div>`;
+    return `<figure>${img}<figcaption>
+        <div class="p-title">${esc(p.title)}</div>
+        <div class="p-why">${esc(p.why)}</div>
+      </figcaption></figure>`;
+  }).join('');
+
   return `
     ${bars ? `<h3>Where the guaranteed value comes from</h3><div class="bars">${bars}</div>` : ''}
-    ${cards ? `<h3>Cards SmartPay recommends here</h3><div class="cards">${cards}</div>` : ''}`;
+    ${cards ? `<h3>Cards SmartPay recommends here</h3><div class="cards">${cards}</div>` : ''}
+    ${priceless ? `<h3>Priceless experiences for this trip</h3>
+      <div class="priceless">${priceless}</div>` : ''}`;
 }
 
 function render() {

@@ -133,7 +133,7 @@ class PricelessExperience(BaseModel):
 
     experience_id: str
     title: str
-    city: str
+    city: str | None = None
     #: Spend categories in the consumer's history that make this relevant. This is
     #: what turns "you like golf" from an assertion into an inference.
     affinity_categories: list[Category] = Field(default_factory=list)
@@ -142,6 +142,30 @@ class PricelessExperience(BaseModel):
     available_to: date | None = None
     description: str = ""
     evidence: Evidence
+
+    #: The rest of these come from the real Priceless catalogue
+    #: (data/priceless_catalogue_smartpay), not the older hand-written demo
+    #: records -- present for those, empty/None for the two legacy entries.
+    catalogue_category: str = ""
+    catalogue_confidence: str = ""
+    offer_type: str = ""
+    price_amount: Decimal | None = None
+    currency: str = "USD"
+    tags: list[str] = Field(default_factory=list)
+    #: The catalogue's own page for this offer. Kept distinct from
+    #: evidence.source_url, which may point at the catalogue file itself when
+    #: this is null or unreliable (see app.priceless_images).
+    source_url: str | None = None
+    #: Populated by app.priceless_images once an image has actually been
+    #: fetched and cached -- relative to app/static/, same convention as
+    #: CARD_ART. None means "no verified image available", never a broken link.
+    image_relative_path: str | None = None
+    #: The small (max 420px) copy app.priceless_images writes alongside the
+    #: full-size one -- the ChatGPT-embedded widget's sandboxed iframe can
+    #: only inline self-contained data URIs, so it reads this instead of
+    #: image_relative_path to keep the tool response payload small.
+    widget_image_relative_path: str | None = None
+    image_attribution: str | None = None
 
     def is_available(self, on: date) -> bool:
         if self.available_from and on < self.available_from:

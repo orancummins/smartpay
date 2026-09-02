@@ -1,0 +1,142 @@
+{
+  "american-football": {
+    "attribution": "Representative image via Wikipedia (American football)",
+    "fetched_at": "2026-09-02T08:50:20Z",
+    "relative_path": "priceless/american-football.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Larry_Fitzgerald_catches_TD_at_2009_Pro_Bowl.jpg/960px-Larry_Fitzgerald_catches_TD_at_2009_Pro_Bowl.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "American football",
+    "widget_relative_path": "priceless/american-football-widget.jpg",
+    "wikipedia_page": "American football"
+  },
+  "baseball": {
+    "attribution": "Representative image via Wikipedia (Baseball)",
+    "fetched_at": "2026-09-02T08:50:19Z",
+    "relative_path": "priceless/baseball.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Tommy_Milone_gives_up_a_home_run_to_Mike_Trout_on_May_21%2C_2017.jpg/960px-Tommy_Milone_gives_up_a_home_run_to_Mike_Trout_on_May_21%2C_2017.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Baseball",
+    "widget_relative_path": "priceless/baseball-widget.jpg",
+    "wikipedia_page": "Baseball"
+  },
+  "chelsea-film-festival": {
+    "attribution": "Photo via Wikipedia (Chelsea Film Festival)",
+    "fetched_at": "2026-09-02T08:51:43Z",
+    "relative_path": "priceless/chelsea-film-festival.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Chelsea_Film_Festival_Official_Logo.jpg/960px-Chelsea_Film_Festival_Official_Logo.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Chelsea Film Festival",
+    "widget_relative_path": "priceless/chelsea-film-festival-widget.jpg",
+    "wikipedia_page": "Chelsea Film Festival"
+  },
+  "dante-bar": {
+    "attribution": "Photo via Wikipedia (Dante (bar))",
+    "fetched_at": "2026-09-02T08:51:49Z",
+    "relative_path": "priceless/dante-bar.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Dante%2C_Greenwich_Village.jpg/960px-Dante%2C_Greenwich_Village.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Dante (bar)",
+    "widget_relative_path": "priceless/dante-bar-widget.jpg",
+    "wikipedia_page": "Dante (bar)"
+  },
+  "fenway-park": {
+    "attribution": "Photo via Wikipedia (Fenway Park)",
+    "fetched_at": "2026-09-02T08:50:21Z",
+    "relative_path": "priceless/fenway-park.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/131023-F-PR861-033_Hanscom_participates_in_World_Series_pregame_events.jpg/960px-131023-F-PR861-033_Hanscom_participates_in_World_Series_pregame_events.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Fenway Park",
+    "widget_relative_path": "priceless/fenway-park-widget.jpg",
+    "wikipedia_page": "Fenway Park"
+  },
+  "fine-dining": {
+    "attribution": "Representative image via Wikipedia (Fine dining)",
+    "fetched_at": "2026-09-02T08:50:17Z",
+    "relative_path": "priceless/fine-dining.JPG",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/The_Fat_Duck_restaurant_dining_room.JPG/960px-The_Fat_Duck_restaurant_dining_room.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Fine dining",
+    "widget_relative_path": "priceless/fine-dining-widget.jpg",
+    "wikipedia_page": "Fine dining"
+  },
+  "golf-course": {
+    "attribution": "Representative image via Wikipedia (Golf course)",
+    "fetched_at": "2026-09-02T08:51:38Z",
+    "relative_path": "priceless/golf-course.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Golf_course_Golfplatz_Wittenbeck_Mecklenburg_Ostsee_Baltic_Sea_Germany.jpg/960px-Golf_course_Golfplatz_Wittenbeck_Mecklenburg_Ostsee_Baltic_Sea_Germany.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Golf course",
+    "widget_relative_path": "priceless/golf-course-widget.jpg",
+    "wikipedia_page": "Golf course"
+  },
+  "marathon": {
+    "attribution": "Representative image via Wikipedia (Marathon)",
+    "fetched_at": "2026-09-02T08:50:18Z",
+    "relative_path": "priceless/marathon.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/BSK_CSOB_MARATON046_%2833791445325%29.jpg/960px-BSK_CSOB_MARATON046_%2833791445325%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Marathon",
+    "widget_relative_path": "priceless/marathon-widget.jpg",
+    "wikipedia_page": "Marathon"
+  },
+  "museum": {
+    "attribution": "Representative image via Wikipedia (Museum)",
+    "fetched_at": "2026-09-02T08:50:16Z",
+    "relative_path": "priceless/museum.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Museo_Chileno_de_Arte_Precolombino_-_2020_-_10.jpg/960px-Museo_Chileno_de_Arte_Precolombino_-_2020_-_10.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Museum",
+    "widget_relative_path": "priceless/museum-widget.jpg",
+    "wikipedia_page": "Museum"
+  },
+  "theatre": {
+    "attribution": "Representative image via Wikipedia (Theatre)",
+    "fetched_at": "2026-09-02T08:50:17Z",
+    "relative_path": "priceless/theatre.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Bernhardt_Hamlet2.jpg/960px-Bernhardt_Hamlet2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Theatre",
+    "widget_relative_path": "priceless/theatre-widget.jpg",
+    "wikipedia_page": "Theatre"
+  },
+  "tourism": {
+    "attribution": "Representative image via Wikipedia (Tourism)",
+    "fetched_at": "2026-09-02T08:51:44Z",
+    "relative_path": "priceless/tourism.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/New_york_times_square-terabass.jpg/960px-New_york_times_square-terabass.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Tourism",
+    "widget_relative_path": "priceless/tourism-widget.jpg",
+    "wikipedia_page": "Tourism"
+  },
+  "tournament-players-club": {
+    "attribution": "Photo via Wikipedia (Tournament Players Club)",
+    "fetched_at": "2026-09-02T08:51:47Z",
+    "relative_path": "priceless/tournament-players-club.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/TournamentPlayersClub_Sawgrass17thHole.jpg/960px-TournamentPlayersClub_Sawgrass17thHole.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Tournament Players Club",
+    "widget_relative_path": "priceless/tournament-players-club-widget.jpg",
+    "wikipedia_page": "Tournament Players Club"
+  },
+  "vintage-clothing": {
+    "attribution": "Representative image via Wikipedia (Vintage clothing)",
+    "fetched_at": "2026-09-02T08:50:19Z",
+    "relative_path": "priceless/vintage-clothing.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Vintage_shops%2C_Dublin.jpg/960px-Vintage_shops%2C_Dublin.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "status": "cached",
+    "subject": "Vintage clothing",
+    "widget_relative_path": "priceless/vintage-clothing-widget.jpg",
+    "wikipedia_page": "Vintage clothing"
+  },
+  "yoga": {
+    "attribution": "Representative image via Wikipedia (Yoga)",
+    "fetched_at": "2026-09-02T08:50:18Z",
+    "relative_path": "priceless/yoga.jpg",
+    "source_image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Shiva_Bangalore.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "status": "cached",
+    "subject": "Yoga",
+    "widget_relative_path": "priceless/yoga-widget.jpg",
+    "wikipedia_page": "Yoga"
+  }
+}

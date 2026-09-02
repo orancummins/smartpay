@@ -18,7 +18,8 @@ from app.engines.baseline import BaselineEngine
 from app.engines.optimizer import ItineraryOptimizer, PurchaseOptimizer
 from app.engines.categorizer import categorise
 from app.engines.wallet_optimizer import WalletOptimizer
-from app.knowledge import card_products, priceless as all_priceless
+from app.engines import priceless as priceless_engine
+from app.knowledge import card_products
 from app.models.common import Category, RewardCurrency
 from app.models.planning import Itinerary, ItineraryItem, PaymentPlan, PurchaseIntent
 from app.money import ZERO, fmt, quantize
@@ -358,33 +359,8 @@ class SmartPayService:
     # -- helpers -------------------------------------------------------------
 
     def _priceless_for(self, profile, itinerary: Itinerary) -> list[dict]:
-        """PLAN.MD section 12. Surfaced only when the history actually supports it."""
-        tiers = {i.product.network_tier for i in profile.instruments if i.product}
-        spend: dict[Category, Decimal] = collections.defaultdict(Decimal)
-        counts: dict[Category, int] = collections.Counter()
-        for txn in profile.spend_transactions:
-            spend[txn.category] += txn.amount
-            counts[txn.category] += 1
-
-        on = itinerary.start_date or date.today()
-        out = []
-        for experience in all_priceless():
-            if not experience.is_available(on):
-                continue
-            if experience.network_tiers and not (tiers & set(experience.network_tiers)):
-                continue
-            evidence = [
-                (c, counts[c], spend[c]) for c in experience.affinity_categories if counts[c] >= 8
-            ]
-            if not evidence:
-                continue
-            category, n, total = evidence[0]
-            out.append({
-                "experience_id": experience.experience_id,
-                "title": experience.title,
-                "why": (
-                    f"inferred from {n} {category.value} transactions totalling "
-                    f"{fmt(total)} in Alex's history"
-                ),
-            })
-        return out
+        """PLAN.MD section 12. Surfaced only when the history actually supports it,
+        or when this itinerary's own destination matches a real catalogue offer
+        there -- see app.engines.priceless for the matching and ranking rules.
+        """
+        return priceless_engine.itinerary_matches(profile, itinerary)

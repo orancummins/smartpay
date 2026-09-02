@@ -90,12 +90,24 @@ def test_guaranteed_and_estimated_are_never_merged(service):
 
 
 def test_priceless_is_inferred_from_history_not_asserted(service):
+    """Every match traces to something real: either Alex's own spend history,
+    or the itinerary's own destination -- never asserted with no reason."""
     priceless = service.optimise_itinerary()["data"]["priceless"]
     assert priceless
     for p in priceless:
-        assert "inferred from" in p["why"]
+        assert "inferred from" in p["why"] or "relevant to this trip's destination" in p["why"]
     md = service.optimise_itinerary()["display_markdown"]
     assert "excluded from the savings figures" in md
+
+
+def test_priceless_leads_with_the_itinerary_destination(service):
+    """The known Disney scenario flies into Orlando; the real catalogue has a
+    real Orlando golf offer, so it must be the top Priceless match -- not
+    buried under Alex's unrelated historic-spend affinities.
+    """
+    priceless = service.optimise_itinerary()["data"]["priceless"]
+    assert priceless[0]["city"] == "Orlando"
+    assert "this trip's destination" in priceless[0]["why"]
 
 
 def test_wallet_optimisation_matches_golden(service):

@@ -25,6 +25,13 @@ def _channel_note(option) -> str:
     return "" if option.channel.value == "merchant_direct" else f" ({option.channel_label})"
 
 
+def _priceless_price(experience: dict) -> str:
+    amount = experience.get("price_amount")
+    if amount is None:
+        return ""
+    return f"from {fmt(Decimal(amount))}"
+
+
 def upside_sentence(
     recommended_name: str,
     baseline_name: str,
@@ -164,7 +171,10 @@ def payment_plan_markdown(plan: PaymentPlan, apply_offers: dict[str, dict] | Non
     if plan.priceless:
         lines += ["", "### Additional experience value", ""]
         for experience in plan.priceless:
-            lines.append(f"- {experience['title']} — {experience['why']}")
+            detail_bits = [b for b in (experience.get("city"), _priceless_price(experience)) if b]
+            detail = f" ({', '.join(detail_bits)})" if detail_bits else ""
+            link = f" [Priceless.com]({experience['source_url']})" if experience.get("source_url") else ""
+            lines.append(f"- **{experience['title']}**{detail} — {experience['why']}{link}")
         lines.append("")
         lines.append(
             "_Experience value is listed separately and is deliberately excluded "
