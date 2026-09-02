@@ -1,0 +1,1161 @@
+{
+  "provenance": {
+    "source_name": "Mastercard Offers platform (2026 Q3 US catalogue)",
+    "market": "US",
+    "note": "Real Mastercard card-linked offer records. Offer terms are copied from the source export; the validity window is extended to the demo period so sourced offers apply to the rehearsed October 2026 trip."
+  },
+  "offers": [
+    {
+      "offer_id": "85f52342-efa3-4543-a3a6-dab173a85dbb",
+      "merchant_name": "ALOHA AMIGO ISLAND MEXICAN CANTINA",
+      "merchants": [
+        "aloha_amigo_island_mexican_cantina"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at ALOHA AMIGO ISLAND MEXICAN CANTINA, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "d42f4ede-d148-4613-9045-458591acc169",
+      "merchant_name": "ALOHA AMIGO ISLAND MEXICAN CANTINA",
+      "merchants": [
+        "aloha_amigo_island_mexican_cantina"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at ALOHA AMIGO ISLAND MEXICAN CANTINA, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "1777c7db-a2ca-46d3-a315-3bde765e6b58",
+      "merchant_name": "bbq CHICKEN WAIKIKI",
+      "merchants": [
+        "bbq_chicken_waikiki"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 10,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "10% back at bbq CHICKEN WAIKIKI, redeemable up to 10 times."
+    },
+    {
+      "offer_id": "2fed1a4b-ef9c-4d4b-9134-483b8ebc6a9f",
+      "merchant_name": "bbq CHICKEN WAIKIKI",
+      "merchants": [
+        "bbq_chicken_waikiki"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 10,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "10% back at bbq CHICKEN WAIKIKI, redeemable up to 10 times."
+    },
+    {
+      "offer_id": "668f25c3-c4a9-4f55-9d71-f122cdb83b8e",
+      "merchant_name": "Bloomingdale's",
+      "merchants": [
+        "bloomingdale_s"
+      ],
+      "minimum_spend": "350.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Bloomingdale's on spend of $350 or more, redeemable once."
+    },
+    {
+      "offer_id": "769bf571-bada-4f35-a906-2412e5ed9e88",
+      "merchant_name": "Bloomingdale's",
+      "merchants": [
+        "bloomingdale_s"
+      ],
+      "minimum_spend": "350.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Bloomingdale's on spend of $350 or more, redeemable once."
+    },
+    {
+      "offer_id": "5004e45b-dfe7-4b1f-b999-314f931c4b37",
+      "merchant_name": "Brooks Brothers",
+      "merchants": [
+        "brooks_brothers"
+      ],
+      "minimum_spend": "250.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Brooks Brothers on spend of $250 or more, redeemable once."
+    },
+    {
+      "offer_id": "8a50273b-8576-4988-9a2e-0aaf78fa5689",
+      "merchant_name": "Brooks Brothers",
+      "merchants": [
+        "brooks_brothers"
+      ],
+      "minimum_spend": "250.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Brooks Brothers on spend of $250 or more, redeemable once."
+    },
+    {
+      "offer_id": "b5e2f900-7b6a-4069-9d78-f875ae9791d6",
+      "merchant_name": "Brooks Brothers Online",
+      "merchants": [
+        "brooks_brothers_online"
+      ],
+      "minimum_spend": "250.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Brooks Brothers Online on spend of $250 or more, redeemable once."
+    },
+    {
+      "offer_id": "5a53f2d0-cdb7-4123-a6af-66f122807e4b",
+      "merchant_name": "Caesars",
+      "merchants": [
+        "caesars"
+      ],
+      "minimum_spend": "300.00",
+      "benefit_type": "statement_credit",
+      "value": "30.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$30 back at Caesars on spend of $300 or more, redeemable once."
+    },
+    {
+      "offer_id": "ac2eb230-f36f-4bef-891e-bfd385a9ed49",
+      "merchant_name": "Caesars",
+      "merchants": [
+        "caesars"
+      ],
+      "minimum_spend": "300.00",
+      "benefit_type": "statement_credit",
+      "value": "30.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$30 back at Caesars on spend of $300 or more, redeemable once."
+    },
+    {
+      "offer_id": "7783b204-5a71-4dfc-87c8-8e70704d7f2a",
+      "merchant_name": "DFS United States",
+      "merchants": [
+        "dfs_united_states"
+      ],
+      "minimum_spend": "150.00",
+      "benefit_type": "statement_credit",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$10 back at DFS United States on spend of $150 or more, redeemable once."
+    },
+    {
+      "offer_id": "4767ae36-106e-47c3-86d6-8fc83e8f9b34",
+      "merchant_name": "Eating House 1849 by Roy Yamaguchi",
+      "merchants": [
+        "eating_house_1849_by_roy_yamaguchi"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "10% back at Eating House 1849 by Roy Yamaguchi, redeemable once."
+    },
+    {
+      "offer_id": "d086191a-9e1c-44b8-a40b-6c531d543528",
+      "merchant_name": "Eating House 1849 by Roy Yamaguchi",
+      "merchants": [
+        "eating_house_1849_by_roy_yamaguchi"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "10% back at Eating House 1849 by Roy Yamaguchi, redeemable once."
+    },
+    {
+      "offer_id": "c67870bd-9c1d-45e7-bccb-37af3447595f",
+      "merchant_name": "EL CIELO",
+      "merchants": [
+        "el_cielo"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at EL CIELO, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "dbc3b78e-cda5-4727-bbb9-b2110e24ea46",
+      "merchant_name": "EL CIELO",
+      "merchants": [
+        "el_cielo"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at EL CIELO, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "f0d188fd-e961-48e0-a9a7-35eebedb4cd5",
+      "merchant_name": "Empire State Building",
+      "merchants": [
+        "empire_state_building"
+      ],
+      "minimum_spend": "70.00",
+      "benefit_type": "statement_credit",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$10 back at Empire State Building on spend of $70 or more, redeemable once."
+    },
+    {
+      "offer_id": "f674601a-0656-4cd5-b7a0-9caf4cc94187",
+      "merchant_name": "Empire State Building",
+      "merchants": [
+        "empire_state_building"
+      ],
+      "minimum_spend": "70.00",
+      "benefit_type": "statement_credit",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$10 back at Empire State Building on spend of $70 or more, redeemable once."
+    },
+    {
+      "offer_id": "64e6f5b6-7812-45c6-a188-0e6f6e219ced",
+      "merchant_name": "Happy Wahine Hawaii",
+      "merchants": [
+        "happy_wahine_hawaii"
+      ],
+      "minimum_spend": "250.00",
+      "benefit_type": "discount_pct",
+      "value": "15.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "15% back at Happy Wahine Hawaii on spend of $250 or more, redeemable once."
+    },
+    {
+      "offer_id": "a29b8340-c222-4f2f-ad35-144793c9a83d",
+      "merchant_name": "Happy Wahine Hawaii",
+      "merchants": [
+        "happy_wahine_hawaii"
+      ],
+      "minimum_spend": "250.00",
+      "benefit_type": "discount_pct",
+      "value": "15.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "15% back at Happy Wahine Hawaii on spend of $250 or more, redeemable once."
+    },
+    {
+      "offer_id": "0f7d40a3-eca1-4ca6-a883-7f42a9007e53",
+      "merchant_name": "Heavenly Island Lifestyle Hawaii Kai",
+      "merchants": [
+        "heavenly_island_lifestyle_hawaii_kai"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Heavenly Island Lifestyle Hawaii Kai, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "ee8bf1d9-8eaa-42a4-b319-9d0c64ac17af",
+      "merchant_name": "Heavenly Island Lifestyle Hawaii Kai",
+      "merchants": [
+        "heavenly_island_lifestyle_hawaii_kai"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Heavenly Island Lifestyle Hawaii Kai, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "3dbccddd-9d48-41b2-9dc7-1cfdfd2033b4",
+      "merchant_name": "Heavenly Island Lifestyle Waikiki",
+      "merchants": [
+        "heavenly_island_lifestyle_waikiki"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Heavenly Island Lifestyle Waikiki, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "f7dc379e-f59d-48e0-8dbc-cf2dd8aebf6f",
+      "merchant_name": "Heavenly Island Lifestyle Waikiki",
+      "merchants": [
+        "heavenly_island_lifestyle_waikiki"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Heavenly Island Lifestyle Waikiki, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "6f79f858-0791-46b5-995c-f5b38d8c69ac",
+      "merchant_name": "iFLY",
+      "merchants": [
+        "ifly"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "3.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "3% back at iFLY, redeemable once."
+    },
+    {
+      "offer_id": "dd058b19-11d8-454e-9457-0fd9fae52c26",
+      "merchant_name": "iFLY",
+      "merchants": [
+        "ifly"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "3.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "3% back at iFLY, redeemable once."
+    },
+    {
+      "offer_id": "7248212f-4334-40a3-bd68-8cbf58c64a39",
+      "merchant_name": "KAITEN SUSHI GINZA ONODERA",
+      "merchants": [
+        "kaiten_sushi_ginza_onodera"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "discount_pct",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "10% back at KAITEN SUSHI GINZA ONODERA on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "f785555a-7195-4dfc-b670-06ed641ab815",
+      "merchant_name": "KAITEN SUSHI GINZA ONODERA",
+      "merchants": [
+        "kaiten_sushi_ginza_onodera"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "discount_pct",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "10% back at KAITEN SUSHI GINZA ONODERA on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "5adfb399-1fe1-455e-b42d-15f794bdffc5",
+      "merchant_name": "LEGOLAND Discovery Center",
+      "merchants": [
+        "legoland_discovery_center"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": "25.00",
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at LEGOLAND Discovery Center (up to $25) on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "ff70c831-93e5-4736-842e-d0b5545c568f",
+      "merchant_name": "LEGOLAND Discovery Center",
+      "merchants": [
+        "legoland_discovery_center"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": "25.00",
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at LEGOLAND Discovery Center (up to $25) on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "5bdaf613-c853-4264-98cd-26a0e99fcbae",
+      "merchant_name": "LEGOLAND Parks",
+      "merchants": [
+        "legoland_parks"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": "25.00",
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at LEGOLAND Parks (up to $25) on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "a42f5b0e-022d-43ec-afc8-3bc90ec78a3a",
+      "merchant_name": "LEGOLAND Parks",
+      "merchants": [
+        "legoland_parks"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": "25.00",
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at LEGOLAND Parks (up to $25) on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "5d6943b5-dc31-4dd5-bdb1-5bc5ce4f4346",
+      "merchant_name": "LYFT",
+      "merchants": [
+        "lyft"
+      ],
+      "minimum_spend": "10.00",
+      "benefit_type": "statement_credit",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$10 back at LYFT on spend of $10 or more, redeemable once."
+    },
+    {
+      "offer_id": "f2f5f7d3-1447-43e5-a04c-37489dba4511",
+      "merchant_name": "LYFT",
+      "merchants": [
+        "lyft"
+      ],
+      "minimum_spend": "10.00",
+      "benefit_type": "statement_credit",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$10 back at LYFT on spend of $10 or more, redeemable once."
+    },
+    {
+      "offer_id": "8e295dfa-1dd8-4eaa-9407-3928d3567b8d",
+      "merchant_name": "Macy's Instore",
+      "merchants": [
+        "macy_s_instore"
+      ],
+      "minimum_spend": "100.00",
+      "benefit_type": "statement_credit",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$10 back at Macy's Instore on spend of $100 or more, redeemable once."
+    },
+    {
+      "offer_id": "94fb4878-a16b-4603-9899-2c21d4cd502b",
+      "merchant_name": "Macy's Instore",
+      "merchants": [
+        "macy_s_instore"
+      ],
+      "minimum_spend": "100.00",
+      "benefit_type": "statement_credit",
+      "value": "10.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$10 back at Macy's Instore on spend of $100 or more, redeemable once."
+    },
+    {
+      "offer_id": "41379d57-932f-42c7-a458-7851c0bb6d38",
+      "merchant_name": "Madame Tussauds Hollywood",
+      "merchants": [
+        "madame_tussauds_hollywood"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds Hollywood on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "9b678bd4-5710-48bc-8803-30fab62f56cf",
+      "merchant_name": "Madame Tussauds Hollywood",
+      "merchants": [
+        "madame_tussauds_hollywood"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds Hollywood on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "131a9eb8-aba8-4817-b1a9-10912abd2cd7",
+      "merchant_name": "Madame Tussauds Las Vegas",
+      "merchants": [
+        "madame_tussauds_las_vegas"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds Las Vegas on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "c36c89e5-18c7-4789-ba97-4b7a06efa77e",
+      "merchant_name": "Madame Tussauds Las Vegas",
+      "merchants": [
+        "madame_tussauds_las_vegas"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds Las Vegas on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "21b53b8d-371d-4c8d-ac75-17fdc65282fa",
+      "merchant_name": "Madame Tussauds Nashville",
+      "merchants": [
+        "madame_tussauds_nashville"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds Nashville on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "ba13ed53-97c1-4aab-97c7-6f7b1bdaba0d",
+      "merchant_name": "Madame Tussauds Nashville",
+      "merchants": [
+        "madame_tussauds_nashville"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds Nashville on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "6f5d2583-b010-4296-9d12-d1a81b5fe012",
+      "merchant_name": "Madame Tussauds New York",
+      "merchants": [
+        "madame_tussauds_new_york"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds New York on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "b59909dc-42be-49f5-b63c-687204efa304",
+      "merchant_name": "Madame Tussauds New York",
+      "merchants": [
+        "madame_tussauds_new_york"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds New York on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "1f959f8f-3bb4-470d-b6bb-d1d56f08a794",
+      "merchant_name": "Madame Tussauds Orlando",
+      "merchants": [
+        "madame_tussauds_orlando"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds Orlando on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "2edcb8a4-8332-4bc2-ad34-19d7f3f6c68f",
+      "merchant_name": "Madame Tussauds Orlando",
+      "merchants": [
+        "madame_tussauds_orlando"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Madame Tussauds Orlando on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "3a5bd001-3a15-4b09-9fc0-9d0ce9684953",
+      "merchant_name": "Muumuu Mall Hawaii",
+      "merchants": [
+        "muumuu_mall_hawaii"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "statement_credit",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$5 back at Muumuu Mall Hawaii on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "dfb4cc0f-df6a-40e5-adba-60bfff90c352",
+      "merchant_name": "Muumuu Mall Hawaii",
+      "merchants": [
+        "muumuu_mall_hawaii"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "statement_credit",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$5 back at Muumuu Mall Hawaii on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "3ca3350d-8ec8-418a-9a74-e75411c5cb86",
+      "merchant_name": "Muumuu Rainbow Hawaii",
+      "merchants": [
+        "muumuu_rainbow_hawaii"
+      ],
+      "minimum_spend": "300.00",
+      "benefit_type": "discount_pct",
+      "value": "2.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "2% back at Muumuu Rainbow Hawaii on spend of $300 or more, redeemable once."
+    },
+    {
+      "offer_id": "872893bf-1cf9-422e-8033-f48b615611f4",
+      "merchant_name": "Muumuu Rainbow Hawaii",
+      "merchants": [
+        "muumuu_rainbow_hawaii"
+      ],
+      "minimum_spend": "300.00",
+      "benefit_type": "discount_pct",
+      "value": "2.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "2% back at Muumuu Rainbow Hawaii on spend of $300 or more, redeemable once."
+    },
+    {
+      "offer_id": "df16d1c1-5c56-4e8d-82cb-7790898cb83e",
+      "merchant_name": "natuRe waikiki",
+      "merchants": [
+        "nature_waikiki"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at natuRe waikiki, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "e8faf7fb-3407-41fd-97c6-c9fec39b2f90",
+      "merchant_name": "natuRe waikiki",
+      "merchants": [
+        "nature_waikiki"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at natuRe waikiki, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "31a803d0-83d5-4b79-a870-90bc08dfbfa3",
+      "merchant_name": "Neiman Marcus",
+      "merchants": [
+        "neiman_marcus"
+      ],
+      "minimum_spend": "750.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Neiman Marcus on spend of $750 or more, redeemable once."
+    },
+    {
+      "offer_id": "da59a09d-fb88-4687-83a6-143b57dda43c",
+      "merchant_name": "Neiman Marcus",
+      "merchants": [
+        "neiman_marcus"
+      ],
+      "minimum_spend": "750.00",
+      "benefit_type": "discount_pct",
+      "value": "3.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "3% back at Neiman Marcus on spend of $750 or more, redeemable once."
+    },
+    {
+      "offer_id": "4074c773-950b-42d2-8373-7fc1bf6af01f",
+      "merchant_name": "Original Penguin",
+      "merchants": [
+        "original_penguin"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "statement_credit",
+      "value": "25.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$25 back at Original Penguin on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "7a4fab62-8c36-4b23-b097-832f760e0be5",
+      "merchant_name": "Original Penguin",
+      "merchants": [
+        "original_penguin"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "statement_credit",
+      "value": "25.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$25 back at Original Penguin on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "4e8dc543-e1e7-46f0-affc-05d353038049",
+      "merchant_name": "Orlando Eye",
+      "merchants": [
+        "orlando_eye"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Orlando Eye on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "779c89fb-8e60-468e-9744-ff805688bdee",
+      "merchant_name": "Orlando Eye",
+      "merchants": [
+        "orlando_eye"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Orlando Eye on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "57f05074-b020-465c-9408-31f4952e7ba5",
+      "merchant_name": "Peppermint CAF\u00c3\u2030&POOL BAR",
+      "merchants": [
+        "peppermint_caf_pool_bar"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Peppermint CAF\u00c3\u2030&POOL BAR, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "c3925257-f80d-42e1-9b7a-6f58295407b4",
+      "merchant_name": "Peppermint CAF\u00c3\u2030&POOL BAR",
+      "merchants": [
+        "peppermint_caf_pool_bar"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Peppermint CAF\u00c3\u2030&POOL BAR, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "50de0eef-d2e7-469d-b95e-0011b8423ac7",
+      "merchant_name": "Saks Fifth Avenue",
+      "merchants": [
+        "saks_fifth_avenue"
+      ],
+      "minimum_spend": "250.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Saks Fifth Avenue on spend of $250 or more, redeemable once."
+    },
+    {
+      "offer_id": "d4072983-cbd8-4d42-a6e0-c9833421a6d2",
+      "merchant_name": "Saks Fifth Avenue",
+      "merchants": [
+        "saks_fifth_avenue"
+      ],
+      "minimum_spend": "250.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Saks Fifth Avenue on spend of $250 or more, redeemable once."
+    },
+    {
+      "offer_id": "631a266b-5b9f-47f3-b3cf-41bd9d484429",
+      "merchant_name": "Sea Life Orlando",
+      "merchants": [
+        "sea_life_orlando"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Sea Life Orlando on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "c63898d1-f09a-4683-bd8d-ee7652f4fabe",
+      "merchant_name": "Sea Life Orlando",
+      "merchants": [
+        "sea_life_orlando"
+      ],
+      "minimum_spend": "80.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at Sea Life Orlando on spend of $80 or more, redeemable once."
+    },
+    {
+      "offer_id": "c0ffa995-d045-4b74-a368-a3cb885c249b",
+      "merchant_name": "Sunglass Hut",
+      "merchants": [
+        "sunglass_hut"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "statement_credit",
+      "value": "30.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$30 back at Sunglass Hut on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "ee0bddcf-693f-4e5c-a7b7-8dc4af56cca5",
+      "merchant_name": "Sunglass Hut",
+      "merchants": [
+        "sunglass_hut"
+      ],
+      "minimum_spend": "200.00",
+      "benefit_type": "statement_credit",
+      "value": "30.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$30 back at Sunglass Hut on spend of $200 or more, redeemable once."
+    },
+    {
+      "offer_id": "2af79874-466d-4ffb-808f-bc66ab2830b4",
+      "merchant_name": "Tory Burch",
+      "merchants": [
+        "tory_burch"
+      ],
+      "minimum_spend": "250.00",
+      "benefit_type": "statement_credit",
+      "value": "20.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$20 back at Tory Burch on spend of $250 or more, redeemable once."
+    },
+    {
+      "offer_id": "ede30b08-334f-4277-a468-d5cb1e1d0e68",
+      "merchant_name": "Tory Burch",
+      "merchants": [
+        "tory_burch"
+      ],
+      "minimum_spend": "250.00",
+      "benefit_type": "statement_credit",
+      "value": "20.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "$20 back at Tory Burch on spend of $250 or more, redeemable once."
+    },
+    {
+      "offer_id": "a9d0466f-ea25-4ae9-9e2f-341075a0e087",
+      "merchant_name": "View Boston",
+      "merchants": [
+        "view_boston"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at View Boston, redeemable once."
+    },
+    {
+      "offer_id": "e1ce5a44-102c-46ba-9801-dbe756d9d2a1",
+      "merchant_name": "View Boston",
+      "merchants": [
+        "view_boston"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 1,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at View Boston, redeemable once."
+    },
+    {
+      "offer_id": "3158987f-9f00-4141-981c-5df5e231a5c5",
+      "merchant_name": "ZIGU",
+      "merchants": [
+        "zigu"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at ZIGU, redeemable up to 5 times."
+    },
+    {
+      "offer_id": "6d5436a8-2b2a-40ff-ae8c-20f4bf485364",
+      "merchant_name": "ZIGU",
+      "merchants": [
+        "zigu"
+      ],
+      "minimum_spend": "0.00",
+      "benefit_type": "discount_pct",
+      "value": "5.00",
+      "max_discount": null,
+      "max_redemptions": 5,
+      "valid_from": "2026-06-30",
+      "valid_to": "2026-11-30",
+      "source_valid_to": "2026-09-30",
+      "description": "5% back at ZIGU, redeemable up to 5 times."
+    }
+  ]
+}

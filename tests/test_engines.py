@@ -83,25 +83,28 @@ def test_only_travel_categories_offer_a_portal_channel():
 
 
 def test_offer_minimum_spend():
-    small = buy("walt_disney_world", Category.ATTRACTION, "500")
-    big = buy("walt_disney_world", Category.ATTRACTION, "1780")
+    """The Lyft card-linked offer pays $10 back on spend of $10 or more."""
+    small = buy("lyft", Category.RIDESHARE, "5")
+    big = buy("lyft", Category.RIDESHARE, "180")
     assert OFFERS.evaluate(small, INST["citi_strata_premier"]) == []
     assert len(OFFERS.evaluate(big, INST["citi_strata_premier"])) == 1
 
 
 def test_offer_date_window_excludes_expired():
-    p = buy("walt_disney_world", Category.ATTRACTION, "1780")
+    p = buy("lyft", Category.RIDESHARE, "180")
     p.purchase_date = date(2026, 12, 25)
     assert OFFERS.evaluate(p, INST["citi_strata_premier"]) == []
 
 
-def test_offer_is_restricted_to_eligible_card():
-    p = buy("walt_disney_world", Category.ATTRACTION, "1780")
-    assert OFFERS.evaluate(p, INST["chase_sapphire_preferred"]) == []
+def test_offer_is_available_to_any_eligible_card():
+    """A catalogue offer carries no product restriction, so it is not tied to one
+    issuer's card the way the old synthetic Disney offer was."""
+    p = buy("lyft", Category.RIDESHARE, "180")
+    assert len(OFFERS.evaluate(p, INST["chase_sapphire_preferred"])) == 1
 
 
 def test_offer_does_not_leak_to_an_unrelated_merchant():
-    """A Walt Disney World offer must not pay out on a Marriott stay."""
+    """A Lyft offer must not pay out on a Marriott stay."""
     p = buy("marriott", Category.HOTEL, "2000")
     assert OFFERS.evaluate(p, INST["citi_strata_premier"]) == []
 

@@ -94,12 +94,17 @@ class Confidence(StrEnum):
     AUTHORITATIVE = "authoritative"
     DEMO_APPROXIMATION = "demo_approximation"
     SYNTHETIC_DEMO = "synthetic_demo"
+    #: A real record copied verbatim from a sourced dataset (the Mastercard Offers
+    #: platform export). Not scraped live, so never AUTHORITATIVE, but not fabricated
+    #: either -- the offer terms are genuine.
+    SOURCED_DATASET = "sourced_dataset"
 
 
 class EvidenceType(StrEnum):
     ISSUER_REWARD_RULE = "issuer_reward_rule"
     NETWORK_BENEFIT = "mastercard_network_benefit"
     SYNTHETIC_OFFER = "synthetic_demo_offer"
+    MASTERCARD_OFFER = "mastercard_card_linked_offer"
     PRICELESS = "priceless_experience"
     TRANSACTION_HISTORY = "open_finance_transaction_history"
     FORECAST = "commercegpt_prediction"

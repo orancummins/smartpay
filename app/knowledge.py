@@ -16,13 +16,38 @@ import yaml
 from pydantic import TypeAdapter
 
 from app import config
-from app.models.common import Category, Confidence, Evidence, EvidenceType, NetworkTier
+from app.models.common import (
+    Category,
+    Confidence,
+    Evidence,
+    EvidenceType,
+    NetworkTier,
+    Provenance,
+)
 from app.models.financial import CardProduct
 from app.models.rules import BenefitRule, Offer, PricelessExperience
 
 _CARDS = TypeAdapter(CardProduct)
 _BENEFITS = TypeAdapter(list[BenefitRule])
-_OFFERS = TypeAdapter(list[Offer])
+
+#: Shared provenance for every catalogue offer. These are real Mastercard
+#: card-linked offer records copied from a sourced dataset -- genuine terms, so
+#: never SYNTHETIC_DEMO, but never AUTHORITATIVE either (not read off a live issuer
+#: page with a verification date). See scripts/import_mastercard_offers.py.
+_OFFER_PROVENANCE = Provenance(
+    status=Confidence.SOURCED_DATASET,
+    modelled_on="mastercard_offers_platform",
+    label="Mastercard card-linked offer",
+)
+_OFFER_EVIDENCE = Evidence(
+    evidence_type=EvidenceType.MASTERCARD_OFFER,
+    source_name="Mastercard Offers platform (2026 Q3 US catalogue)",
+    confidence=Confidence.SOURCED_DATASET,
+    note=(
+        "Real Mastercard card-linked offer. Terms copied from the sourced "
+        "catalogue; validity window extended to the demo period."
+    ),
+)
 
 #: The catalogue's own category taxonomy doesn't match our spend taxonomy --
 #: it describes what the EXPERIENCE is, ours describes what the CONSUMER
@@ -151,8 +176,33 @@ def benefits() -> list[BenefitRule]:
 
 @lru_cache(maxsize=1)
 def offers() -> list[Offer]:
-    path = config.DATA / "mastercard" / "offers.yaml"
-    return _OFFERS.validate_python(_load_yaml(path).get("offers", []))
+    """Real US Mastercard card-linked offers, sourced from the Mastercard Offers
+    platform catalogue. See scripts/import_mastercard_offers.py for the importer.
+    """
+    path = config.DATA / "mastercard" / "offers_catalog.json"
+    doc = json.loads(path.read_text())
+    out: list[Offer] = []
+    for row in doc.get("offers", []):
+        out.append(
+            Offer(
+                offer_id=row["offer_id"],
+                merchant_name=row["merchant_name"],
+                merchants=row.get("merchants", []),
+                categories=[],
+                eligible_products=[],
+                minimum_spend=row.get("minimum_spend", "0"),
+                benefit_type=row["benefit_type"],
+                value=row.get("value", "0"),
+                max_discount=row.get("max_discount"),
+                max_redemptions=row.get("max_redemptions", 1),
+                valid_from=row.get("valid_from"),
+                valid_to=row.get("valid_to"),
+                description=row.get("description", ""),
+                provenance=_OFFER_PROVENANCE,
+                evidence=_OFFER_EVIDENCE,
+            )
+        )
+    return out
 
 
 @lru_cache(maxsize=1)

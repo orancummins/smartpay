@@ -895,15 +895,24 @@ def _card_detail_tables(profile: FinancialProfile) -> str:
 
 
 def _offers_and_terms(profile: FinancialProfile) -> str:
-    """Simulated offers, and the full source table for every network benefit."""
+    """Sourced Mastercard card-linked offers, and the source table for every benefit."""
     from app.knowledge import offers as all_offers
 
+    catalogue = all_offers()
+    #: The catalogue runs to dozens of merchants; a reference panel only needs a
+    #: representative slice, with an honest count of the full set.
+    shown = catalogue[:12]
     offer_rows = "".join(f"""
       <li class="offer-row">
-        <span class="offer-tag">Simulated Mastercard card-linked offer</span>
+        <span class="offer-tag">{_t(o.provenance.label)}</span>
         <h4>{_t(o.merchant_name)}</h4>
         <p>{_t(o.description)}</p>
-      </li>""" for o in all_offers())
+      </li>""" for o in shown)
+    offer_lede = (
+        f'<p class="sub-lede">{len(shown)} of {len(catalogue)} real Mastercard '
+        f"card-linked offers from the US catalogue.</p>"
+        if catalogue else ""
+    )
 
     seen: dict[tuple[str, str], str] = {}
     for b in benefits():
@@ -919,7 +928,7 @@ def _offers_and_terms(profile: FinancialProfile) -> str:
     )
 
     return f"""
-      {f'<h3 class="sub-h">Offers</h3><ul class="offer-list">{offer_rows}</ul>' if offer_rows else ''}
+      {f'<h3 class="sub-h">Offers</h3>{offer_lede}<ul class="offer-list">{offer_rows}</ul>' if offer_rows else ''}
       <h3 class="sub-h">Every rule, and where it came from</h3>
       <p class="sub-lede">Read off live issuer and network pages. Nothing here is estimated.</p>
       <table class="data-table">

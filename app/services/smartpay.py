@@ -38,10 +38,11 @@ NETWORK_TIEBREAK_NOTE = (
     "mechanics, not a live Mastercard offer, and it only ever applies to an exact "
     "tie."
 )
-SIMULATED_OFFER_NOTE = (
-    "Offers marked 'Simulated Mastercard card-linked offer' are synthetic demo "
-    "offers modelled on real Mastercard card-linked offer mechanics. They are not "
-    "live Mastercard offers."
+MASTERCARD_OFFER_NOTE = (
+    "Offers marked 'Mastercard card-linked offer' are real Mastercard card-linked "
+    "offers sourced from the Mastercard Offers platform (2026 Q3 US catalogue). The "
+    "offer terms are genuine; their validity window has been extended to the demo "
+    "period."
 )
 FORECAST_NOTE = (
     "Future spend is produced by a demo CommerceGPT adapter from observed history, "
@@ -175,8 +176,8 @@ class SmartPayService:
         plan = ItineraryOptimizer(profile).optimise(itinerary, customer_id)
         plan.priceless = self._priceless_for(profile, itinerary)
         plan.disclaimers = [SYNTHETIC_DATA_NOTE, render.VALUATION_FOOTNOTE]
-        if any(o.is_synthetic for r in plan.recommendations for o in r.recommended.offers):
-            plan.disclaimers.insert(1, SIMULATED_OFFER_NOTE)
+        if any(r.recommended.offers for r in plan.recommendations):
+            plan.disclaimers.insert(1, MASTERCARD_OFFER_NOTE)
         if any(r.recommended.tiebreak_note for r in plan.recommendations):
             plan.disclaimers.append(NETWORK_TIEBREAK_NOTE)
 

@@ -1,6 +1,6 @@
 {
   "itinerary_total": "7480.00",
-  "incremental_guaranteed": "600.50",
+  "incremental_guaranteed": "525.50",
   "incremental_estimated": "359.70",
   "incremental_points": 35620,
   "recommendations": [
@@ -22,7 +22,7 @@
       "recommended_payment": "Citi Strata Premier Card",
       "recommended_channel": "via Citi Travel",
       "is_mastercard": true,
-      "guaranteed_savings": "175.00",
+      "guaranteed_savings": "100.00",
       "estimated_reward_value_delta": "196.00",
       "points_delta": 19600
     },
@@ -73,5 +73,5 @@
   ],
   "wallet_action": "drop",
   "wallet_net_incremental": "89.99",
-  "wallet_current_value": "3629.67"
+  "wallet_current_value": "3564.67"
 }

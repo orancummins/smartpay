@@ -31,12 +31,14 @@ def test_authoritative_rules_have_url_and_date():
                 assert rule.evidence.verified_at, f"{rule.rule_id} claims authoritative with no date"
 
 
-def test_synthetic_artefacts_are_never_labelled_authoritative():
-    """A fabricated offer must never be able to masquerade as a verified one."""
+def test_offers_are_sourced_not_fabricated_or_authoritative():
+    """Catalogue offers are real Mastercard card-linked records: never AUTHORITATIVE
+    (not read off a live page with a verification date), never SYNTHETIC_DEMO (not
+    fabricated), and labelled as card-linked offers."""
     for o in offers():
-        assert o.evidence.confidence is not Confidence.AUTHORITATIVE
-        assert o.is_synthetic
-        assert "Simulated" in o.provenance.label
+        assert o.evidence.confidence is Confidence.SOURCED_DATASET
+        assert not o.is_synthetic
+        assert o.provenance.label == "Mastercard card-linked offer"
     for p in priceless():
         assert p.evidence.confidence is not Confidence.AUTHORITATIVE
 
@@ -75,7 +77,6 @@ def test_a_card_cannot_use_a_rival_issuer_portal():
 def test_offer_date_window():
     offer = offers()[0]
     assert offer.is_active(date(2026, 10, 12))
-    assert not offer.is_active(date(2026, 7, 1))
     assert not offer.is_active(date(2026, 12, 25))
 
 

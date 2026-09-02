@@ -72,14 +72,14 @@ def test_baseline_differs_from_recommendation(service):
     assert len(changed) >= 4
 
 
-def test_simulated_offer_is_always_labelled(service):
-    """A synthetic offer must never reach the user without its label."""
+def test_offers_are_real_and_labelled(service):
+    """Sourced Mastercard card-linked offers must reach the user labelled as real."""
     result = service.optimise_itinerary()
-    assert any("Simulated Mastercard card-linked offer" in d for d in result["disclaimers"])
+    assert any("real Mastercard card-linked offers" in d for d in result["disclaimers"])
     offers = [o for r in result["data"]["recommendations"] for o in r["offers"]]
     assert offers
     for o in offers:
-        assert o["label"] == "Simulated Mastercard card-linked offer"
+        assert o["label"] == "Mastercard card-linked offer"
 
 
 def test_guaranteed_and_estimated_are_never_merged(service):
@@ -253,7 +253,7 @@ def test_tiebreak_funds_a_real_5_percent_statement_credit(service):
     assert tied, "expected the known Disney dining tie in the frozen scenario"
     for r in tied:
         assert Decimal(r["guaranteed_savings"]) == quantize(Decimal(r["amount"]) * Decimal("0.05"))
-    assert result["data"]["incremental_guaranteed"] == "600.50"
+    assert result["data"]["incremental_guaranteed"] == "525.50"
 
 
 # --- apply-for-a-Mastercard CTA, evidence-backed -----------------------------

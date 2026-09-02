@@ -77,12 +77,18 @@ avoid, so the guaranteed savings have to come from real benefits. They do:
 |---|---:|---|
 | First checked bag free, 4 bags × 2 directions × $45 | $360 | Citi + American Airlines newsroom |
 | Citi Travel hotel benefit, on a $500+ stay | $100 | citi.com |
-| Simulated Mastercard card-linked offer | $75 | *synthetic, labelled everywhere* |
+| 5% Mastercard credit funding the dining tie | $47.50 | *funded on an exact tie, disclosed* |
 | 10% off scheduled Lyft airport rides (World Elite) | $18 | mastercard.com |
-| **Total guaranteed** | **$553** | |
+| **Total guaranteed** | **$525.50** | |
 
 Plus ~35,620 additional points, largely from booking the hotel and tickets through
 Citi Travel at 10x instead of direct at 3x/1x.
+
+Real Mastercard card-linked offers are also wired in from a sourced US catalogue
+(`data/mastercard/offers_catalog.json`, built by `scripts/import_mastercard_offers.py`).
+A matching offer — e.g. the $10 Lyft card-linked offer on the airport transport —
+surfaces on the recommendation; it does not inflate the guaranteed total, because
+the baseline card qualifies for the same offer.
 
 ## Honesty rules
 

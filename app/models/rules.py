@@ -106,7 +106,11 @@ class Offer(BaseModel):
     eligible_products: list[str] = Field(default_factory=list)
     minimum_spend: Decimal = ZERO
     benefit_type: BenefitType = BenefitType.STATEMENT_CREDIT
+    #: For STATEMENT_CREDIT: the dollars back. For DISCOUNT_PCT: the percentage,
+    #: e.g. 5 == 5% back (the engine computes the dollar credit from the purchase).
     value: Decimal = ZERO
+    #: Caps a percentage offer's payout, e.g. "5% back, up to $25".
+    max_discount: Decimal | None = None
     #: How many times this offer can pay out across the whole plan. One-time offers
     #: are the main double-counting hazard at itinerary level.
     max_redemptions: int = 1
