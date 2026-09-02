@@ -42,6 +42,36 @@ CARD_ART = {
     "first_hawaiian_priority_destinations": "/static/cards/first_hawaiian_priority_destinations.webp",
 }
 
+#: How a real historical purchase could be optimised, by mechanism -- so the
+#: annotated history reads "this was a Benefit" / "this was an Offer" /
+#: "this was a Reward" at a glance, not just an unlabelled pill. Colour reuses
+#: the existing chart series tokens (already theme-aware) rather than
+#: inventing new ones; the icon repeats the same distinction for anyone
+#: relying on shape, not colour, to tell them apart.
+_OPT_TYPE = {
+    "benefit": (
+        "Benefit", "series-1",
+        '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true">'
+        '<path d="M8 1.4 13 3.3v4.2c0 3.4-2.2 5.9-5 6.9-2.8-1-5-3.5-5-6.9V3.3L8 1.4Z" '
+        'stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'
+        '<path d="M5.6 8.1 7.2 9.7l3.2-3.4" stroke="currentColor" stroke-width="1.3" '
+        'stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+    ),
+    "offer": (
+        "Offer", "series-2",
+        '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true">'
+        '<path d="M2 3.6c0-.9.7-1.6 1.6-1.6h4.2c.4 0 .8.2 1.1.5l5 5c.6.6.6 1.6 0 2.2l-4.2 4.2 '
+        'c-.6.6-1.6.6-2.2 0l-5-5A1.6 1.6 0 0 1 2 7.8V3.6Z" stroke="currentColor" '
+        'stroke-width="1.3" stroke-linejoin="round"/><circle cx="5.3" cy="5.3" r=".9" '
+        'fill="currentColor"/></svg>',
+    ),
+    "reward": (
+        "Reward", "series-4",
+        '<svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true">'
+        '<path d="M8 1.3 9.7 5.5l4.5.4-3.4 2.9 1 4.4L8 11l-3.8 2.2 1-4.4-3.4-2.9 4.5-.4Z"/></svg>',
+    ),
+}
+
 
 @lru_cache(maxsize=None)
 def _card_art_uri(product_id: str) -> str:
@@ -269,8 +299,8 @@ def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
 def _flipper_section(offer_list: list[dict]) -> str:
     if not offer_list:
         return ""
-    cards = []
-    for o in offer_list:
+    heroes = []
+    for i, o in enumerate(offer_list):
         txn_pct = min(
             100, round(o["progress_transaction_count"] / o["required_transaction_count"] * 100)
         )
@@ -278,26 +308,33 @@ def _flipper_section(offer_list: list[dict]) -> str:
             100,
             round(Decimal(o["progress_spend_amount"]) / Decimal(o["required_spend_amount"]) * 100),
         )
+        # The card art itself is the progress indicator: washed-out grey at zero
+        # usage, resolving into its real colour as the cardholder actually uses
+        # it -- "evolving" toward the reward rather than a static picture next
+        # to a number. Driven by the lower of the two requirements so the art
+        # never looks "nearly there" while one threshold is still barely started.
+        progress = min(txn_pct, spend_pct) / 100
         status = "Ready to redeem" if o["complete"] else "In progress"
-        # Pulses only while unclaimed -- the point is to catch the eye toward
-        # an action still worth taking, not to keep animating a reward already
-        # earned. A card with no headline (a future, differently-intentioned
-        # campaign) still renders correctly with the lead line simply absent.
         pulsing = not o["complete"]
-        classes = "flipper-card" + (" complete" if o["complete"] else "") + (
+        classes = "flipper-hero" + (" complete" if o["complete"] else "") + (
             " pulsing" if pulsing else ""
         )
         headline_html = (
             f'<p class="flipper-headline">{_t(o["headline"])}</p>' if o.get("headline") else ""
         )
-        cards.append(f"""
-        <article class="{classes}">
-          <div class="flipper-badge"><b>{_money(Decimal(o['cashback_value']))}</b><small>CASH BACK</small></div>
-          <div class="flipper-body">
+        art = CARD_ART.get(o.get("card_product_id", ""), "")
+        art_html = (
+            f'<img class="flipper-hero-art" src="{_t(art)}" alt="{_t(o["card"])}" loading="lazy">'
+            if art else f'<div class="flipper-hero-art placeholder">{_t(o["card"])}</div>'
+        )
+        heroes.append(f"""
+        <section class="{classes}" aria-labelledby="flipper-h-{i}" style="--progress:{progress:.3f}">
+          <div class="flipper-hero-glow" aria-hidden="true"></div>
+          <div class="flipper-hero-copy">
             <span class="flipper-status">{_t(status)}</span>
             {headline_html}
-            <h3>{_t(o['display_name'])}</h3>
-            <p>{_t(o['card'])} — funded by Mastercard once you reach the threshold below</p>
+            <div class="flipper-badge"><b>{_money(Decimal(o['cashback_value']))}</b><small>CASH BACK</small></div>
+            <h3 id="flipper-h-{i}">{_t(o['display_name'])} — {_t(o['card'])}</h3>
             <div class="flipper-progress">
               <div class="flipper-progress-row">
                 <span>{_t(o['progress_transaction_count'])} of {_t(o['required_transaction_count'])} purchases</span>
@@ -310,19 +347,10 @@ def _flipper_section(offer_list: list[dict]) -> str:
             </div>
             <p class="flipper-meta">{_t(o['why'])}</p>
           </div>
-        </article>""")
+          <div class="flipper-hero-card">{art_html}</div>
+        </section>""")
 
-    return f"""
-    <section class="panel flipper-panel" aria-labelledby="flipper-h">
-      <header class="panel-head">
-        <div>
-          <h2 id="flipper-h">Mastercard offers for you</h2>
-          <p>A Mastercard-funded growth campaign, counting every purchase on the card
-             it applies to — not tied to any single transaction.</p>
-        </div>
-      </header>
-      <div class="flipper-grid">{''.join(cards)}</div>
-    </section>"""
+    return "".join(heroes)
 
 
 # ---------------------------------------------------------------------------
@@ -411,20 +439,35 @@ def _retrospective_section(history: dict, accumulated: dict, projected: dict) ->
     past_txns = sorted(history["transactions"], key=lambda t: t["date"], reverse=True)
     future_txns = sorted(projected["transactions"], key=lambda t: t["date"])
 
+    def _mc_item(kind: str, detail: str) -> str:
+        label, series, icon = _OPT_TYPE[kind]
+        return f"""
+          <li class="rt-mc-item {kind}" style="--type-color:var(--{series})">
+            <span class="rt-mc-icon">{icon}</span>
+            <span class="rt-mc-text"><b>{_t(label)}</b> {detail}</span>
+          </li>"""
+
     def _mc_chips(t: dict) -> str:
-        """What actually fired on the Mastercard Alex actually used here."""
+        """What actually fired on the Mastercard Alex actually used here --
+        typed and coloured so it is clear at a glance whether this was a
+        network Benefit, a card-linked Offer, or an issuer Reward program,
+        with the specific detail behind each spelled out."""
         if not t.get("actual_is_mastercard"):
             return ""
         items = (
-            [f'{_t(b["label"])} — {_money(b["value"])}' for b in t.get("actual_benefits", [])]
-            + [f'{_t(o["label"])}: {_t(o["merchant"])} — {_money(o["value"])}'
+            [_mc_item("benefit", f'{_t(b["label"])} — {_money(b["value"])}')
+             for b in t.get("actual_benefits", [])]
+            + [_mc_item("offer", f'{_t(o["merchant"])} card-linked offer — {_money(o["value"])}')
                for o in t.get("actual_offers", [])]
-            + [f'{_t(rp["program"])} ({_t(rp["issuer"].title())}) — +{int(rp["points"]):,} pts '
-               f'(~{_money(rp["value"])})' for rp in t.get("actual_reward_programs", [])]
+            + [_mc_item(
+                   "reward",
+                   f'{_t(rp["program"])} ({_t(rp["issuer"].title())}) — '
+                   f'+{int(rp["points"]):,} pts (~{_money(rp["value"])})',
+               ) for rp in t.get("actual_reward_programs", [])]
         )
         if not items:
             return ""
-        return f'<ul class="rt-mc">{"".join(f"<li>{i}</li>" for i in items)}</ul>'
+        return f'<ul class="rt-mc">{"".join(items)}</ul>'
 
     def _data_attrs(t: dict, side: str, mi: int) -> str:
         return (
@@ -1198,42 +1241,65 @@ a{color:inherit}
 .mini-stats span{display:block;font-size:21px;font-weight:660;letter-spacing:-.02em}
 .mini-stats small{color:var(--ink-3);font-size:12.5px}
 
-/* Flipper offers -- a large, general Mastercard-funded cash back campaign */
-.flipper-panel .panel-head{margin-bottom:18px}
-.flipper-grid{display:grid;grid-template-columns:1fr;gap:16px}
-.flipper-card{position:relative;display:flex;flex-direction:column;background:var(--surface-2);
-  border:1.5px solid color-mix(in srgb,var(--brand) 30%,var(--line));border-radius:14px;
-  padding:22px 26px;gap:10px}
-.flipper-card.complete{border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
-.flipper-card.pulsing{animation:flippertone 2.6s ease-in-out infinite}
-@media (prefers-reduced-motion:reduce){
-  .flipper-card.pulsing{animation:none;
-    box-shadow:0 0 0 1px color-mix(in srgb,var(--brand) 35%,transparent)}
-}
-@keyframes flippertone{
-  0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--brand) 32%,transparent)}
-  50%{box-shadow:0 0 0 9px transparent}
-}
-.flipper-badge{display:flex;align-items:baseline;gap:5px}
-.flipper-badge b{font-size:34px;font-weight:800;letter-spacing:-.02em;
-  background:linear-gradient(96deg,var(--brand),var(--brand-2));
+/* Flipper -- an immersive hero, not a bordered utility panel. Deliberately
+   fixed dark colours rather than the light/dark theme tokens, the same way
+   the card art itself carries the visual weight regardless of site theme. */
+.flipper-hero{position:relative;overflow:hidden;display:grid;
+  grid-template-columns:1.3fr 1fr;gap:36px;align-items:center;border-radius:26px;
+  padding:44px 48px;margin-bottom:24px;color:#f6f5f3;
+  background:radial-gradient(120% 160% at 100% 0%,#2a2130,transparent 60%),
+    linear-gradient(135deg,#15161f,#1c1e2b 55%,#231920)}
+.flipper-hero-glow{position:absolute;inset:-40% -10% auto auto;width:60%;aspect-ratio:1;
+  border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,color-mix(in srgb,var(--brand) 55%,transparent),transparent 70%);
+  filter:blur(10px);opacity:.55}
+.flipper-hero-copy{position:relative;z-index:1}
+.flipper-hero .flipper-status{display:inline-block;font-size:10.5px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;color:#f6f5f3;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+  border-radius:999px;padding:4px 10px}
+.flipper-hero.complete .flipper-status{color:#e8fff4;background:rgba(27,175,122,.22);
+  border-color:rgba(27,175,122,.5)}
+.flipper-headline{font-size:27px;font-weight:760;letter-spacing:-.02em;line-height:1.28;
+  margin:14px 0 18px;max-width:32ch}
+.flipper-badge{display:flex;align-items:baseline;gap:7px;margin-bottom:16px}
+.flipper-badge b{font-size:46px;font-weight:800;letter-spacing:-.03em;
+  background:linear-gradient(96deg,#ffffff,var(--brand-2));
   -webkit-background-clip:text;background-clip:text;color:transparent}
-.flipper-badge small{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink-3)}
-.flipper-status{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.04em;
-  text-transform:uppercase;color:var(--ink-3);background:var(--surface);border:1px solid var(--line);
-  border-radius:999px;padding:3px 9px}
-.flipper-card.complete .flipper-status{color:var(--good);background:var(--good-bg);
-  border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
-.flipper-headline{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.3;
-  margin-top:8px;color:var(--ink)}
-.flipper-body h3{font-size:14px;font-weight:620;color:var(--ink-2);margin-top:6px}
-.flipper-body p{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.4}
-.flipper-progress{display:grid;gap:8px;margin-top:12px;max-width:520px}
-.flipper-progress-row{display:grid;gap:4px;font-size:12px;color:var(--ink-2)}
-.flipper-track{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+.flipper-badge small{font-size:12.5px;font-weight:700;letter-spacing:.07em;
+  color:rgba(246,245,243,.65)}
+.flipper-hero h3{font-size:13.5px;font-weight:600;color:rgba(246,245,243,.72);
+  margin-bottom:14px}
+.flipper-progress{display:grid;gap:9px;max-width:440px}
+.flipper-progress-row{display:grid;gap:5px;font-size:12.5px;color:rgba(246,245,243,.8)}
+.flipper-track{height:6px;border-radius:4px;background:rgba(255,255,255,.16);overflow:hidden}
 .flipper-track i{display:block;height:100%;border-radius:4px;
   background:linear-gradient(90deg,var(--brand),var(--brand-2))}
-.flipper-meta{color:var(--ink-3);font-size:12.5px;margin-top:2px}
+.flipper-meta{color:rgba(246,245,243,.6);font-size:12.5px;margin-top:14px;line-height:1.5}
+.flipper-hero-card{position:relative;z-index:1;display:flex;justify-content:center}
+.flipper-hero-art{width:100%;max-width:260px;border-radius:18px;object-fit:contain;
+  box-shadow:0 30px 70px -12px rgba(0,0,0,.6);transform:rotate(-5deg);
+  filter:grayscale(calc(100% - (var(--progress,0) * 100%)))
+         saturate(calc(35% + (var(--progress,0) * 90%)))
+         brightness(calc(.85 + (var(--progress,0) * .2)));
+  transition:filter 1.4s ease}
+.flipper-hero-art.placeholder{aspect-ratio:1.58;display:flex;align-items:center;
+  justify-content:center;text-align:center;font-size:14px;font-weight:650;padding:0 16px;
+  background:rgba(255,255,255,.08);color:rgba(246,245,243,.7)}
+@media (prefers-reduced-motion:no-preference){
+  .flipper-hero.pulsing .flipper-hero-art{animation:flipperfloat 3.6s ease-in-out infinite}
+  .flipper-hero.pulsing .flipper-hero-glow{animation:flipperglow 3.6s ease-in-out infinite}
+}
+@keyframes flipperfloat{
+  0%,100%{transform:rotate(-5deg) translateY(0)}
+  50%{transform:rotate(-3deg) translateY(-10px)}
+}
+@keyframes flipperglow{0%,100%{opacity:.4}50%{opacity:.75}}
+@media (max-width:820px){
+  .flipper-hero{grid-template-columns:1fr;padding:32px 26px}
+  .flipper-hero-card{order:-1}
+  .flipper-hero-art{max-width:200px}
+}
 
 /* Priceless -- real catalogue offers matched to Alex's history */
 .priceless-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
@@ -1395,12 +1461,16 @@ input.timeline-slider{background:linear-gradient(90deg,
 .retro-txn .rt-change{grid-column:1/-1;font-size:12px;color:var(--ink-2);padding-top:2px}
 .retro-txn.out-of-window{opacity:.32}
 .retro-txn.out-of-window.improved{background:transparent}
-.retro-txn.mc-lit:not(.improved){background:color-mix(in srgb,var(--brand) 6%,transparent)}
-.retro-txn .rt-mc{grid-column:1/-1;list-style:none;margin:2px 0 0;padding:0;
-  display:flex;gap:6px;flex-wrap:wrap}
-.retro-txn .rt-mc li{font-size:11px;color:var(--brand-ink);
-  background:color-mix(in srgb,var(--brand) 10%,var(--surface));
-  padding:3px 8px;border-radius:999px}
+.retro-txn.mc-lit:not(.improved){background:color-mix(in srgb,var(--brand) 5%,transparent)}
+.retro-txn .rt-mc{grid-column:1/-1;list-style:none;margin:4px 0 0;padding:0;
+  display:flex;flex-direction:column;gap:4px}
+.rt-mc-item{display:flex;align-items:center;gap:6px;font-size:11.5px;
+  color:var(--type-color);background:color-mix(in srgb,var(--type-color) 10%,var(--surface));
+  border:1px solid color-mix(in srgb,var(--type-color) 25%,var(--line));
+  padding:4px 9px;border-radius:999px;width:fit-content}
+.rt-mc-icon{display:flex;flex:none}
+.rt-mc-text{color:var(--ink-2)}
+.rt-mc-text b{color:var(--type-color);font-weight:700;margin-right:2px}
 
 /* stat chip row (section 2) */
 .chips-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px}
@@ -1786,6 +1856,32 @@ SCRIPT = """
           h.count++; h.total += g; bucket[row.dataset.habit]=h;
         }
       });
+
+      // Follow the slider: scroll the active list so the transaction right at
+      // the edge of the current window stays in view, instead of leaving the
+      // reader to separately scroll a ~420px box to find where the timeline
+      // position they just dragged to actually landed. Rows are already in
+      // chronological order per side, so the boundary is simply the last
+      // still-in-window row before the first out-of-window one.
+      var activeList = document.getElementById(activeSide==='past' ? 'retro-txn-list' : 'future-txn-list');
+      if(activeList){
+        var boundary=null;
+        for(var bi=0; bi<rows.length; bi++){
+          if(rows[bi].dataset.side!==activeSide) continue;
+          if(!rows[bi].classList.contains('out-of-window')) boundary=rows[bi]; else break;
+        }
+        if(boundary){
+          // getBoundingClientRect deltas rather than offsetTop: the list has
+          // no declared position, so offsetTop would resolve against whatever
+          // ancestor happens to be positioned instead of the scroll container.
+          var rowRect = boundary.getBoundingClientRect(), listRect = activeList.getBoundingClientRect();
+          var target = activeList.scrollTop + (rowRect.top - listRect.top)
+            - activeList.clientHeight/2 + boundary.offsetHeight/2;
+          activeList.scrollTop = Math.max(0, target);
+        } else {
+          activeList.scrollTop = 0;
+        }
+      }
 
       document.getElementById('retro-txn-count').textContent = pastCount;
       document.getElementById('retro-total').textContent = money(pastTotal);

@@ -215,6 +215,18 @@ def test_demo_alex_renders_the_dashboard():
     assert "Mastercard card-linked offer" in html
     assert "tie · +5% Mastercard credit" in html, "the network tiebreak must stay visible"
 
+    # The Flipper offer is an immersive hero, not a bordered utility panel --
+    # and the real First Hawaiian card art carries the progress signal.
+    assert "flipper-hero" in html
+    assert "flipper-hero-art" in html
+    assert 'class="panel flipper-panel"' not in html
+    assert "Use this Mastercard more, and we" in html and "ll give you a whopping cashback!" in html
+
+    # Annotated history: what applied is typed (Benefit/Offer/Reward), not a
+    # single undifferentiated pill.
+    assert 'class="rt-mc-item benefit"' in html
+    assert 'class="rt-mc-item offer"' in html
+
     # Provenance, with a real verification date.
     assert "2026-09-01" in html
     assert "financialdataexchange" in html or "citi.com" in html or "chase.com" in html
