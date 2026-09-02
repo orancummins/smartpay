@@ -1189,6 +1189,70 @@ def _wallet_advice(wallet: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Subscriptions -- Mastercard subscription management (Minna Technologies).
+# Recurring charges identified from the ledger, with a mocked in-app cancel.
+# UI-only: there is deliberately no MCP surface for this.
+# ---------------------------------------------------------------------------
+
+def _subscriptions_section(data: dict) -> str:
+    items = data["items"]
+    if not items:
+        return ""
+    rows = []
+    for it in items:
+        badge = "Bill" if it["type"] == "bill" else "Subscription"
+        rows.append(f"""
+        <li class="sub-row" data-amount="{it['amount']}">
+          <div class="sub-main">
+            <span class="sub-badge {it['type']}">{badge}</span>
+            <div class="sub-info">
+              <h4>{_t(it['name'])}</h4>
+              <p class="sub-meta">{_label(it['category'])} · {_t(it['card'])} · renews {_t(it['next_renewal'])}</p>
+            </div>
+          </div>
+          <div class="sub-amt">
+            <span class="sub-price">{_money(it['amount'])}<small>/mo</small></span>
+            <span class="sub-annual">{_money(it['annual'])}/yr</span>
+          </div>
+          <button class="sub-cancel" type="button">Cancel</button>
+        </li>""")
+    streaming_note = (
+        f'<p class="sub-lede">You have {_t(data["streaming_count"])} streaming subscriptions '
+        f'totalling {_money(data["streaming_monthly"])}/mo — a candidate for consolidation.</p>'
+        if data["streaming_count"] >= 2 else ""
+    )
+    return f"""
+    <section class="panel expandable subs-panel" aria-labelledby="subs-h">
+      <button class="expand-toggle" id="subs-toggle" type="button" aria-expanded="false"
+              aria-controls="subs-body">
+        <div class="expand-toggle-text">
+          <h2 id="subs-h">Subscriptions &amp; recurring payments</h2>
+          <p>Identified from your transactions and manageable in one place —
+             Mastercard subscription management, powered by Minna Technologies.</p>
+        </div>
+        <span class="expand-figure">{_money(data['monthly_total'])}</span>
+        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="expand-body" id="subs-body" hidden>
+        <div class="chips-row">
+          <span class="kv"><b id="subs-monthly">{_money(data['monthly_total'])}</b><small>Total per month</small></span>
+          <span class="kv"><b id="subs-annual">{_money(data['annual_total'])}</b><small>Per year</small></span>
+          <span class="kv"><b>{_t(data['count'])}</b><small>Recurring payments found</small></span>
+          <span class="kv"><b>{_t(data['streaming_count'])}</b><small>Streaming · {_money(data['streaming_monthly'])}/mo</small></span>
+        </div>
+        {streaming_note}
+        <ul class="sub-list">{''.join(rows)}</ul>
+        <p class="sub-lede">Cancellation is simulated in this demo. In production,
+           Mastercard subscription management (Minna Technologies) lets you cancel or
+           pause a subscription directly from your banking app.</p>
+      </div>
+    </section>"""
+
+
+# ---------------------------------------------------------------------------
 # Page shell
 # ---------------------------------------------------------------------------
 
@@ -1728,6 +1792,28 @@ input.timeline-slider{background:linear-gradient(90deg,
 .advice-meta ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .advice-meta li{font-size:13.5px;color:var(--ink-2)}
 
+/* subscriptions -- Mastercard subscription management (Minna) */
+.sub-list{list-style:none;margin:10px 0 14px;padding:0;display:grid;gap:8px}
+.sub-row{display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center;
+  border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:opacity .2s}
+.sub-row.cancelled{opacity:.5}
+.sub-row.cancelled .sub-price,.sub-row.cancelled .sub-info h4{text-decoration:line-through}
+.sub-main{display:flex;align-items:center;gap:12px;min-width:0}
+.sub-badge{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  border-radius:6px;padding:3px 7px;flex:none}
+.sub-badge.subscription{color:#fff;background:linear-gradient(96deg,var(--brand),var(--brand-2))}
+.sub-badge.bill{color:var(--ink-2);border:1px solid var(--line)}
+.sub-info h4{font-size:15px;font-weight:620}
+.sub-meta{font-size:12.5px;color:var(--ink-3)}
+.sub-amt{text-align:right;display:flex;flex-direction:column;line-height:1.25}
+.sub-price{font-weight:700;font-variant-numeric:tabular-nums}
+.sub-price small{font-weight:500;color:var(--ink-3)}
+.sub-annual{font-size:12px;color:var(--ink-3)}
+.sub-cancel{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+  border-radius:999px;height:34px;padding:0 16px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.sub-cancel:hover{color:var(--brand-ink);border-color:var(--brand-ink)}
+@media (max-width:640px){.sub-row{grid-template-columns:1fr auto}.sub-cancel{grid-column:1/-1}}
+
 footer.foot{padding:26px 0 56px;color:var(--ink-3);font-size:13px;display:grid;gap:6px}
 
 /* motion */
@@ -1877,6 +1963,20 @@ SCRIPT = """
     body.hidden = open;
     var container = btn.closest('.expandable');
     if(container) container.classList.toggle('open', !open);
+  });
+
+  // Subscriptions: mocked in-app cancel that live-updates the running totals.
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.sub-cancel'); if(!btn) return;
+    var row = btn.closest('.sub-row'); if(!row) return;
+    var cancelled = row.classList.toggle('cancelled');
+    btn.textContent = cancelled ? 'Reactivate' : 'Cancel';
+    var monthly = 0;
+    document.querySelectorAll('.sub-row:not(.cancelled)').forEach(function(r){
+      monthly += parseFloat(r.dataset.amount || 0);
+    });
+    var m = document.getElementById('subs-monthly'); if(m) m.textContent = money(monthly);
+    var a = document.getElementById('subs-annual'); if(a) a.textContent = money(monthly * 12);
   });
 
   // Timeline slider: spending history on the left, a mocked Mastercard
@@ -2046,6 +2146,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
     accumulated = analytics.accumulated_savings(profile)
     retrospective = analytics.retrospective_history(profile)
     projected = analytics.projected_history(profile)
+    subscriptions = analytics.detect_subscriptions(profile)
     potential = analytics.potential_future_savings(
         Decimal(wallet["recommendation"]["net_annual_incremental_value"])
     )
@@ -2093,6 +2194,7 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
   {_flipper_section(flipper_list)}
   {_potential_section(potential, entries, active_key)}
   {_retrospective_section(retrospective, accumulated, projected)}
+  {_subscriptions_section(subscriptions)}
   {_priceless_section(priceless_offers)}
   {_shared_data_section(profile)}
   {_wallet_advice(wallet)}
