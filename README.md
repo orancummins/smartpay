@@ -296,7 +296,7 @@ data/
   cards/              six card products, with evidence on every rule
   mastercard/         network benefits, real card-linked offers and issuer
                       rewards programs (both sourced from Mastercard platform
-                      exports), Priceless
+                      exports), Flipper growth campaigns, Priceless
   itineraries/        the frozen rehearsed scenario
 ```
 

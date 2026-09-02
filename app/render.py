@@ -190,7 +190,7 @@ def payment_plan_markdown(plan: PaymentPlan, apply_offers: dict[str, dict] | Non
     return "\n".join(lines)
 
 
-def wallet_markdown(rec: WalletRecommendation) -> str:
+def wallet_markdown(rec: WalletRecommendation, flipper: list[dict] | None = None) -> str:
     lines = [
         "## SmartPay wallet review",
         "",
@@ -200,6 +200,17 @@ def wallet_markdown(rec: WalletRecommendation) -> str:
         f"- Recommended wallet, projected annual value: {fmt(rec.recommended_wallet_value)}",
         f"- **Net annual incremental value: {fmt(rec.net_annual_incremental_value)}**",
         "",
+    ]
+    if flipper:
+        lines += ["### Mastercard offers for you", ""]
+        for f in flipper:
+            headline = (
+                f"**{f['display_name']}** — {fmt(Decimal(f['cashback_value']))} cash back "
+                f"on {f['card']}"
+            )
+            lines.append(f"- {headline}. {f['why']}")
+        lines.append("")
+    lines += [
         "### What is driving this",
         "",
     ]

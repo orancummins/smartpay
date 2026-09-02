@@ -474,3 +474,72 @@ def test_merchant_scoped_benefit_does_not_leak_to_the_same_category_elsewhere():
              travellers=2, checked_bags=2, segments=2)
     ids = {b.benefit_id for b in BENEFITS.evaluate_purchase(aa, INST["citi_aa_platinum_select"])}
     assert "AA_FREE_CHECKED_BAG" in ids
+
+
+def test_flipper_offer_counts_every_purchase_not_one_transaction():
+    """A Flipper campaign is general: every purchase on its target card counts
+    toward the threshold, never scoped to one merchant or transaction the way
+    a card-linked Offer is."""
+    from app.engines import flipper_offers
+
+    result = flipper_offers.evaluate(PROFILE)
+    assert result, "expected the demo Flipper campaign to evaluate for Alex"
+    offer = result[0]
+    assert offer["card"] == "Citi Double Cash Card"
+    # Real progress: at least a handful of Alex's genuine Double Cash purchases
+    # feed the count, not a single flagged transaction.
+    assert offer["progress_transaction_count"] > 1
+    assert Decimal(offer["progress_spend_amount"]) > 0
+
+
+def test_flipper_offer_is_absent_for_a_card_alex_does_not_hold():
+    """A campaign targeting a card outside Alex's wallet must not appear at
+    all -- never a fabricated $0 progress row."""
+    from app.engines import flipper_offers
+    from app.models.common import Confidence, Evidence, EvidenceType
+    from app.models.rules import FlipperOffer
+
+    fake = FlipperOffer(
+        offer_id="FAKE", display_name="Fake Campaign",
+        card_product_id="not_a_real_card", required_transaction_count=1,
+        required_spend_amount=Decimal("1"), cashback_value=Decimal("1"),
+        window_days=90,
+        evidence=Evidence(
+            evidence_type=EvidenceType.FLIPPER_CAMPAIGN, source_name="test",
+            confidence=Confidence.SYNTHETIC_DEMO,
+        ),
+    )
+    progress = flipper_offers._progress(PROFILE, fake, date(2026, 8, 31))
+    assert progress is None
+
+
+def test_flipper_offer_completes_once_both_thresholds_are_met():
+    """Completion requires BOTH the transaction count and the spend amount --
+    "n times to the value of y" is one combined requirement, not either/or."""
+    from app.engines import flipper_offers
+    from app.models.common import Confidence, Evidence, EvidenceType
+    from app.models.rules import FlipperOffer
+
+    evidence = Evidence(
+        evidence_type=EvidenceType.FLIPPER_CAMPAIGN, source_name="test",
+        confidence=Confidence.SYNTHETIC_DEMO,
+    )
+    # Alex's real Double Cash history over the last 90 days: 31 purchases,
+    # $2,799.74 (see the demo campaign's own numbers). A count-only threshold
+    # must not report complete while the spend threshold is still unmet.
+    count_only = FlipperOffer(
+        offer_id="COUNT_ONLY", display_name="Count Only", card_product_id="citi_double_cash",
+        required_transaction_count=10, required_spend_amount=Decimal("999999"),
+        cashback_value=Decimal("1"), window_days=90, evidence=evidence,
+    )
+    progress = flipper_offers._progress(PROFILE, count_only, date(2026, 8, 31))
+    assert progress["progress_transaction_count"] >= 10
+    assert not progress["complete"], "spend threshold unmet must block completion"
+
+    both_met = FlipperOffer(
+        offer_id="BOTH_MET", display_name="Both Met", card_product_id="citi_double_cash",
+        required_transaction_count=1, required_spend_amount=Decimal("1"),
+        cashback_value=Decimal("1"), window_days=90, evidence=evidence,
+    )
+    progress = flipper_offers._progress(PROFILE, both_met, date(2026, 8, 31))
+    assert progress["complete"]

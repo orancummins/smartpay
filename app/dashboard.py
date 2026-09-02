@@ -22,7 +22,7 @@ import html
 import json
 import mimetypes
 from collections import defaultdict
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from functools import lru_cache
 
@@ -260,52 +260,56 @@ def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Clipped coupons -- a Mastercard tiebreak discount made real and actionable.
-# Only ever appears when app.engines.optimizer actually proposed one (see
-# app.coupons and the record_from_recommendation call in the service layer);
-# there is nothing to render otherwise.
+# Flipper offers -- a large, general Mastercard-funded cash back campaign,
+# never tied to any one transaction or merchant. See app.engines.flipper_offers
+# for the "n purchases to $y spend" progress rule this renders, and
+# app/admin_dashboard.py's Flipper campaign studio for where one is configured.
 # ---------------------------------------------------------------------------
 
-def _coupons_section(coupon_list: list[dict]) -> str:
-    if not coupon_list:
+def _flipper_section(offer_list: list[dict]) -> str:
+    if not offer_list:
         return ""
-    today = date.today()
     cards = []
-    for c in coupon_list:
-        expires = date.fromisoformat(c["expires_on"])
-        days_left = (expires - today).days
-        if days_left <= 0:
-            expiry_text = "expires today"
-        elif days_left == 1:
-            expiry_text = "expires in 1 day"
-        else:
-            expiry_text = f"expires in {days_left} days"
-        merchant_label = _t(c["merchant"].replace("_", " ").title())
-        clipped = bool(c["clipped"])
+    for o in offer_list:
+        txn_pct = min(
+            100, round(o["progress_transaction_count"] / o["required_transaction_count"] * 100)
+        )
+        spend_pct = min(
+            100,
+            round(Decimal(o["progress_spend_amount"]) / Decimal(o["required_spend_amount"]) * 100),
+        )
+        status = "Ready to redeem" if o["complete"] else "In progress"
         cards.append(f"""
-        <article class="coupon{' clipped' if clipped else ''}" data-coupon-id="{_t(c['coupon_id'])}">
-          <div class="coupon-badge"><b>{_t(c['discount_percent'])}%</b><small>OFF</small></div>
-          <div class="coupon-body">
-            <h3>{merchant_label}</h3>
-            <p>{_t(c['card'])} — funded by Mastercard, refunded as a statement credit</p>
-            <p class="coupon-meta">~{_money(c['approx_amount'])} purchase · {expiry_text}</p>
+        <article class="flipper-card{' complete' if o['complete'] else ''}">
+          <div class="flipper-badge"><b>{_money(Decimal(o['cashback_value']))}</b><small>CASH BACK</small></div>
+          <div class="flipper-body">
+            <span class="flipper-status">{_t(status)}</span>
+            <h3>{_t(o['display_name'])}</h3>
+            <p>{_t(o['card'])} — funded by Mastercard once you reach the threshold below</p>
+            <div class="flipper-progress">
+              <div class="flipper-progress-row">
+                <span>{_t(o['progress_transaction_count'])} of {_t(o['required_transaction_count'])} purchases</span>
+                <div class="flipper-track"><i style="width:{txn_pct}%"></i></div>
+              </div>
+              <div class="flipper-progress-row">
+                <span>{_money(o['progress_spend_amount'])} of {_money(o['required_spend_amount'])} spent</span>
+                <div class="flipper-track"><i style="width:{spend_pct}%"></i></div>
+              </div>
+            </div>
+            <p class="flipper-meta">{_t(o['why'])}</p>
           </div>
-          <button class="coupon-clip{' on' if clipped else ''}" type="button"
-                  data-coupon-id="{_t(c['coupon_id'])}">
-            <span>{'Clipped' if clipped else 'Clip coupon'}</span>
-          </button>
         </article>""")
 
     return f"""
-    <section class="panel coupons-panel" aria-labelledby="coupons-h">
+    <section class="panel flipper-panel" aria-labelledby="flipper-h">
       <header class="panel-head">
         <div>
-          <h2 id="coupons-h">Mastercard offers for you</h2>
-          <p>Funded by Mastercard on the purchases you've recently researched through
-             ChatGPT — already clipped for you below, tied to the purchase that earned it.</p>
+          <h2 id="flipper-h">Mastercard offers for you</h2>
+          <p>A Mastercard-funded growth campaign, counting every purchase on the card
+             it applies to — not tied to any single transaction.</p>
         </div>
       </header>
-      <div class="coupon-grid">{''.join(cards)}</div>
+      <div class="flipper-grid">{''.join(cards)}</div>
     </section>"""
 
 
@@ -1176,32 +1180,31 @@ a{color:inherit}
 .mini-stats span{display:block;font-size:21px;font-weight:660;letter-spacing:-.02em}
 .mini-stats small{color:var(--ink-3);font-size:12.5px}
 
-/* clipped coupons -- a Mastercard tiebreak discount made tangible */
-.coupons-panel .panel-head{margin-bottom:18px}
-.coupon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.coupon{position:relative;display:flex;flex-direction:column;background:var(--surface-2);
-  border:1.5px dashed color-mix(in srgb,var(--brand) 45%,var(--line));border-radius:14px;
-  padding:18px 18px 16px;gap:10px;transition:opacity .2s}
-.coupon::before,.coupon::after{content:'';position:absolute;left:50%;width:18px;height:18px;
-  border-radius:50%;background:var(--bg);transform:translateX(-50%)}
-.coupon::before{top:-9px}
-.coupon::after{bottom:-9px}
-.coupon-badge{display:flex;align-items:baseline;gap:5px}
-.coupon-badge b{font-size:28px;font-weight:800;letter-spacing:-.02em;
+/* Flipper offers -- a large, general Mastercard-funded cash back campaign */
+.flipper-panel .panel-head{margin-bottom:18px}
+.flipper-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.flipper-card{position:relative;display:flex;flex-direction:column;background:var(--surface-2);
+  border:1px solid color-mix(in srgb,var(--brand) 30%,var(--line));border-radius:14px;
+  padding:18px 18px 16px;gap:10px}
+.flipper-card.complete{border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
+.flipper-badge{display:flex;align-items:baseline;gap:5px}
+.flipper-badge b{font-size:28px;font-weight:800;letter-spacing:-.02em;
   background:linear-gradient(96deg,var(--brand),var(--brand-2));
   -webkit-background-clip:text;background-clip:text;color:transparent}
-.coupon-badge small{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink-3)}
-.coupon-body h3{font-size:16px;font-weight:660}
-.coupon-body p{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.4}
-.coupon-body .coupon-meta{color:var(--ink-3);font-size:12.5px;margin-top:6px}
-.coupon-clip{margin-top:auto;border:1px solid var(--line);background:var(--surface);
-  color:var(--ink);border-radius:10px;padding:10px 14px;font:inherit;font-size:13.5px;
-  font-weight:660;cursor:pointer;transition:background-color .15s,border-color .15s}
-.coupon-clip:hover{border-color:var(--ink-3)}
-.coupon-clip.on{background:var(--good-bg);border-color:color-mix(in srgb,var(--good) 45%,var(--line));
-  color:var(--good)}
-.coupon-clip.on span::before{content:'✓ '}
-.coupon.clipped{opacity:.75}
+.flipper-badge small{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink-3)}
+.flipper-status{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--ink-3);background:var(--surface);border:1px solid var(--line);
+  border-radius:999px;padding:3px 9px}
+.flipper-card.complete .flipper-status{color:var(--good);background:var(--good-bg);
+  border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
+.flipper-body h3{font-size:16px;font-weight:660;margin-top:6px}
+.flipper-body p{font-size:13px;color:var(--ink-2);margin-top:4px;line-height:1.4}
+.flipper-progress{display:grid;gap:8px;margin-top:10px}
+.flipper-progress-row{display:grid;gap:4px;font-size:12px;color:var(--ink-2)}
+.flipper-track{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
+.flipper-track i{display:block;height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--brand),var(--brand-2))}
+.flipper-meta{color:var(--ink-3);font-size:12.5px;margin-top:2px}
 
 /* Priceless -- real catalogue offers matched to Alex's history */
 .priceless-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
@@ -1684,23 +1687,6 @@ SCRIPT = """
     if(container) container.classList.toggle('open', !open);
   });
 
-  // Clipped coupons: toggle clip state server-side so it survives a refresh,
-  // but update the button immediately rather than waiting on the round trip.
-  document.addEventListener('click', function(e){
-    var btn = e.target.closest('.coupon-clip');
-    if(!btn) return;
-    var id = btn.dataset.couponId;
-    var willClip = !btn.classList.contains('on');
-    btn.classList.toggle('on', willClip);
-    btn.querySelector('span').textContent = willClip ? 'Clipped' : 'Clip coupon';
-    var card = btn.closest('.coupon');
-    if(card) card.classList.toggle('clipped', willClip);
-    fetch('/coupons/clip', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({coupon_id: id, clipped: willClip})
-    }).catch(function(){ /* offline: the click still reflects locally */ });
-  });
-
   // Timeline slider: spending history on the left, a mocked Mastercard
   // CommerceGPT forecast on the right, "today" in the middle. Every per-row
   // number lives on the row as data-*, so this reads straight from the DOM.
@@ -1799,10 +1785,10 @@ SCRIPT = """
 """
 
 
-def _research_banner(coupons_list: list[dict], priceless_offers: list[dict]) -> str:
+def _research_banner(flipper_list: list[dict], priceless_offers: list[dict]) -> str:
     """Full-width label framing the offers below as tied to recent ChatGPT research.
     Only shown when there is at least one offer to frame."""
-    if not coupons_list and not priceless_offers:
+    if not flipper_list and not priceless_offers:
         return ""
     return """
     <div class="research-banner">
@@ -1813,13 +1799,13 @@ def _research_banner(coupons_list: list[dict], priceless_offers: list[dict]) -> 
 
 def render_alex_dashboard(profile: FinancialProfile) -> str:
     """Render the full dashboard for the demo consumer."""
-    from app import analytics, coupons, history
+    from app import analytics, history
     from app.engines import priceless as priceless_engine
     from app.services.smartpay import SmartPayService
 
     service = SmartPayService()
     wallet = service.optimise_wallet()["data"]
-    active_coupons = coupons.load_active(date.today())
+    flipper_list = wallet.get("flipper_offers", [])
     priceless_offers = priceless_engine.historic_matches(profile)
 
     entries = history.load()
@@ -1892,8 +1878,8 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 <main class="wrap">
   {_header(full_name, accumulated, potential["total"])}
   {_potential_section(potential, entries, active_key)}
-  {_research_banner(active_coupons, priceless_offers)}
-  {_coupons_section(active_coupons)}
+  {_research_banner(flipper_list, priceless_offers)}
+  {_flipper_section(flipper_list)}
   {_priceless_section(priceless_offers)}
   {_retrospective_section(retrospective, accumulated, projected)}
   {_shared_data_section(profile)}

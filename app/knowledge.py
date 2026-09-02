@@ -25,7 +25,7 @@ from app.models.common import (
     Provenance,
 )
 from app.models.financial import CardProduct
-from app.models.rules import BenefitRule, Offer, PricelessExperience, RewardProgram
+from app.models.rules import BenefitRule, FlipperOffer, Offer, PricelessExperience, RewardProgram
 
 _CARDS = TypeAdapter(CardProduct)
 _BENEFITS = TypeAdapter(list[BenefitRule])
@@ -263,6 +263,20 @@ def priceless() -> list[PricelessExperience]:
     return [_priceless_from_catalogue(e) for e in entries]
 
 
+_FLIPPER_OFFERS = TypeAdapter(list[FlipperOffer])
+
+
+@lru_cache(maxsize=1)
+def flipper_offers() -> list[FlipperOffer]:
+    """SmartPay's own "Flipper" growth campaigns -- see app.models.rules.FlipperOffer
+    and app/admin_dashboard.py's campaign builder these model. Demo campaigns,
+    not real Mastercard offers, hence SYNTHETIC_DEMO provenance throughout.
+    """
+    path = config.DATA / "mastercard" / "flipper_offers.yaml"
+    doc = _load_yaml(path)
+    return _FLIPPER_OFFERS.validate_python(doc.get("offers", []))
+
+
 def reset_cache() -> None:
-    for fn in (card_products, benefits, offers, rewards_programs, priceless):
+    for fn in (card_products, benefits, offers, rewards_programs, priceless, flipper_offers):
         fn.cache_clear()

@@ -326,9 +326,11 @@ def test_smartpay_admin_renders_analytics_and_flipper_campaigns():
     assert "Flipper" in html
     assert "Campaign studio" in html
     assert "Competitor card portfolio" in html
-    assert "Contactless" in html
-    assert "E-commerce" in html
-    assert "In-store" in html
+    # Default campaign type: a flat cash back reward for a spend threshold
+    # reached across any purchases -- never a percentage tied to one merchant.
+    assert "Cash back reward" in html
+    assert "Purchases required" in html
+    assert "Unlock window" in html
     assert 'id="campaign-form"' in html
 
 

@@ -1,0 +1,32 @@
+# Flipper campaigns -- see app.models.rules.FlipperOffer and the SmartPay
+# Admin "Flipper" campaign builder (app/admin_dashboard.py) these model. A
+# demo campaign SmartPay itself would have configured, not a real live
+# Mastercard offer -- so it carries SYNTHETIC_DEMO provenance, the same
+# honesty discipline as the tiebreak mechanic it replaces in the dashboard's
+# "Mastercard offers for you" panel.
+
+offers:
+  - offer_id: FLIPPER_DOUBLE_CASH_EVERYDAY_SPEND
+    display_name: "Everyday Spend Cashback"
+    card_product_id: citi_double_cash
+    required_transaction_count: 40
+    required_spend_amount: "3000.00"
+    cashback_value: "500.00"
+    window_days: 90
+    description: >-
+      Make 40 purchases totalling $3,000 or more on your Citi Double Cash
+      Card within any rolling 90 days and get $500 cash back -- funded by
+      Mastercard, credited once the threshold is reached. Counts every
+      purchase on the card, not one specific merchant or transaction.
+    provenance:
+      status: synthetic_demo
+      modelled_on: smartpay_flipper_campaign_builder
+      label: "Mastercard Flipper campaign"
+    evidence:
+      evidence_type: flipper_campaign
+      source_name: "SmartPay Admin -- Flipper campaign studio"
+      confidence: synthetic_demo
+      note: >-
+        A demo Mastercard growth campaign configured through SmartPay's own
+        Flipper admin tool, modelled on real card-issuer spend-threshold
+        cash back mechanics. Not a live Mastercard offer.

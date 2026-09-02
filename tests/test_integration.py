@@ -5,6 +5,7 @@ is the safety net -- it fails the moment any number said on stage changes.
 """
 
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -142,6 +143,27 @@ def test_wallet_optimisation_matches_golden(service):
     assert rec["action"] == GOLDEN["wallet_action"]
     assert rec["net_annual_incremental_value"] == GOLDEN["wallet_net_incremental"]
     assert rec["current_wallet_value"] == GOLDEN["wallet_current_value"]
+
+
+def test_flipper_offer_appears_in_the_wallet_response_not_per_transaction(service):
+    """The large Mastercard "offers for you" incentive is a general, wallet-level
+    construct -- surfaced through optimise_wallet, not hung off any one
+    itinerary recommendation the way the old tiebreak coupon used to be."""
+    result = service.optimise_wallet()
+    flipper = result["data"]["flipper_offers"]
+    assert flipper, "expected the demo Flipper campaign to surface"
+    offer = flipper[0]
+    assert Decimal(offer["cashback_value"]) >= Decimal("500")
+    assert "Mastercard Flipper campaign" in result["disclaimers"][0] or any(
+        "Flipper campaign" in d for d in result["disclaimers"]
+    )
+    assert "Mastercard offers for you" in result["display_markdown"]
+
+    # Never hung off a specific transaction: the itinerary response carries no
+    # trace of this construct at all.
+    itinerary = service.optimise_itinerary()
+    assert "flipper" not in itinerary["data"]
+    assert "Flipper" not in itinerary["display_markdown"]
 
 
 def test_wallet_recommendation_keeps_the_card_that_earns_its_fee(service):

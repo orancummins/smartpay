@@ -10,19 +10,19 @@ from __future__ import annotations
 
 import collections
 import re
-from datetime import date
 from decimal import Decimal
 
-from app import analytics, config, coupons, history, render
+from app import analytics, config, history, render
 from app.engines.baseline import BaselineEngine
 from app.engines.optimizer import ItineraryOptimizer, PurchaseOptimizer
 from app.engines.categorizer import categorise
 from app.engines.wallet_optimizer import WalletOptimizer
+from app.engines import flipper_offers as flipper_offers_engine
 from app.engines import priceless as priceless_engine
 from app.knowledge import card_products
 from app.models.common import Category, RewardCurrency
 from app.models.planning import Itinerary, ItineraryItem, PaymentPlan, PurchaseIntent
-from app.money import ZERO, fmt, quantize
+from app.money import ZERO, fmt
 from app.providers.future_spend import CommerceGPTMockProvider
 from app.providers.open_finance import OpenFinanceProvider, default_provider
 from app.scenarios import load_scenario
@@ -49,6 +49,13 @@ REWARD_PROGRAM_NOTE = (
     "programs sourced from the Mastercard Rewards platform. They are applied only to "
     "a card whose issuer runs the program, as an additive bonus — never restated as "
     "the card's own published earn rate."
+)
+FLIPPER_CAMPAIGN_NOTE = (
+    "Offers marked 'Mastercard Flipper campaign' are demo growth campaigns configured "
+    "through SmartPay's own Flipper admin tool, modelled on real card-issuer "
+    "spend-threshold cash back mechanics. They are not live Mastercard offers, and "
+    "are never tied to any one transaction -- they count every purchase on the named "
+    "card toward one combined threshold."
 )
 FORECAST_NOTE = (
     "Future spend is produced by a demo CommerceGPT adapter from observed history, "
@@ -308,20 +315,6 @@ class SmartPayService:
                 plan.itinerary_id, plan.itinerary_title,
                 plan.incremental_guaranteed, plan.incremental_estimated,
             )
-            for r in plan.recommendations:
-                if r.recommended.tiebreak_bonus > ZERO:
-                    discount_percent = quantize(
-                        r.recommended.tiebreak_bonus / r.amount * 100
-                    )
-                    coupons.record_from_recommendation(
-                        coupon_id=f"{plan.itinerary_id}:{r.item_id}",
-                        merchant=r.merchant,
-                        item_label=r.item_label,
-                        approx_amount=r.amount,
-                        card_name=r.recommended.instrument_name,
-                        discount_percent=discount_percent,
-                        issued_on=date.today(),
-                    )
 
         for r in plan.recommendations:
             self._recommendations[f"{plan.itinerary_id}:{r.item_id}"] = {
@@ -340,11 +333,15 @@ class SmartPayService:
         forecast = self.forecaster.predict(profile, 12, itinerary)
         rec = WalletOptimizer(profile).optimise(forecast, itinerary)
         rec.disclaimers = [SYNTHETIC_DATA_NOTE, FORECAST_NOTE]
+        flipper = flipper_offers_engine.evaluate(profile)
+        if flipper:
+            rec.disclaimers.append(FLIPPER_CAMPAIGN_NOTE)
         data = {
             "recommendation": rec.model_dump(mode="json"),
             "forecast": forecast.model_dump(mode="json"),
+            "flipper_offers": flipper,
         }
-        return _envelope(render.wallet_markdown(rec), data, rec.disclaimers)
+        return _envelope(render.wallet_markdown(rec, flipper), data, rec.disclaimers)
 
     # -- evidence ------------------------------------------------------------
 

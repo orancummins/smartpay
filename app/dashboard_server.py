@@ -11,7 +11,7 @@ from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import Route
 from starlette.staticfiles import StaticFiles
 
-from app import config, coupons, history, runtime
+from app import config, history, runtime
 from app.admin_dashboard import render_admin_dashboard
 from app.dashboard import render_alex_dashboard
 from app.providers.open_finance import SyntheticAlexProvider
@@ -51,22 +51,6 @@ async def query_history(_: Request) -> JSONResponse:
     )
 
 
-async def clip_coupon(request: Request) -> JSONResponse:
-    """Persist a clip/unclip so it survives a refresh. The dashboard already
-    updates the button optimistically; this just makes that choice durable."""
-    try:
-        body = await request.json()
-    except ValueError:
-        return JSONResponse({"error": "invalid JSON body"}, status_code=400)
-    coupon_id = body.get("coupon_id")
-    if not coupon_id:
-        return JSONResponse({"error": "coupon_id is required"}, status_code=400)
-    clipped = bool(body.get("clipped"))
-    if not coupons.set_clipped(coupon_id, clipped):
-        return JSONResponse({"error": "unknown or expired coupon"}, status_code=404)
-    return JSONResponse({"coupon_id": coupon_id, "clipped": clipped})
-
-
 async def health(_: Request) -> JSONResponse:
     return JSONResponse({"status": "ok", "service": "smartpay-dashboard", **runtime.status()})
 
@@ -77,7 +61,6 @@ app = Starlette(
         Route("/admin", admin_dashboard),
         Route("/", demo_alex),
         Route("/history.json", query_history),
-        Route("/coupons/clip", clip_coupon, methods=["POST"]),
         Route("/demo/alex", demo_alex),
         Route("/demo/alex.json", demo_alex_json),
     ]

@@ -148,6 +148,7 @@ class EvidenceType(StrEnum):
     SYNTHETIC_OFFER = "synthetic_demo_offer"
     MASTERCARD_OFFER = "mastercard_card_linked_offer"
     MASTERCARD_REWARD = "mastercard_issuer_reward_program"
+    FLIPPER_CAMPAIGN = "flipper_campaign"
     PRICELESS = "priceless_experience"
     TRANSACTION_HISTORY = "open_finance_transaction_history"
     FORECAST = "commercegpt_prediction"

@@ -235,3 +235,38 @@ class PricelessExperience(BaseModel):
         if self.available_to and on > self.available_to:
             return False
         return True
+
+
+class FlipperOffer(BaseModel):
+    """A Mastercard "Flipper" growth campaign: a large, flat cash back reward
+    for reaching a spend threshold on ONE specific card, within a rolling
+    window -- see the SmartPay Admin campaign builder this models.
+
+    Deliberately NOT a card-linked Offer: this never hangs off a single
+    transaction or merchant. It counts every purchase on the named card
+    toward one combined requirement (a minimum transaction count AND a
+    minimum total spend), the way a real issuer/network "spend $X in Y
+    purchases, get $Z back" activation or retention campaign works.
+    """
+
+    offer_id: str
+    display_name: str
+    #: The one card this campaign targets -- app.models.financial.CardProduct.product_id.
+    card_product_id: str
+    required_transaction_count: int
+    required_spend_amount: Decimal
+    cashback_value: Decimal
+    #: The campaign only counts purchases in this many trailing days.
+    window_days: int
+    valid_from: date | None = None
+    valid_to: date | None = None
+    description: str = ""
+    provenance: Provenance = Provenance()
+    evidence: Evidence
+
+    def is_active(self, on: date) -> bool:
+        if self.valid_from and on < self.valid_from:
+            return False
+        if self.valid_to and on > self.valid_to:
+            return False
+        return True
