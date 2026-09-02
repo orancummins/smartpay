@@ -50,6 +50,25 @@ def test_accumulated_savings_never_goes_negative():
     assert result["guaranteed"] >= Decimal("0")
 
 
+def test_detect_subscriptions_finds_recurring_charges_not_variable_spend():
+    """Near-constant monthly merchants are surfaced (Minna-style); variable spend
+    and rent are not."""
+    profile = SyntheticAlexProvider().get_profile("alex")
+    data = analytics.detect_subscriptions(profile)
+    names = {i["merchant"] for i in data["items"]}
+    assert {"netflix", "spotify", "peacock"} <= names   # streaming subscriptions
+    assert "verizon" in names                            # a recurring utility bill
+    assert "beacon_property" not in names                # rent is not a subscription
+    assert "starbucks" not in names                      # variable spend is not
+    assert data["streaming_count"] == 3
+    assert Decimal(data["monthly_total"]) > Decimal("0")
+    assert Decimal(data["annual_total"]) == Decimal(data["monthly_total"]) * 12
+    for item in data["items"]:
+        assert item["type"] in ("subscription", "bill")
+        assert Decimal(item["amount"]) > Decimal("0")
+        assert item["next_renewal"]
+
+
 def test_potential_future_savings_starts_at_the_wallet_baseline():
     result = analytics.potential_future_savings(Decimal("90.00"))
     assert result["enquiry_count"] == 0

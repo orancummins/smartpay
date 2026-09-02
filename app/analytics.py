@@ -475,3 +475,87 @@ def potential_future_savings(wallet_annual_value: Decimal) -> dict:
 def clear_ledger() -> None:
     with contextlib.suppress(OSError):
         LEDGER_PATH.unlink()
+
+
+#: Recurring charges in these categories read as bills the consumer pays rather
+#: than discretionary subscriptions they would cancel from an app.
+_BILL_CATEGORIES = {"utilities"}
+#: A merchant must recur across at least this many months, roughly monthly, with a
+#: near-constant amount, to read as a subscription rather than variable spend.
+_SUB_MIN_MONTHS = 6
+_SUB_AMOUNT_TOLERANCE = Decimal("0.15")
+
+
+def _add_month(d):
+    import calendar
+    from datetime import date
+
+    year = d.year + (d.month == 12)
+    month = (d.month % 12) + 1
+    return date(year, month, min(d.day, calendar.monthrange(year, month)[1]))
+
+
+def detect_subscriptions(profile: FinancialProfile) -> dict:
+    """Recurring subscriptions and bills inferred from Alex's transaction history.
+
+    Modelled on Mastercard's subscription management capability (Minna
+    Technologies): a merchant qualifies when it bills a near-constant amount
+    roughly once a month across most of the year. Rent/mortgage (HOUSING) is
+    excluded -- it is not a subscription a consumer would cancel from an app.
+    This is UI-only; there is deliberately no MCP surface for it.
+    """
+    import collections
+    import statistics
+
+    from app.models.common import Category
+
+    by_merchant: dict[str, list] = collections.defaultdict(list)
+    for t in profile.spend_transactions:
+        if t.transaction_type is not TransactionType.PURCHASE or t.category is Category.HOUSING:
+            continue
+        by_merchant[t.merchant].append(t)
+
+    accounts = {a.account_id: a for a in profile.accounts}
+    card_names = {i.account_id: i.display_name for i in profile.instruments if i.is_card}
+
+    def account_label(account_id: str) -> str:
+        if account_id in card_names:
+            return card_names[account_id]
+        return accounts[account_id].display_name if account_id in accounts else "—"
+
+    items: list[dict] = []
+    for merchant, txns in by_merchant.items():
+        months = {t.posted_at.strftime("%Y-%m") for t in txns}
+        if len(months) < _SUB_MIN_MONTHS or len(txns) > len(months) * 1.4:
+            continue
+        amounts = [t.amount for t in txns]
+        median = Decimal(str(statistics.median(amounts)))
+        if median <= 0 or (max(amounts) - min(amounts)) > median * _SUB_AMOUNT_TOLERANCE:
+            continue
+
+        latest = max(txns, key=lambda t: t.posted_at)
+        items.append({
+            "merchant": merchant,
+            "name": latest.description.title(),
+            "category": latest.category.value,
+            "type": "bill" if latest.category.value in _BILL_CATEGORIES else "subscription",
+            "amount": str(quantize(median)),
+            "annual": str(quantize(median * 12)),
+            "months_seen": len(months),
+            "last_charged": latest.posted_at.isoformat(),
+            "next_renewal": _add_month(latest.posted_at).isoformat(),
+            "card": account_label(latest.account_id),
+        })
+
+    items.sort(key=lambda x: -Decimal(x["amount"]))
+    monthly_total = sum((Decimal(i["amount"]) for i in items), ZERO)
+    streaming = [i for i in items if i["category"] == "streaming"]
+    return {
+        "items": items,
+        "monthly_total": str(quantize(monthly_total)),
+        "annual_total": str(quantize(monthly_total * 12)),
+        "count": len(items),
+        "subscription_count": sum(1 for i in items if i["type"] == "subscription"),
+        "streaming_count": len(streaming),
+        "streaming_monthly": str(quantize(sum((Decimal(i["amount"]) for i in streaming), ZERO))),
+    }
