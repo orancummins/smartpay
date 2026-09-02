@@ -1174,6 +1174,8 @@ def _idle_network_cards(profile: FinancialProfile, wallet: dict, network: Networ
             "product_id": product.product_id,
             "display_name": product.display_name,
             "annual_fee": product.annual_fee,
+            "issuer": product.issuer,
+            "source_url": getattr(product.evidence, "source_url", None),
             "savings": quantize(Decimal(candidate["net_annual_value"]) - current),
         })
     return idle
@@ -1212,6 +1214,7 @@ def _wallet_advice(wallet: dict, profile: FinancialProfile) -> str:
             <li>{_money(card['annual_fee'])} annual fee, earning nothing</li>
             <li>Your Mastercards already cover this spend, with rewards</li>
           </ul>
+          {f'<p class="advice-cancel">Ready to drop it? <a href="{_t(card["source_url"])}" target="_blank" rel="noopener noreferrer">How to close your {_t(card["display_name"])} with {_t(ISSUER_NAME.get(card["issuer"], card["issuer"].replace("_", " ").title()))}</a>.</p>' if card.get('source_url') else ''}
         </div>
         <figure class="advice-card">
           <span class="idle-ribbon">Unused · Visa</span>
@@ -1839,6 +1842,8 @@ input.timeline-slider{background:linear-gradient(90deg,
 .advice-points{list-style:none;margin:0;padding:0;display:grid;gap:7px}
 .advice-points li{font-size:13.5px;color:var(--ink-2);padding-left:20px;position:relative}
 .advice-points li::before{content:'—';position:absolute;left:0;color:var(--brand-ink);font-weight:700}
+.advice-cancel{margin:14px 0 0;font-size:13px;color:var(--ink-2)}
+.advice-cancel a{color:var(--brand-ink);font-weight:600;text-decoration:underline}
 .idle-ribbon{align-self:center;font-size:11px;font-weight:800;letter-spacing:.05em;
   text-transform:uppercase;color:#fff;background:#3f4a5a;border-radius:6px;padding:3px 9px}
 .whopper-card.unused{filter:grayscale(.5);animation:none;opacity:.94}
