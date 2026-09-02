@@ -34,6 +34,45 @@ class Category(StrEnum):
     OTHER = "other"
 
 
+#: Friendly words for the spend taxonomy, used when summarising a card's earn.
+_CATEGORY_WORDS: dict[Category, str] = {
+    Category.RESTAURANT: "dining",
+    Category.SUPERMARKET: "groceries",
+    Category.GROCERY_ONLINE: "groceries",
+    Category.GAS: "gas",
+    Category.RIDESHARE: "rideshare",
+    Category.TRANSPORT: "transport",
+    Category.ENTERTAINMENT: "entertainment",
+    Category.STREAMING: "streaming",
+    Category.DRUGSTORE: "drugstore",
+    Category.SHOPPING: "shopping",
+    Category.UTILITIES: "utilities",
+    Category.GOLF: "golf",
+    Category.OTHER: "everyday spend",
+}
+_TRAVEL_CATEGORIES = {
+    Category.AIRFARE, Category.HOTEL, Category.ATTRACTION, Category.CAR_RENTAL,
+}
+
+
+def summarise_categories(categories: list[Category]) -> str:
+    """A short human phrase for a set of spend categories, e.g. "travel", "dining".
+
+    The four travel categories collapse to a single "travel" so a card's earn reads
+    as a headline rather than a list of MCC-style buckets.
+    """
+    words: list[str] = []
+    remaining = list(categories)
+    if _TRAVEL_CATEGORIES & set(remaining):
+        words.append("travel")
+        remaining = [c for c in remaining if c not in _TRAVEL_CATEGORIES]
+    for category in remaining:
+        word = _CATEGORY_WORDS.get(category, category.value.replace("_", " "))
+        if word not in words:
+            words.append(word)
+    return ", ".join(words)
+
+
 class PurchaseChannel(StrEnum):
     """How a purchase is booked.
 

@@ -17,13 +17,18 @@ slots -- hence labels on every bar rather than a legend-only chart.
 
 from __future__ import annotations
 
+import base64
 import html
 import json
+import mimetypes
 from collections import defaultdict
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from functools import lru_cache
 
+from app import config
 from app.knowledge import benefits
+from app.models.common import RewardCurrency
 from app.models.financial import Account, FinancialProfile, PaymentInstrument
 from app.money import fmt
 from app.render import upside_sentence
@@ -36,6 +41,25 @@ CARD_ART = {
     "chase_freedom_unlimited": "/static/cards/chase_freedom_unlimited.png",
     "first_hawaiian_priority_destinations": "/static/cards/first_hawaiian_priority_destinations.webp",
 }
+
+
+@lru_cache(maxsize=None)
+def _card_art_uri(product_id: str) -> str:
+    """Card art inlined as a data URI so it renders without a mounted /static route
+    (e.g. in a standalone preview), the same way the ChatGPT widget ships its art."""
+    rel = CARD_ART.get(product_id, "")
+    if not rel:
+        return ""
+    path = config.ROOT / "app" / "static" / rel.removeprefix("/static/")
+    if not path.exists():
+        return ""
+    mime = mimetypes.guess_type(path.name)[0] or "image/webp"
+    return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode()}"
+
+
+def _rate(value: Decimal) -> str:
+    """A multiplier as a plain number: 10, not Decimal's 1E+1; 0.5, not 0.50."""
+    return f"{value.normalize():f}"
 
 ISSUER_LOGO = {"citi": "/static/logos/citi.svg", "chase": "/static/logos/chase.svg"}
 ISSUER_NAME = {"citi": "Citi", "chase": "Chase", "first hawaiian": "First Hawaiian"}
@@ -823,33 +847,58 @@ def _wallet_carousel(profile: FinancialProfile) -> str:
         product = inst.product
         if product is None or inst.card is None:
             continue
-        art = CARD_ART.get(product.product_id, "")
+        art = _card_art_uri(product.product_id)
         logo = ISSUER_LOGO.get(product.issuer, "")
         tier = product.network_tier.value.replace("_", " ").title()
         network_label = _t(tier if tier != "None" else product.network.value.title())
-        top = sorted(product.reward_rules, key=lambda r: -r.multiplier)[:3]
-        rules = "".join(
-            f'<li><b>{_t(r.multiplier.normalize())}×</b> {_t(r.description)}</li>'
-            for r in top
+        # A concise earn summary: best rate per distinct category, so the card reads
+        # as headline rates ("3× travel") rather than a paragraph of rule prose.
+        seen: set[str] = set()
+        rule_items: list[str] = []
+        for r in sorted(product.reward_rules, key=lambda r: -r.multiplier):
+            summary = r.category_summary
+            if summary in seen:
+                continue
+            seen.add(summary)
+            unit = "%" if r.reward_currency is RewardCurrency.USD_CASHBACK else "×"
+            hint = ""
+            if r.required_channels:
+                channel = r.required_channels[0].value.replace("_", " ").title()
+                hint = f' <span class="channel-hint">via {_t(channel)}</span>'
+            rule_items.append(
+                f'<li><b>{_t(_rate(r.multiplier))}{unit}</b> {_t(summary)}{hint}</li>'
+            )
+            if len(rule_items) == 3:
+                break
+        rules = "".join(rule_items)
+        base_unit = "%" if product.base_currency is RewardCurrency.USD_CASHBACK else "×"
+        base_line = (
+            f'<li><b>{_t(_rate(product.base_multiplier))}{base_unit}</b> '
+            "on all purchases</li>"
         )
+        # Show the base rate as the floor when a card has room, so a flat-rate card
+        # (Double Cash's 2%) is not misrepresented by a lone portal bonus.
+        if rules and len(rule_items) < 3:
+            rules += base_line
         # Cards that earn their bonuses through sourced Mastercard rewards programs
         # (rather than hard-coded rules) show those programs instead of a bare base.
         if not rules:
             ranked = sorted(programs_by_issuer.get(product.issuer, []), key=lambda p: -p.rate)
             # Best program per distinct category, so three travel tiers don't all show.
-            seen: set[str] = set()
+            seen_p: set[str] = set()
             distinct = []
             for p in ranked:
-                if p.category_summary in seen:
+                if p.category_summary in seen_p:
                     continue
-                seen.add(p.category_summary)
+                seen_p.add(p.category_summary)
                 distinct.append(p)
             rules = "".join(
-                f'<li><b>+{_t(p.rate.normalize())}×</b> {_t(p.category_summary)} '
+                f'<li><b>+{_t(_rate(p.rate))}×</b> {_t(p.category_summary)} '
                 f'<span class="sourced-tag">sourced</span></li>'
                 for p in distinct[:3]
             )
-        rules = rules or "<li>Base earn only</li>"
+        if not rules:
+            rules = base_line
         perks = "".join(
             f"<li>{_t(b.display_name)}</li>" for b in _card_benefits(inst)[:3]
         )
@@ -1415,6 +1464,7 @@ a{color:inherit}
   color:var(--brand-ink)}
 .sourced-tag{font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
   color:var(--brand-ink);border:1px solid var(--line);border-radius:6px;padding:1px 5px;margin-left:4px}
+.channel-hint{font-size:11.5px;color:var(--ink-3)}
 .offer-row h4{font-size:15px;font-weight:640;margin-top:4px}
 .offer-row p{font-size:13.5px;color:var(--ink-2);margin-top:4px}
 

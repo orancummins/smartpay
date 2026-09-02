@@ -201,11 +201,14 @@ def test_demo_alex_renders_the_dashboard():
     assert "via Citi Travel" in html
     assert "First checked bag free on American Airlines" in html
 
-    # All six cards, each with its art.
+    # All six cards, each with its art inlined as a data URI so it renders
+    # without a mounted /static route.
     assert html.count('class="wallet-card art-') == 6
-    for art in ("citi_strata_premier.webp", "chase_sapphire_preferred.png",
-                "first_hawaiian_priority_destinations.webp"):
-        assert art in html
+    assert html.count('<div class="card-art">') == 6
+    assert html.count('src="data:image/') >= 6
+    for card in ("Citi Strata Premier Card", "Chase Sapphire Preferred",
+                 "First Hawaiian Priority Destinations World Elite Mastercard"):
+        assert card in html
 
     # Disclosures are not optional, whatever the design does.
     assert "synthetic demo consumer" in html

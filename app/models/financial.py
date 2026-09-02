@@ -15,6 +15,7 @@ from app.models.common import (
     NetworkTier,
     PurchaseChannel,
     RewardCurrency,
+    summarise_categories,
 )
 from app.money import ZERO
 
@@ -92,6 +93,16 @@ class RewardRule(BaseModel):
 
     def channel_qualifies(self, channel: PurchaseChannel) -> bool:
         return not self.required_channels or channel in self.required_channels
+
+    @property
+    def category_summary(self) -> str:
+        """A short phrase for what this rule rewards, e.g. "travel", "dining".
+
+        Merchant-scoped rules with no category fall back to naming select merchants.
+        """
+        return summarise_categories(self.categories) or (
+            "select merchants" if self.merchants else "everyday spend"
+        )
 
     def matches(self, category: Category, merchant_key: str, channel: PurchaseChannel) -> bool:
         if not self.channel_qualifies(channel):
