@@ -119,6 +119,16 @@ def test_priceless_leads_with_the_itinerary_destination(service):
     assert "this trip's destination" in priceless[0]["why"]
 
 
+def test_priceless_never_pads_a_known_destination_with_other_cities(service):
+    """A trip with a resolvable destination must only ever show offers in that
+    city -- topping up an empty-looking list with Alex's Boston/LA/NYC
+    historic-spend picks under a "for this trip" heading would misrepresent
+    them as relevant to a Disney/Orlando trip when they are not."""
+    priceless = service.optimise_itinerary()["data"]["priceless"]
+    assert priceless
+    assert all(p["city"] == "Orlando" for p in priceless)
+
+
 def test_wallet_optimisation_matches_golden(service):
     rec = service.optimise_wallet()["data"]["recommendation"]
     assert rec["action"] == GOLDEN["wallet_action"]
