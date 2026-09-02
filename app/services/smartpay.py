@@ -168,7 +168,8 @@ class SmartPayService:
         intent = PurchaseIntent.model_validate(purchase or {})
         item = ItineraryItem(item_id="purchase", **intent.model_dump())
         itinerary = Itinerary(
-            itinerary_id="single_purchase", title=intent.display_label, items=[item],
+            itinerary_id=_slug(intent.display_label) or "single_purchase",
+            title=intent.display_label, items=[item],
             start_date=intent.purchase_date,
         )
         return self._optimise(customer_id, itinerary)
