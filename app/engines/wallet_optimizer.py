@@ -68,17 +68,18 @@ class WalletOptimizer:
                     merchant=category.value, category=category, amount=spend
                 )
                 # A sourced issuer rewards program (see app.engines.rewards_programs)
-                # is additive on top of the card's own published earn -- omitting it
-                # here made a card's real total rate look weaker than it is, which
-                # is what silently recommended dropping a card with a genuine,
-                # sourced bonus this engine just never counted.
-                program_value = sum(
+                # is additive on top of the card's own published earn, issuer-matched
+                # and channel independent -- omitting it here made a card's real
+                # total rate look weaker than it is, which is what silently
+                # recommended dropping a card with a genuine, sourced bonus this
+                # engine just never counted.
+                bonus = sum(
                     (p.estimated_value for p in self.reward_programs.evaluate(purchase, instrument)),
                     ZERO,
                 )
                 for channel in available_channels(category, instrument):
                     evaluation = self.rewards.evaluate(purchase, instrument, channel)
-                    best = max(best, evaluation.estimated_value + program_value)
+                    best = max(best, evaluation.estimated_value + bonus)
             total += best
         return quantize(total)
 

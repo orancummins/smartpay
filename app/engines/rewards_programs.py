@@ -55,12 +55,12 @@ class RewardsProgramsEngine:
             RewardProgramBonus(
                 program_id=program.program_id,
                 issuer_name=program.issuer_name,
-                display_name=program.display_name,
+                display_name=program.reward_summary,
                 points=points,
                 estimated_value=value,
                 label=program.provenance.label,
                 explanation=(
-                    f"{program.issuer_name}: {program.description} "
+                    f"{program.issuer_name}: {program.reward_summary} "
                     f"(sourced issuer rewards program)"
                 ),
                 evidence=[program.evidence],

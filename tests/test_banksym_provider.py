@@ -115,14 +115,14 @@ def test_all_six_cards_are_matched_to_their_products(live):
     assert cards == {
         "citi_strata_premier", "citi_double_cash", "citi_aa_platinum_select",
         "chase_sapphire_preferred", "chase_freedom_unlimited",
-        "first_hawaiian_priority_destinations_world_elite",
+        "first_hawaiian_priority_destinations",
     }
 
 
 def test_all_institutions_are_aggregated(live):
     """Alex banks with three institutions; Open Finance has to reassemble one picture."""
     profile = live.get_profile("alex")
-    assert {a.institution for a in profile.accounts} == {"citi", "chase", "first_hawaiian"}
+    assert {a.institution for a in profile.accounts} == {"citi", "chase", "first hawaiian"}
 
 
 def test_identical_recommendations_from_a_live_api(live, fixture_profile):

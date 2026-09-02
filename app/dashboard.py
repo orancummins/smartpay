@@ -34,10 +34,11 @@ CARD_ART = {
     "citi_aa_platinum_select": "/static/cards/citi_aa_platinum_select.webp",
     "chase_sapphire_preferred": "/static/cards/chase_sapphire_preferred.png",
     "chase_freedom_unlimited": "/static/cards/chase_freedom_unlimited.png",
+    "first_hawaiian_priority_destinations": "/static/cards/first_hawaiian_priority_destinations.webp",
 }
 
 ISSUER_LOGO = {"citi": "/static/logos/citi.svg", "chase": "/static/logos/chase.svg"}
-ISSUER_NAME = {"citi": "Citi", "chase": "Chase", "first_hawaiian": "First Hawaiian"}
+ISSUER_NAME = {"citi": "Citi", "chase": "Chase", "first hawaiian": "First Hawaiian"}
 
 #: Validated categorical palette (see the dataviz reference). Adjacent-pair safe in
 #: both modes; three light slots sit under 3:1, so every bar carries a direct label.
@@ -838,6 +839,12 @@ def _shared_data_section(profile: FinancialProfile) -> str:
 # ---------------------------------------------------------------------------
 
 def _wallet_carousel(profile: FinancialProfile) -> str:
+    from app.knowledge import rewards_programs
+
+    programs_by_issuer: dict[str, list] = defaultdict(list)
+    for program in rewards_programs():
+        programs_by_issuer[program.issuer_key].append(program)
+
     cards = []
     for i, inst in enumerate(profile.instruments):
         product = inst.product
@@ -851,7 +858,25 @@ def _wallet_carousel(profile: FinancialProfile) -> str:
         rules = "".join(
             f'<li><b>{_t(r.multiplier.normalize())}×</b> {_t(r.description)}</li>'
             for r in top
-        ) or "<li>Base earn only</li>"
+        )
+        # Cards that earn their bonuses through sourced Mastercard rewards programs
+        # (rather than hard-coded rules) show those programs instead of a bare base.
+        if not rules:
+            ranked = sorted(programs_by_issuer.get(product.issuer, []), key=lambda p: -p.rate)
+            # Best program per distinct category, so three travel tiers don't all show.
+            seen: set[str] = set()
+            distinct = []
+            for p in ranked:
+                if p.category_summary in seen:
+                    continue
+                seen.add(p.category_summary)
+                distinct.append(p)
+            rules = "".join(
+                f'<li><b>+{_t(p.rate.normalize())}×</b> {_t(p.category_summary)} '
+                f'<span class="sourced-tag">sourced</span></li>'
+                for p in distinct[:3]
+            )
+        rules = rules or "<li>Base earn only</li>"
         perks = "".join(
             f"<li>{_t(b.display_name)}</li>" for b in _card_benefits(inst)[:3]
         )
@@ -990,7 +1015,7 @@ def _benefits_section(profile: FinancialProfile) -> str:
         <div class="expand-toggle-text">
           <h2 id="benefits-h">Card benefits, rewards, offers &amp; terms</h2>
           <p>{_t(sum(1 for i in profile.instruments if i.is_card))} cards, read live
-             over FDX from two institutions.</p>
+             over FDX from {_t(len({a.institution for a in profile.accounts}))} institutions.</p>
         </div>
         <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
           <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -1432,6 +1457,8 @@ a{color:inherit}
 .offer-row{border:1px dashed var(--line);border-radius:12px;padding:12px 14px}
 .offer-tag{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
   color:var(--brand-ink)}
+.sourced-tag{font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--brand-ink);border:1px solid var(--line);border-radius:6px;padding:1px 5px;margin-left:4px}
 .offer-row h4{font-size:15px;font-weight:640;margin-top:4px}
 .offer-row p{font-size:13.5px;color:var(--ink-2);margin-top:4px}
 

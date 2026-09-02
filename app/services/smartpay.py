@@ -118,12 +118,27 @@ class SmartPayService:
 
     def get_wallet(self, customer_id: str = config.DEMO_CUSTOMER_ID) -> dict:
         profile = self.provider.get_profile(customer_id)
+        from app.knowledge import rewards_programs
+        programs_by_issuer: dict[str, list] = collections.defaultdict(list)
+        for program in rewards_programs():
+            programs_by_issuer[program.issuer_key].append(program)
         cards = []
         for instrument in profile.instruments:
             product = instrument.product
             if product is None:
                 continue
             best = max(product.reward_rules, key=lambda r: r.multiplier, default=None)
+            if best:
+                headline = best.description
+            else:
+                top = max(
+                    programs_by_issuer.get(product.issuer, []),
+                    key=lambda p: p.rate, default=None,
+                )
+                headline = (
+                    f"{top.reward_summary} via Mastercard rewards"
+                    if top else f"{product.base_multiplier.normalize()}× base"
+                )
             cards.append({
                 "product_id": product.product_id,
                 "display_name": product.display_name,
@@ -131,7 +146,7 @@ class SmartPayService:
                 + (f" {product.network_tier.value.replace('_', ' ').title()}"
                    if product.network_tier.value != "none" else ""),
                 "annual_fee": fmt(product.annual_fee),
-                "headline": best.description if best else f"{product.base_multiplier}x base",
+                "headline": headline,
             })
         return _envelope(
             render.wallet_list_markdown(customer_id, cards), {"cards": cards},

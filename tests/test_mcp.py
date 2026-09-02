@@ -201,9 +201,10 @@ def test_demo_alex_renders_the_dashboard():
     assert "via Citi Travel" in html
     assert "First checked bag free on American Airlines" in html
 
-    # All five cards, each with its art.
+    # All six cards, each with its art.
     assert html.count('class="wallet-card art-') == 6
-    for art in ("citi_strata_premier.webp", "chase_sapphire_preferred.png"):
+    for art in ("citi_strata_premier.webp", "chase_sapphire_preferred.png",
+                "first_hawaiian_priority_destinations.webp"):
         assert art in html
 
     # Disclosures are not optional, whatever the design does.
@@ -338,7 +339,7 @@ def test_card_art_carries_no_placeholder_cardholder_name():
 
     cards = Path(__file__).resolve().parent.parent / "app" / "static" / "cards"
     shipped = [p for p in cards.glob("*") if p.suffix in {".png", ".webp"}]
-    assert len(shipped) == 5
+    assert len(shipped) == 6
 
     originals = cards / "_original"
     assert originals.is_dir(), "originals must be kept so the edit stays reversible"

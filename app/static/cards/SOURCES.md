@@ -7,6 +7,7 @@ Downloaded 2026-09-01 from the current issuer product pages for local demo use.
 - `citi_aa_platinum_select.webp`: https://aemapi.citi.com/content/dam/cfs/uspb/usmkt/cards/en/static/images/citi-aadvantage-platinum-elite-credit-card/citi-aadvantage-platinum-select-elite-credit-card_306x192.webp
 - `chase_sapphire_preferred.png`: https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/sapphire-preferredcard2026.png
 - `chase_freedom_unlimited.png`: https://creditcards.chase.com/content/dam/jpmc-marketplace/card-art/freedom_unlimited_card_alt.png
+- `first_hawaiian_priority_destinations.webp`: generated placeholder art (not vendored from the issuer). Produced by `scripts/make_first_hawaiian_art.py` at the same 306x192 footprint, embossed with the demo persona name. Re-run that script to regenerate.
 
 ## Institution logos
 

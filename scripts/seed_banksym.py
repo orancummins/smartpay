@@ -42,7 +42,7 @@ INSTITUTIONS = {
         "primary_color": "#117ACA",
         "logo_url": "/logos/chase.svg",
     },
-    "first_hawaiian": {
+    "first hawaiian": {
         "display_name": "First Hawaiian Bank",
         # From FHB's own published logo SVG (fhb.com/sites/default/files/images/
         # Logo_Color_Horizontal.svg) -- no single declared "primary" brand color
