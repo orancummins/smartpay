@@ -11,8 +11,11 @@
 * In UI, add a 'New Card' offer from a Mastercard bank with a link to apply where the Visa option wins
 * Make sure card benefits are really real, make sure all highlighted rewards, offers, benefits etc are real
 * 'The right card. Every time.' is the consumer tagline
-*  From accepted everywhere to chosen every time - Priceless
+*  From accepted everywhere to chosen every time. Priceless.
 * Update 'Offers' section to be 'Merchant Offers for you on your Mastercard' and have more whitespace between Cards and Offers
+* Add in real Citi Rewards
+* Ensure we have true delta to Visa and others (i.e. diff between their offers)
+* Non Peronslaised MCP (shows Priceless etc.)
 
 IDEAS for future:
 - SME version, huge amount reuable and can use things like 'Easy Savings'
@@ -24,3 +27,12 @@ IDEAS for future:
     * Priceless experiences
     * Card Art (* maybe at a cost)
 - - Expand beyond US, support every Gen AI client (Gemini, Groq etc.)   
+
+
+I want to simplify the User UI.
+1. Update 'CommerceGPT forecast — your projected spend' or 'Your spending history' table is shown to the right hand side of 'Spending habits that would need to change' panel and it dynamically changes as the slider is in the left or right side.
+2. Integrate Mastercard Offers for you into the 'Potential Future savings identified' and put the banner 'Discounts & Priceless experiences, matched to what you've recently researched through ChatGPT' into the potential savings section
+3. Have Priceless Offers for You section more discrete - scrollable one row and smaller, have it collapsed.
+4. Move 'what could you have saved' to be directly under 'Potential future savings identified'
+5. Merge 'Your card benefits etc' into 'Here's all the information you've shared'. 
+6. On 'Here's all the information you've shared' have the spending categorisation collapsed
