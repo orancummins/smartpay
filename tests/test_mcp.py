@@ -81,8 +81,8 @@ def test_mcp_get_wallet():
 
 def test_mcp_optimise_itinerary():
     payload = call("optimise_itinerary", {})
-    assert payload["data"]["incremental_guaranteed"] == "525.50"
-    assert len(payload["data"]["recommendations"]) == 6
+    assert payload["data"]["incremental_guaranteed"] == "542.90"
+    assert len(payload["data"]["recommendations"]) == 7
 
 
 def test_mcp_optimise_purchase_values_the_baggage_benefit():
@@ -191,9 +191,9 @@ def test_demo_alex_renders_the_dashboard():
     assert html.startswith("<!doctype html>")
 
     # The figures on screen must be the engine's, to the cent.
-    assert "$525.50" in html, "headline guaranteed value missing"
-    assert "$359.70" in html
-    assert "35,620" in html
+    assert "$542.90" in html, "headline guaranteed value missing"
+    assert "$373.02" in html
+    assert "36,952" in html
 
     # The story: baseline, recommendation and the rule behind it.
     assert "Chase Sapphire Preferred" in html

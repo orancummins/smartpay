@@ -168,30 +168,26 @@ def itinerary_matches(
     itinerary: Itinerary,
     total: int = TOTAL_LIMIT,
 ) -> list[dict]:
-    """Priceless experiences relevant to what ChatGPT just asked about: this
-    itinerary's own destination first, then Alex's historic-spend affinities
-    filling whatever room is left.
+    """Priceless experiences relevant to what ChatGPT just asked about.
+
+    When the trip has a resolvable destination, this returns ONLY offers in
+    that city -- never padded out with Alex's own historic-spend picks from
+    somewhere else. A one-item list ("this trip only has one real Orlando
+    offer") is honest; topping it up with Boston dining or LA shopping under
+    a "for this trip" heading is not, no matter how empty the section looks.
+    Historic-spend matching only takes over when there is no destination
+    signal at all to be relevant to.
     """
     on = itinerary.start_date or date.today()
     tiers = _tiers_held(profile)
     cities = _itinerary_cities(itinerary)
 
-    out: list[dict] = []
-    seen: set[str] = set()
-    if cities:
-        candidates = [
-            e for e in all_priceless() if e.city in cities and _eligible(e, tiers, on)
-        ]
-        candidates.sort(key=_rank_key)
-        for experience in candidates[: min(total, 3)]:
-            out.append(
-                _to_dict(experience, f"relevant to this trip's destination, {experience.city}")
-            )
-            seen.add(experience.experience_id)
+    if not cities:
+        return historic_matches(profile, on=on, total=total)
 
-    if len(out) < total:
-        for match in historic_matches(profile, on=on, total=total - len(out)):
-            if match["experience_id"] not in seen:
-                out.append(match)
-                seen.add(match["experience_id"])
-    return out[:total]
+    candidates = [e for e in all_priceless() if e.city in cities and _eligible(e, tiers, on)]
+    candidates.sort(key=_rank_key)
+    return [
+        _to_dict(e, f"relevant to this trip's destination, {e.city}")
+        for e in candidates[:total]
+    ]

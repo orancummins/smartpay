@@ -104,11 +104,20 @@ def test_offer_date_window_excludes_expired():
     assert OFFERS.evaluate(p, INST["citi_strata_premier"]) == []
 
 
-def test_offer_is_available_to_any_eligible_card():
+def test_offer_is_available_to_any_eligible_mastercard():
     """A catalogue offer carries no product restriction, so it is not tied to one
-    issuer's card the way the old synthetic Disney offer was."""
+    issuer's card the way the old synthetic Disney offer was -- but it is still a
+    Mastercard card-linked offer, so it must not pay out on a Visa card."""
     p = buy("lyft", Category.RIDESHARE, "180")
-    assert len(OFFERS.evaluate(p, INST["chase_sapphire_preferred"])) == 1
+    assert len(OFFERS.evaluate(p, INST["citi_double_cash"])) == 1
+
+
+def test_offer_does_not_apply_to_a_visa_card():
+    """A real Mastercard card-linked offer can only be redeemed by paying with a
+    Mastercard-network card -- a Visa baseline must never claim the same credit,
+    or it silently cancels out of the incremental total."""
+    p = buy("lyft", Category.RIDESHARE, "180")
+    assert OFFERS.evaluate(p, INST["chase_sapphire_preferred"]) == []
 
 
 def test_offer_does_not_leak_to_an_unrelated_merchant():

@@ -28,6 +28,13 @@ class OffersEngine:
         product = instrument.product
         if product is None:
             return []
+        # A Mastercard card-linked offer can only ever be redeemed by paying with
+        # a Mastercard-network card -- without this, a Visa baseline option
+        # silently claims the same credit as the Mastercard recommendation, and
+        # the two cancel out in the incremental total instead of showing up as
+        # real Mastercard-exclusive value.
+        if not instrument.is_mastercard:
+            return []
 
         merchant_key = merchant_key or purchase.merchant
         on = on or purchase.purchase_date or date.today()

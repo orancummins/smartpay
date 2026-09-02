@@ -119,6 +119,16 @@ def test_priceless_leads_with_the_itinerary_destination(service):
     assert "this trip's destination" in priceless[0]["why"]
 
 
+def test_priceless_never_pads_a_known_destination_with_other_cities(service):
+    """A trip with a resolvable destination must only ever show offers in that
+    city -- topping up an empty-looking list with Alex's Boston/LA/NYC
+    historic-spend picks under a "for this trip" heading would misrepresent
+    them as relevant to a Disney/Orlando trip when they are not."""
+    priceless = service.optimise_itinerary()["data"]["priceless"]
+    assert priceless
+    assert all(p["city"] == "Orlando" for p in priceless)
+
+
 def test_wallet_optimisation_matches_golden(service):
     rec = service.optimise_wallet()["data"]["recommendation"]
     assert rec["action"] == GOLDEN["wallet_action"]
@@ -262,7 +272,7 @@ def test_tiebreak_funds_a_real_5_percent_statement_credit(service):
     assert tied, "expected the known Disney dining tie in the frozen scenario"
     for r in tied:
         assert Decimal(r["guaranteed_savings"]) == quantize(Decimal(r["amount"]) * Decimal("0.05"))
-    assert result["data"]["incremental_guaranteed"] == "525.50"
+    assert result["data"]["incremental_guaranteed"] == "542.90"
 
 
 # --- apply-for-a-Mastercard CTA, evidence-backed -----------------------------
