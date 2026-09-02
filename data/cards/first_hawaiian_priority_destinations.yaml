@@ -1,0 +1,40 @@
+product_id: first_hawaiian_priority_destinations
+display_name: First Hawaiian Priority Destinations World Elite Mastercard
+issuer: first_hawaiian
+network: mastercard
+network_tier: world_elite
+annual_fee: "0"
+foreign_transaction_fee_pct: "0"
+base_currency: loyalty_points
+base_multiplier: "1"
+
+soft_benefits:
+  - "World Elite Mastercard travel and lifestyle benefits"
+  - "Bonus categories earned through First Hawaiian rewards programs"
+
+# The card earns a 1 point per dollar base here; its category bonuses (travel,
+# dining, everyday spend) are supplied by the real First Hawaiian rewards
+# programs in data/mastercard/rewards_catalog.json, applied by the issuer-matched
+# rewards-programs engine. Modelling them there rather than duplicating them as
+# reward_rules is what keeps the sourced bonus from double-counting a base rate.
+reward_rules: []
+
+late_payment_fee: "40.00"
+late_payment_fee_evidence:
+  evidence_type: issuer_reward_rule
+  source_name: First Hawaiian Bank
+  source_url: "https://www.fhb.com/en/personal/credit-cards"
+  verified_at: 2026-09-01
+  confidence: authoritative
+  note: "First Hawaiian Bank consumer credit card late payment penalty fee, from the published cardmember agreement pricing schedule."
+
+evidence:
+  evidence_type: issuer_reward_rule
+  source_name: First Hawaiian Bank
+  source_url: "https://www.fhb.com/en/personal/credit-cards/priority-destinations-world-elite-mastercard"
+  confidence: demo_approximation
+  note: >-
+    First Hawaiian Priority Destinations World Elite Mastercard, modelled for the
+    demo. Base earn is 1 point per dollar; the card's bonus categories are supplied
+    by the real First Hawaiian rewards programs sourced from the Mastercard Rewards
+    platform, not restated here.

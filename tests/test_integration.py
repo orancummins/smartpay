@@ -22,15 +22,15 @@ def service():
 def test_alex_profile_builds(service):
     result = service.get_financial_profile("alex")
     assert result["display_markdown"].startswith("## Financial profile")
-    assert result["data"]["account_count"] == 7
+    assert result["data"]["account_count"] == 8
     assert "Chase, Citi" in result["data"]["institutions"]
     assert result["disclaimers"], "synthetic data must always be disclosed"
 
 
-def test_wallet_lists_five_cards(service):
+def test_wallet_lists_six_cards(service):
     cards = service.get_wallet("alex")["data"]["cards"]
-    assert len(cards) == 5
-    assert sum(1 for c in cards if "Mastercard" in c["network"]) == 3
+    assert len(cards) == 6
+    assert sum(1 for c in cards if "Mastercard" in c["network"]) == 4
 
 
 def test_disney_itinerary_matches_golden_totals(service):

@@ -171,6 +171,44 @@ class RewardProgram(BaseModel):
             return False
         return bool(self.categories) and category in self.categories
 
+    @property
+    def category_summary(self) -> str:
+        """A human phrase for the bonus categories, e.g. "travel", "dining".
+
+        The catalogue's own program names are internal codes ("PD WE Travel Bonus
+        Spend"); this is what the UI shows instead.
+        """
+        travel = {Category.AIRFARE, Category.HOTEL, Category.ATTRACTION, Category.CAR_RENTAL}
+        words: list[str] = []
+        remaining = list(self.categories)
+        if travel & set(remaining):
+            words.append("travel")
+            remaining = [c for c in remaining if c not in travel]
+        friendly = {
+            Category.RESTAURANT: "dining",
+            Category.SUPERMARKET: "groceries",
+            Category.GAS: "gas",
+            Category.UTILITIES: "utilities",
+            Category.ENTERTAINMENT: "entertainment",
+            Category.STREAMING: "streaming",
+            Category.DRUGSTORE: "drugstore",
+            Category.SHOPPING: "shopping",
+            Category.OTHER: "everyday spend",
+        }
+        for category in remaining:
+            word = friendly.get(category, category.value.replace("_", " "))
+            if word not in words:
+                words.append(word)
+        return ", ".join(words) or "everyday spend"
+
+    @property
+    def reward_summary(self) -> str:
+        """Friendly one-liner, e.g. "3x points on travel" or "1.5% back on dining"."""
+        rate = self.rate.normalize()
+        if self.reward_currency is RewardCurrency.USD_CASHBACK:
+            return f"{rate}% back on {self.category_summary}"
+        return f"{rate}x points on {self.category_summary}"
+
 
 class PricelessExperience(BaseModel):
     """PLAN.MD section 12. Never counted as hard savings -- experience value only."""

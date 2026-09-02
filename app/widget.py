@@ -79,6 +79,9 @@ def _assets() -> str:
                 ),
                 "Chase Sapphire Preferred": data_uri("cards/chase_sapphire_preferred.png"),
                 "Chase Freedom Unlimited": data_uri("cards/chase_freedom_unlimited.png"),
+                "First Hawaiian Priority Destinations World Elite Mastercard": data_uri(
+                    "cards/first_hawaiian_priority_destinations.webp"
+                ),
             },
             "priceless": _priceless_assets(),
         }

@@ -41,6 +41,8 @@ CARD_ACCOUNTS = {
     "acct_citi_aa": "citi_aa_platinum_select",
     "acct_chase_csp": "chase_sapphire_preferred",
     "acct_chase_cfu": "chase_freedom_unlimited",
+    # Recently added by Alex; held but not yet used, so it carries no spend history.
+    "acct_fhb_priority": "first_hawaiian_priority_destinations",
 }
 
 ACCOUNTS = [
@@ -58,6 +60,9 @@ ACCOUNTS = [
      "account_type": AccountType.CREDIT_CARD, "mask": "5518"},
     {"account_id": "acct_chase_cfu", "institution": "chase", "display_name": "Chase Freedom Unlimited",
      "account_type": AccountType.CREDIT_CARD, "mask": "2094"},
+    {"account_id": "acct_fhb_priority", "institution": "first hawaiian",
+     "display_name": "First Hawaiian Priority Destinations World Elite Mastercard",
+     "account_type": AccountType.CREDIT_CARD, "mask": "4028"},
 ]
 
 # Merchant catalogue: (merchant_key, display name, low, high)
