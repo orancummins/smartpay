@@ -25,7 +25,7 @@ from app.models.common import (
     Provenance,
 )
 from app.models.financial import CardProduct
-from app.models.rules import BenefitRule, Offer, PricelessExperience
+from app.models.rules import BenefitRule, Offer, PricelessExperience, RewardProgram
 
 _CARDS = TypeAdapter(CardProduct)
 _BENEFITS = TypeAdapter(list[BenefitRule])
@@ -46,6 +46,23 @@ _OFFER_EVIDENCE = Evidence(
     note=(
         "Real Mastercard card-linked offer. Terms copied from the sourced "
         "catalogue; validity window extended to the demo period."
+    ),
+)
+
+#: Shared provenance for every sourced issuer rewards program. Real records from
+#: the Mastercard Rewards platform, applied only as an issuer-matched bonus.
+_REWARD_PROGRAM_PROVENANCE = Provenance(
+    status=Confidence.SOURCED_DATASET,
+    modelled_on="mastercard_rewards_platform",
+    label="Mastercard issuer rewards program",
+)
+_REWARD_PROGRAM_EVIDENCE = Evidence(
+    evidence_type=EvidenceType.MASTERCARD_REWARD,
+    source_name="Mastercard Rewards platform (US loyalty programs)",
+    confidence=Confidence.SOURCED_DATASET,
+    note=(
+        "Real issuer rewards program sourced from the Mastercard Rewards platform. "
+        "Applied only to a card whose issuer runs it, as an additive bonus."
     ),
 )
 
@@ -206,6 +223,34 @@ def offers() -> list[Offer]:
 
 
 @lru_cache(maxsize=1)
+def rewards_programs() -> list[RewardProgram]:
+    """Real US Mastercard issuer rewards programs, sourced from the Mastercard
+    Rewards platform. See scripts/import_mastercard_rewards.py for the importer.
+    """
+    path = config.DATA / "mastercard" / "rewards_catalog.json"
+    doc = json.loads(path.read_text())
+    out: list[RewardProgram] = []
+    for row in doc.get("programs", []):
+        out.append(
+            RewardProgram(
+                program_id=row["program_id"],
+                issuer_key=row["issuer_key"],
+                issuer_name=row.get("issuer_name", ""),
+                display_name=row["display_name"],
+                description=row.get("description", ""),
+                categories=row.get("categories", []),
+                reward_currency=row.get("reward_currency", "loyalty_points"),
+                rate=row.get("rate", "0"),
+                valid_from=row.get("valid_from"),
+                valid_to=row.get("valid_to"),
+                provenance=_REWARD_PROGRAM_PROVENANCE,
+                evidence=_REWARD_PROGRAM_EVIDENCE,
+            )
+        )
+    return out
+
+
+@lru_cache(maxsize=1)
 def priceless() -> list[PricelessExperience]:
     """The real Priceless catalogue -- data/priceless_catalogue_smartpay,
     already curated for this consumer (every row carries an "alex" tag).
@@ -219,5 +264,5 @@ def priceless() -> list[PricelessExperience]:
 
 
 def reset_cache() -> None:
-    for fn in (card_products, benefits, offers, priceless):
+    for fn in (card_products, benefits, offers, rewards_programs, priceless):
         fn.cache_clear()

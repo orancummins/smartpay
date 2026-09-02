@@ -1,0 +1,517 @@
+{
+  "provenance": {
+    "source_name": "Mastercard Rewards platform (US loyalty programs)",
+    "market": "US",
+    "note": "Real Mastercard issuer rewards programs. Curated to US consumer-facing category-bonus earn programs. Applied only to a card whose issuer runs the program -- never restated as the card's own published base rate."
+  },
+  "programs": [
+    {
+      "program_id": "citadel_federal_credit_union:business_office_supplies_gas",
+      "issuer_key": "citadel_federal_credit_union",
+      "issuer_name": "CITADEL FEDERAL CREDIT UNION",
+      "display_name": "Business - Office Supplies Gas",
+      "description": "Award additional 0.5 points per dollar on Office Supplies and Gas for Small Business Rewards for a total of 2 points per dollar.",
+      "categories": [
+        "gas"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "0.5",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "citadel_federal_credit_union:wr_restaurants_airlines_hote",
+      "issuer_key": "citadel_federal_credit_union",
+      "issuer_name": "CITADEL FEDERAL CREDIT UNION",
+      "display_name": "WR - Restaurants Airlines Hote",
+      "description": "Award additional 1 point per dollar on Restaurants, Hotels, and Airfare for World Rewards for a total of 2 points per dollar.",
+      "categories": [
+        "restaurant",
+        "airfare",
+        "hotel"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "1",
+      "valid_from": "2024-09-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "first_hawaiian:pd_we_travel_bonus_no_cap",
+      "issuer_key": "first_hawaiian",
+      "issuer_name": "FIRST HAWAIIAN BANK",
+      "display_name": "PD WE Travel Bonus No Cap",
+      "description": "Households earn an additional 1 points per USD for purchases at eligible travel merchant categories with no cap",
+      "categories": [
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "1",
+      "valid_from": "2016-07-11",
+      "valid_to": "2036-01-14"
+    },
+    {
+      "program_id": "first_hawaiian:pd_we_travel_bonus_spend",
+      "issuer_key": "first_hawaiian",
+      "issuer_name": "FIRST HAWAIIAN BANK",
+      "display_name": "PD WE Travel Bonus Spend",
+      "description": "Households earn an additional 3 points per USD for purchases at eligible travel merchant categories with 18,000 spend cap \u2013 CAP removed 7/1/25",
+      "categories": [
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "3",
+      "valid_from": "2016-07-11",
+      "valid_to": "2036-01-14"
+    },
+    {
+      "program_id": "first_hawaiian:pd_world_elite_dining_spend",
+      "issuer_key": "first_hawaiian",
+      "issuer_name": "FIRST HAWAIIAN BANK",
+      "display_name": "PD World Elite Dining Spend",
+      "description": "Cardholders earn an additional 1 point per USD for purchases in eligible merchant categories.",
+      "categories": [
+        "restaurant"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "1",
+      "valid_from": "2016-07-11",
+      "valid_to": "2036-01-14"
+    },
+    {
+      "program_id": "first_hawaiian:pd_world_everyday_spend",
+      "issuer_key": "first_hawaiian",
+      "issuer_name": "FIRST HAWAIIAN BANK",
+      "display_name": "PD World EveryDay Spend",
+      "description": "Cardholders earn an additional .5 points per USD for purchases in eligible Fuel, Service Stations, Grocery, Telco, or Utilities merchant categories.",
+      "categories": [
+        "gas",
+        "supermarket",
+        "utilities"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "0.5",
+      "valid_from": "2016-07-11",
+      "valid_to": "2036-01-14"
+    },
+    {
+      "program_id": "first_hawaiian:pd_world_travel_bonus_no_cap",
+      "issuer_key": "first_hawaiian",
+      "issuer_name": "FIRST HAWAIIAN BANK",
+      "display_name": "PD World Travel Bonus No Cap",
+      "description": "Households earn an additional .5 points per USD for purchases at eligible travel merchant categories with no cap",
+      "categories": [
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "0.5",
+      "valid_from": "2016-07-11",
+      "valid_to": "2036-01-14"
+    },
+    {
+      "program_id": "first_hawaiian:pd_wrldtrvlbonus6000_spendcap",
+      "issuer_key": "first_hawaiian",
+      "issuer_name": "FIRST HAWAIIAN BANK",
+      "display_name": "PD WrldTrvlBonus6000 SpendCap",
+      "description": "Households earn an additional 1.5 points per USD for purchases at eligible travel merchant categories. Offer capped at 6000 spend",
+      "categories": [
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "1.5",
+      "valid_from": "2016-07-11",
+      "valid_to": "2036-01-14"
+    },
+    {
+      "program_id": "gte_federal_credit_union:gas_grocery_home_improve_2x_bo",
+      "issuer_key": "gte_federal_credit_union",
+      "issuer_name": "GTE Federal Credit Union",
+      "display_name": "Gas/Grocery/Home Improve 2x Bo",
+      "description": "Earn 1 point per dollar spent on Gas, EV, Grocery and Home Improvement Merchant Category Codes (MCCs) for GBUS BPC through transactions made on or after February 17, 2025. Standard MCC exclusions apply.",
+      "categories": [
+        "gas",
+        "supermarket"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "1",
+      "valid_from": "2025-02-17",
+      "valid_to": null
+    },
+    {
+      "program_id": "gte_federal_credit_union:gas_travel_dining_3x_bonus",
+      "issuer_key": "gte_federal_credit_union",
+      "issuer_name": "GTE Federal Credit Union",
+      "display_name": "Gas/Travel/Dining 3x Bonus",
+      "description": "Earn 2 points per $1 on Gas, Travel and Restaurant MCCs",
+      "categories": [
+        "restaurant",
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental",
+        "gas"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "2",
+      "valid_from": "2021-10-04",
+      "valid_to": "2051-10-04"
+    },
+    {
+      "program_id": "gte_federal_credit_union:gas_travel_dining_3x_bonus_g",
+      "issuer_key": "gte_federal_credit_union",
+      "issuer_name": "GTE Federal Credit Union",
+      "display_name": "Gas/Travel/Dining 3X Bonus - G",
+      "description": "Earn 2 points per $1 on Gas, EV, Travel and Restaurant MCCs",
+      "categories": [
+        "restaurant",
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental",
+        "gas"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "2",
+      "valid_from": "2024-08-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "gte_federal_credit_union:grocery_home_improve_2x_bonus",
+      "issuer_key": "gte_federal_credit_union",
+      "issuer_name": "GTE Federal Credit Union",
+      "display_name": "Grocery/Home Improve 2x Bonus",
+      "description": "Earn 1 pt per $1 on Grocery and Home Improvement MCCs.",
+      "categories": [
+        "supermarket"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "1",
+      "valid_from": "2021-10-04",
+      "valid_to": "2051-10-04"
+    },
+    {
+      "program_id": "gte_federal_credit_union:travel_and_dining_4x_bonus_g",
+      "issuer_key": "gte_federal_credit_union",
+      "issuer_name": "GTE Federal Credit Union",
+      "display_name": "Travel and Dining 4x Bonus - G",
+      "description": "Earn 3 points per dollar spent on Travel, and Restaurant Merchant Category Codes (MCCs) for GHERT BPC. Standard MCC exclusions apply.",
+      "categories": [
+        "restaurant",
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "3",
+      "valid_from": "2025-04-29",
+      "valid_to": null
+    },
+    {
+      "program_id": "gte_federal_credit_union:travel_dining_3x_bonus_bpc_g",
+      "issuer_key": "gte_federal_credit_union",
+      "issuer_name": "GTE Federal Credit Union",
+      "display_name": "Travel/Dining 3X Bonus - BPC-G",
+      "description": "Earn 2 points per dollar spent on Travel, and Restaurant Merchant Category Codes (MCCs) for GBUS BPC through transactions made on or after February 17, 2025. Standard MCC exclusions apply.",
+      "categories": [
+        "restaurant",
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "2",
+      "valid_from": "2025-02-17",
+      "valid_to": null
+    },
+    {
+      "program_id": "hsbc_engage:bonus_dining_rewards",
+      "issuer_key": "hsbc_engage",
+      "issuer_name": "HSBC ENGAGE",
+      "display_name": "Bonus Dining Rewards",
+      "description": "Dining promotion to provide 2 point per dollar.",
+      "categories": [
+        "restaurant"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "2",
+      "valid_from": "2020-10-31",
+      "valid_to": "2050-10-16"
+    },
+    {
+      "program_id": "hsbc_engage:bonus_entertainment_rewards",
+      "issuer_key": "hsbc_engage",
+      "issuer_name": "HSBC ENGAGE",
+      "display_name": "Bonus Entertainment Rewards",
+      "description": "Entertainment promotion to provide 2 point per dollar.",
+      "categories": [
+        "entertainment"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "2",
+      "valid_from": "2020-10-31",
+      "valid_to": "2050-10-16"
+    },
+    {
+      "program_id": "hsbc_engage:bonus_travel_rewards",
+      "issuer_key": "hsbc_engage",
+      "issuer_name": "HSBC ENGAGE",
+      "display_name": "Bonus Travel Rewards",
+      "description": "Travel promotion to provide 2 point per dollar.",
+      "categories": [
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "2",
+      "valid_from": "2020-10-31",
+      "valid_to": "2050-10-16"
+    },
+    {
+      "program_id": "kimberly_clark_credit_union:kccu_1x_promotion",
+      "issuer_key": "kimberly_clark_credit_union",
+      "issuer_name": "Kimberly Clark Credit Union",
+      "display_name": "KCCU 1x Promotion",
+      "description": "KCCU to offer an additional 1% cashback on GAS purchases only for the first program year Qualifying MCCs: GAS MCCs: 5541 & 5542",
+      "categories": [
+        "gas"
+      ],
+      "reward_currency": "usd_cashback",
+      "rate": "1",
+      "valid_from": "2026-05-01",
+      "valid_to": "2027-06-15"
+    },
+    {
+      "program_id": "kimberly_clark_credit_union:kccu_mastercard_rewards",
+      "issuer_key": "kimberly_clark_credit_union",
+      "issuer_name": "Kimberly Clark Credit Union",
+      "display_name": "KCCU Mastercard Rewards",
+      "description": "KCCU to offer 0.5% cashback on gas purchases only. Cardholders will award 0.5 points for every $1 spend in Gas MCCs: 5541 & 5542",
+      "categories": [
+        "gas"
+      ],
+      "reward_currency": "usd_cashback",
+      "rate": "0.5",
+      "valid_from": "2024-11-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "mc_local:mc_local_dining",
+      "issuer_key": "mc_local",
+      "issuer_name": "MC Local",
+      "display_name": "MC Local Dining",
+      "description": "Award 5% cashback on dining",
+      "categories": [
+        "restaurant"
+      ],
+      "reward_currency": "usd_cashback",
+      "rate": "5",
+      "valid_from": "2023-11-01",
+      "valid_to": "2050-08-30"
+    },
+    {
+      "program_id": "patelco_credit_union:gas_and_grocery_bonus",
+      "issuer_key": "patelco_credit_union",
+      "issuer_name": "PATELCO CREDIT UNION",
+      "display_name": "- Gas and Grocery Bonus",
+      "description": "Cardholders earn an additional 1 point per USD for purchases in eligible merchant categories.",
+      "categories": [
+        "gas",
+        "supermarket"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "1",
+      "valid_from": "2024-08-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "patelco_credit_union:school_and_grocery",
+      "issuer_key": "patelco_credit_union",
+      "issuer_name": "PATELCO CREDIT UNION",
+      "display_name": "- School and Grocery",
+      "description": "Cardholders earn an additional 1 point per USD for purchases in eligible merchant categories.",
+      "categories": [
+        "supermarket"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "1",
+      "valid_from": "2024-08-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "patelco_credit_union:travel_and_dining_bonus",
+      "issuer_key": "patelco_credit_union",
+      "issuer_name": "PATELCO CREDIT UNION",
+      "display_name": "- Travel and Dining Bonus",
+      "description": "Cardholders earn an additional 1 point per USD for purchases in eligible merchant categories.",
+      "categories": [
+        "restaurant",
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "1",
+      "valid_from": "2024-08-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "patelco_credit_union:patelco_gas_grocery_promotion",
+      "issuer_key": "patelco_credit_union",
+      "issuer_name": "PATELCO CREDIT UNION",
+      "display_name": "Patelco Gas&Grocery Promotion",
+      "description": "The promotion will provide targeted customers with 2% cash back for every $1 spent in applicable MCCs.",
+      "categories": [
+        "gas",
+        "supermarket",
+        "utilities"
+      ],
+      "reward_currency": "usd_cashback",
+      "rate": "2",
+      "valid_from": "2023-09-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "patelco_credit_union:patelco_non_rewards_card_walle",
+      "issuer_key": "patelco_credit_union",
+      "issuer_name": "PATELCO CREDIT UNION",
+      "display_name": "Patelco Non Rewards Card Walle",
+      "description": "The promotion will provide targeted customers with 1% cash back for every $1 on purchases made with a digital wallet.",
+      "categories": [
+        "utilities"
+      ],
+      "reward_currency": "usd_cashback",
+      "rate": "1",
+      "valid_from": "2026-07-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "patelco_credit_union:patelco_pure_card_payment_prom",
+      "issuer_key": "patelco_credit_union",
+      "issuer_name": "PATELCO CREDIT UNION",
+      "display_name": "Patelco Pure Card Payment Prom",
+      "description": "The promotion will provide targeted customers with 2% cash back for every $1 paid to their account up to $50 monthly.",
+      "categories": [
+        "utilities"
+      ],
+      "reward_currency": "usd_cashback",
+      "rate": "2",
+      "valid_from": "2025-07-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "patelco_credit_union:patelco_rewards_card_payment_p",
+      "issuer_key": "patelco_credit_union",
+      "issuer_name": "PATELCO CREDIT UNION",
+      "display_name": "Patelco Rewards Card Payment P",
+      "description": "The promotion will provide targeted customers with 2% cash back for every $1 paid to their account up to $50 monthly.",
+      "categories": [
+        "utilities"
+      ],
+      "reward_currency": "usd_cashback",
+      "rate": "2",
+      "valid_from": "2025-07-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "patelco_credit_union:patelco_rewards_wallet_promoti",
+      "issuer_key": "patelco_credit_union",
+      "issuer_name": "PATELCO CREDIT UNION",
+      "display_name": "Patelco Rewards Wallet Promoti",
+      "description": "The promotion will provide targeted customers with 2% cash back for every $1 on purchases made with a digital wallet.",
+      "categories": [
+        "utilities"
+      ],
+      "reward_currency": "usd_cashback",
+      "rate": "2",
+      "valid_from": "2026-05-01",
+      "valid_to": null
+    },
+    {
+      "program_id": "security_service_federal_credit_union:additional_2_pt_cash_8131_tgrw",
+      "issuer_key": "security_service_federal_credit_union",
+      "issuer_name": "SECURITY SERVICE FEDERAL CREDIT UNION",
+      "display_name": "Additional 2 pt Cash 8131 TGRW",
+      "description": "Additional 2% Cash Back points for purchases on Travel, Gasoline, Restaurants, Warehouse Clubs (i.e.: Sam's and Costco)",
+      "categories": [
+        "restaurant",
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental",
+        "gas"
+      ],
+      "reward_currency": "usd_cashback",
+      "rate": "2",
+      "valid_from": "2015-11-02",
+      "valid_to": "2035-12-31"
+    },
+    {
+      "program_id": "security_service_federal_credit_union:additional_2_pt_cash_8132_tgrw",
+      "issuer_key": "security_service_federal_credit_union",
+      "issuer_name": "SECURITY SERVICE FEDERAL CREDIT UNION",
+      "display_name": "Additional 2 pt Cash 8132 TGRW",
+      "description": "Additional 2 Points per dollar for purchases on Travel, Gasoline, Restaurants, Warehouse Clubs (i.e.: Sam's)",
+      "categories": [
+        "restaurant",
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental",
+        "gas"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "2",
+      "valid_from": "2015-11-02",
+      "valid_to": null
+    },
+    {
+      "program_id": "security_service_federal_credit_union:additional_2_pts_per_usd_feb17",
+      "issuer_key": "security_service_federal_credit_union",
+      "issuer_name": "SECURITY SERVICE FEDERAL CREDIT UNION",
+      "display_name": "Additional 2 Pts Per USD feb17",
+      "description": "Additional 2 Points per dollar for purchases on Travel, Gasoline, Restaurants, Warehouse Clubs (i.e.: Sam's and Costco)",
+      "categories": [
+        "restaurant",
+        "airfare",
+        "hotel",
+        "attraction",
+        "car_rental",
+        "gas"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "2",
+      "valid_from": "2017-01-30",
+      "valid_to": "2050-12-31"
+    },
+    {
+      "program_id": "sessionm_cfna:co_brand_2pts_out_ntwk_fuel",
+      "issuer_key": "sessionm_cfna",
+      "issuer_name": "SESSIONM CFNA",
+      "display_name": "Co-Brand 2pts Out-Ntwk Fuel",
+      "description": "Additional 2pts per dollar for Fuel Purchases for accounts out of network",
+      "categories": [
+        "gas"
+      ],
+      "reward_currency": "loyalty_points",
+      "rate": "2",
+      "valid_from": "2023-02-15",
+      "valid_to": "2050-05-06"
+    }
+  ]
+}

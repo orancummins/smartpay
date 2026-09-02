@@ -71,6 +71,7 @@ REWARD_VALUATIONS: dict[str, Decimal] = {
     "chase_ultimate_rewards": Decimal("0.01"),
     "american_airlines_miles": Decimal("0.01"),
     "usd_cashback": Decimal("1.00"),
+    "loyalty_points": Decimal("0.01"),
 }
 
 VALUATION_NOTE = (

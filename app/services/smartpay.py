@@ -44,6 +44,12 @@ MASTERCARD_OFFER_NOTE = (
     "offer terms are genuine; their validity window has been extended to the demo "
     "period."
 )
+REWARD_PROGRAM_NOTE = (
+    "Bonuses marked 'Mastercard issuer rewards program' are real issuer loyalty "
+    "programs sourced from the Mastercard Rewards platform. They are applied only to "
+    "a card whose issuer runs the program, as an additive bonus — never restated as "
+    "the card's own published earn rate."
+)
 FORECAST_NOTE = (
     "Future spend is produced by a demo CommerceGPT adapter from observed history, "
     "not a live CommerceGPT prediction."
@@ -178,6 +184,8 @@ class SmartPayService:
         plan.disclaimers = [SYNTHETIC_DATA_NOTE, render.VALUATION_FOOTNOTE]
         if any(r.recommended.offers for r in plan.recommendations):
             plan.disclaimers.insert(1, MASTERCARD_OFFER_NOTE)
+        if any(r.recommended.reward_programs for r in plan.recommendations):
+            plan.disclaimers.insert(1, REWARD_PROGRAM_NOTE)
         if any(r.recommended.tiebreak_note for r in plan.recommendations):
             plan.disclaimers.append(NETWORK_TIEBREAK_NOTE)
 
@@ -245,6 +253,16 @@ class SmartPayService:
                     "offers": [
                         {"label": o.label, "merchant": o.merchant_name, "value": str(o.value)}
                         for o in r.recommended.offers
+                    ],
+                    "reward_programs": [
+                        {
+                            "label": rp.label,
+                            "issuer": rp.issuer_name,
+                            "program": rp.display_name,
+                            "points": rp.points,
+                            "value": str(rp.estimated_value),
+                        }
+                        for rp in r.recommended.reward_programs
                     ],
                     "apply_offer": apply_offers.get(r.item_id),
                 }

@@ -133,6 +133,8 @@ def payment_plan_markdown(plan: PaymentPlan, apply_offers: dict[str, dict] | Non
                 details.append(f"{b.display_name} — {fmt(b.value)}")
         for o in r.recommended.offers:
             details.append(f"{o.label}: {o.merchant_name} — {fmt(o.value)}")
+        for rp in r.recommended.reward_programs:
+            details.append(f"{rp.display_name} ({rp.issuer_name}) — +{rp.points:,} pts")
         line = f"- **{r.item_label}** — {upside}"
         if details:
             line += " (" + "; ".join(details) + ")"

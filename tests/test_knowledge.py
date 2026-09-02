@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from app.knowledge import benefits, card_products, offers, priceless
+from app.knowledge import benefits, card_products, offers, priceless, rewards_programs
 from app.models.common import Confidence, Network, PurchaseChannel
 
 
@@ -78,6 +78,20 @@ def test_offer_date_window():
     offer = offers()[0]
     assert offer.is_active(date(2026, 10, 12))
     assert not offer.is_active(date(2026, 12, 25))
+
+
+def test_reward_programs_are_sourced_and_targeted():
+    """Sourced issuer rewards programs are real records (never AUTHORITATIVE, never
+    SYNTHETIC_DEMO), labelled as issuer programs, and carry a targeted category so
+    they can never silently restate a card's base rate."""
+    programs = rewards_programs()
+    assert programs
+    for p in programs:
+        assert p.evidence.confidence is Confidence.SOURCED_DATASET
+        assert p.evidence.source_name
+        assert p.provenance.label == "Mastercard issuer rewards program"
+        assert p.categories
+        assert p.rate > 0
 
 
 def test_benefit_date_window_and_tier():
