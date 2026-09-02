@@ -1,8 +1,8 @@
 {
-  "itinerary_total": "7480.00",
-  "incremental_guaranteed": "535.50",
-  "incremental_estimated": "359.70",
-  "incremental_points": 35620,
+  "itinerary_total": "7628.00",
+  "incremental_guaranteed": "542.90",
+  "incremental_estimated": "373.02",
+  "incremental_points": 36952,
   "recommendations": [
     {
       "recommendation_id": "disney_october_2026:flights",
@@ -36,6 +36,17 @@
       "guaranteed_savings": "0.00",
       "estimated_reward_value_delta": "160.20",
       "points_delta": 16020
+    },
+    {
+      "recommendation_id": "disney_october_2026:icon_park",
+      "amount": "148.00",
+      "baseline_payment": "Chase Sapphire Preferred",
+      "recommended_payment": "Citi Strata Premier Card",
+      "recommended_channel": "via Citi Travel",
+      "is_mastercard": true,
+      "guaranteed_savings": "7.40",
+      "estimated_reward_value_delta": "13.32",
+      "points_delta": 1332
     },
     {
       "recommendation_id": "disney_october_2026:transport",
@@ -73,5 +84,5 @@
   ],
   "wallet_action": "drop",
   "wallet_net_incremental": "89.99",
-  "wallet_current_value": "3564.67"
+  "wallet_current_value": "3586.87"
 }

@@ -253,7 +253,7 @@ def test_tiebreak_funds_a_real_5_percent_statement_credit(service):
     assert tied, "expected the known Disney dining tie in the frozen scenario"
     for r in tied:
         assert Decimal(r["guaranteed_savings"]) == quantize(Decimal(r["amount"]) * Decimal("0.05"))
-    assert result["data"]["incremental_guaranteed"] == "535.50"
+    assert result["data"]["incremental_guaranteed"] == "542.90"
 
 
 # --- apply-for-a-Mastercard CTA, evidence-backed -----------------------------

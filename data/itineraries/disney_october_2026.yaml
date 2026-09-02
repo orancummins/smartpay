@@ -40,6 +40,15 @@ items:
     metadata:
       travellers: 4
 
+  - item_id: icon_park
+    label: "ICON Park: Orlando Eye observation wheel, family of four"
+    merchant: orlando_eye
+    category: attraction
+    amount: "148.00"
+    purchase_channel: merchant_direct
+    metadata:
+      travellers: 4
+
   - item_id: transport
     label: "Airport transport, scheduled Lyft both ways"
     merchant: lyft
