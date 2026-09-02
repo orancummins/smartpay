@@ -2,12 +2,12 @@
 
 Organised as a presentation surface, not a data viewer:
 
-  1. Name, potential savings over last year, further potential savings (the header).
-  2. Potential future savings identified -- the breakdown behind that number.
-  3. Financial institutions and accounts connected, logos prominent.
-  4. Recent activity.
-  5. Everything Open Finance has shared -- the full accounts and transactions.
-  6. Card benefits, rewards, offers and terms.
+  1. Name and headline savings figures (the header).
+  2. Recent ChatGPT activity -- the distinct enquiries and their potential savings.
+  3. Discounts and Priceless offers, framed as tied to recent ChatGPT research.
+  4. "What could you have saved?" -- the retrospective slider.
+  5. Everything Open Finance has shared -- institutions, accounts and transactions.
+  6. Your card benefits, rewards, offers and terms.
   7. "And one more thing..." -- the wallet recommendation, always last.
 
 Charts are inline SVG with direct labels. Colours come from the validated
@@ -239,7 +239,7 @@ def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
     return f"""
     <section class="hero" aria-labelledby="hero-h">
       <p class="eyebrow">SmartPay · Open Finance profile</p>
-      <h1 id="hero-h" class="name">{_t(full_name)} <span class="demo-badge">DEMO</span></h1>
+      <h1 id="hero-h" class="name">{_t(full_name)}</h1>
       <div class="hero-stats">
         <div class="stat accent">
           <dt>Potential savings over last year</dt>
@@ -301,8 +301,8 @@ def _coupons_section(coupon_list: list[dict]) -> str:
       <header class="panel-head">
         <div>
           <h2 id="coupons-h">Mastercard offers for you</h2>
-          <p>When two cards tie on value, Mastercard funds an extra discount to win
-             it — already clipped for you below, tied to the purchase that earned it.</p>
+          <p>Funded by Mastercard on the purchases you've recently researched through
+             ChatGPT — already clipped for you below, tied to the purchase that earned it.</p>
         </div>
       </header>
       <div class="coupon-grid">{''.join(cards)}</div>
@@ -355,9 +355,9 @@ def _priceless_section(offers: list[dict]) -> str:
       <header class="panel-head">
         <div>
           <h2 id="priceless-h">Priceless offers for you</h2>
-          <p>Real Mastercard Priceless experiences, matched to what Alex's own last 12
-             months of spend already shows a taste for — what you could have availed
-             of, not a generic catalogue browse.</p>
+          <p>Real Mastercard Priceless experiences, matched to what you've recently
+             researched through ChatGPT and your own spending — not a generic
+             catalogue browse.</p>
         </div>
       </header>
       <div class="priceless-grid">{cards}</div>
@@ -671,7 +671,7 @@ def _potential_section(potential: dict, entries: list[dict], active_key: str) ->
 # Section 3 -- financial institutions and accounts, logos prominent
 # ---------------------------------------------------------------------------
 
-def _institutions_section(profile: FinancialProfile) -> str:
+def _institutions_grid(profile: FinancialProfile) -> str:
     by_institution: dict[str, list[Account]] = defaultdict(list)
     for a in profile.accounts:
         by_institution[a.institution].append(a)
@@ -700,79 +700,11 @@ def _institutions_section(profile: FinancialProfile) -> str:
           <ul class="acct-list">{rows}</ul>
         </article>""")
 
-    account_count = len(profile.accounts)
-    return f"""
-    <section class="panel expandable" aria-labelledby="inst-h">
-      <button class="expand-toggle" id="inst-toggle" type="button" aria-expanded="false"
-              aria-controls="inst-body">
-        <div class="expand-toggle-text">
-          <h2 id="inst-h">Financial institutions &amp; accounts connected</h2>
-          <p>Read live over FDX, the US open banking standard.</p>
-        </div>
-        <span class="expand-figure small">{_t(len(by_institution))} banks ·
-          {_t(account_count)} account{'s' if account_count != 1 else ''}</span>
-        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
-          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <div class="expand-body" id="inst-body" hidden>
-        <div class="inst-grid">{''.join(blocks)}</div>
-      </div>
-    </section>"""
+    return f'<div class="inst-grid">{"".join(blocks)}</div>'
 
 
 # ---------------------------------------------------------------------------
-# Section 4 -- recent activity
-# ---------------------------------------------------------------------------
-
-def _recent_activity_section(profile: FinancialProfile, limit: int = 12) -> str:
-    account_lookup = {a.account_id: a for a in profile.accounts}
-    instrument_lookup = {
-        i.account_id: i.display_name for i in profile.instruments if i.is_card
-    }
-
-    def card_label(account_id: str) -> str:
-        if account_id in instrument_lookup:
-            return instrument_lookup[account_id]
-        if account_id in account_lookup:
-            return account_lookup[account_id].display_name
-        return "—"
-
-    recent = sorted(
-        profile.spend_transactions, key=lambda t: t.posted_at, reverse=True
-    )[:limit]
-
-    rows = "".join(f"""
-      <li class="activity-row">
-        <span class="act-date">{t.posted_at.strftime('%b %d')}</span>
-        <span class="act-merchant">{_t(t.description.title())}</span>
-        <span class="act-category">{_label(t.category.value)}</span>
-        <span class="act-card">{_t(card_label(t.account_id))}</span>
-        <span class="act-amount">{_money(t.amount)}</span>
-      </li>""" for t in recent)
-
-    return f"""
-    <section class="panel expandable" aria-labelledby="activity-h">
-      <button class="expand-toggle" id="activity-toggle" type="button" aria-expanded="false"
-              aria-controls="activity-body">
-        <div class="expand-toggle-text">
-          <h2 id="activity-h">Recent activity</h2>
-          <p>The most recent {_t(len(recent))} payments across every connected account.</p>
-        </div>
-        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
-          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <div class="expand-body" id="activity-body" hidden>
-        <ul class="activity-list">{rows}</ul>
-      </div>
-    </section>"""
-
-
-# ---------------------------------------------------------------------------
-# Section 5 -- everything shared: accounts, transactions
+# Everything shared: financial institutions, accounts, transactions
 # ---------------------------------------------------------------------------
 
 def _shared_data_section(profile: FinancialProfile) -> str:
@@ -783,15 +715,6 @@ def _shared_data_section(profile: FinancialProfile) -> str:
     labelled = [(CATEGORY_LABEL.get(k, k.title()), v) for k, v in spend_rows]
     total = sum(totals.values(), Decimal(0))
     months = len({t.posted_at.strftime("%Y-%m") for t in profile.spend_transactions}) or 1
-
-    account_rows = "".join(f"""
-      <tr>
-        <td>{_t(ISSUER_NAME.get(a.institution, a.institution.title()))}</td>
-        <td>{_t(a.display_name)}</td>
-        <td>{_t(ACCOUNT_TYPE_LABEL.get(a.account_type.value, a.account_type.value))}</td>
-        <td>····{_t(a.mask)}</td>
-        <td class="num">{_money(a.current_balance)}</td>
-      </tr>""" for a in sorted(profile.accounts, key=lambda a: (a.institution, a.display_name)))
 
     account_lookup = {a.account_id: a for a in profile.accounts}
     # Every raw ledger entry, not just consumer spend -- card payments, ATM cash
@@ -816,30 +739,23 @@ def _shared_data_section(profile: FinancialProfile) -> str:
               aria-controls="shared-body">
         <div class="expand-toggle-text">
           <h2 id="shared-h">Here's all the information you've shared</h2>
-          <p>Everything Open Finance has given SmartPay access to for Alex — nothing
-             more, nothing hidden.</p>
+          <p>Every financial institution, account and transaction Open Finance has
+             given SmartPay access to for Alex — nothing more, nothing hidden.</p>
         </div>
-        <div class="mini-stats">
-          <div><span>{_money(total)}</span><small>12-month spend</small></div>
-          <div><span>{_money(total / months)}</span><small>Monthly average</small></div>
-        </div>
+        <span class="expand-figure small">{_t(len({a.institution for a in profile.accounts}))} banks ·
+          {_t(len(profile.accounts))} account{'s' if len(profile.accounts) != 1 else ''}</span>
         <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
           <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
                 stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <div class="expand-body" id="shared-body" hidden>
+        <h3 class="sub-h">Financial institutions &amp; accounts connected</h3>
+        <p class="sub-lede">Read live over FDX, the US open banking standard.</p>
+        {_institutions_grid(profile)}
+
         <h3 class="sub-h">Where your money goes</h3>
         <div class="chart-wrap" role="list">{_bar_chart(labelled)}</div>
-
-        <h3 class="sub-h">Every connected account ({_t(len(profile.accounts))})</h3>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr><th>Institution</th><th>Account</th><th>Type</th><th>Mask</th>
-              <th>Balance</th></tr></thead>
-            <tbody>{account_rows}</tbody>
-          </table>
-        </div>
 
         <h3 class="sub-h">Every transaction shared ({_t(len(txns))})</h3>
         <p class="sub-lede">Every raw ledger entry Open Finance returned, nothing
@@ -1062,7 +978,7 @@ def _benefits_section(profile: FinancialProfile) -> str:
       <button class="expand-toggle" id="benefits-toggle" type="button" aria-expanded="false"
               aria-controls="benefits-body">
         <div class="expand-toggle-text">
-          <h2 id="benefits-h">Card benefits, rewards, offers &amp; terms</h2>
+          <h2 id="benefits-h">Your card benefits, rewards, offers &amp; terms</h2>
           <p>{_t(sum(1 for i in profile.instruments if i.is_card))} cards, read live
              over FDX from {_t(len({a.institution for a in profile.accounts}))} institutions.</p>
         </div>
@@ -1184,8 +1100,6 @@ a{color:inherit}
   font-weight:650;margin-bottom:10px}
 .name{font-size:clamp(38px,6vw,64px);font-weight:720;letter-spacing:-.03em;
   display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.demo-badge{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);
-  border:1px solid var(--line);border-radius:999px;padding:4px 12px;vertical-align:middle}
 .hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:30px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:20px;
   padding:26px 28px;box-shadow:var(--shadow)}
@@ -1269,6 +1183,13 @@ a{color:inherit}
 .priceless-price{font-weight:650;color:var(--ink-2)}
 .priceless-foot a{color:var(--brand-ink);font-weight:600;text-decoration:none}
 .priceless-foot a:hover{text-decoration:underline}
+
+/* full-width label framing the offers as tied to recent ChatGPT research */
+.research-banner{width:100%;text-align:center;font-size:14px;font-weight:640;
+  letter-spacing:.01em;color:var(--brand-ink);
+  background:color-mix(in srgb,var(--brand) 7%,transparent);
+  border:1px solid color-mix(in srgb,var(--brand) 18%,transparent);
+  border-radius:14px;padding:14px 20px;margin:6px 0}
 
 /* generic expandable panel -- retro, enquiries, institutions, shared data all
    use this same toggle/body pair so one delegated click handler covers all of
@@ -1755,6 +1676,18 @@ SCRIPT = """
 """
 
 
+def _research_banner(coupons_list: list[dict], priceless_offers: list[dict]) -> str:
+    """Full-width label framing the offers below as tied to recent ChatGPT research.
+    Only shown when there is at least one offer to frame."""
+    if not coupons_list and not priceless_offers:
+        return ""
+    return """
+    <div class="research-banner">
+      Discounts &amp; Priceless experiences, matched to what you've recently
+      researched through ChatGPT
+    </div>"""
+
+
 def render_alex_dashboard(profile: FinancialProfile) -> str:
     """Render the full dashboard for the demo consumer."""
     from app import analytics, coupons, history
@@ -1834,12 +1767,11 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 </header>
 <main class="wrap">
   {_header(full_name, accumulated, potential["total"])}
+  {_potential_section(potential, entries, active_key)}
+  {_research_banner(active_coupons, priceless_offers)}
   {_coupons_section(active_coupons)}
   {_priceless_section(priceless_offers)}
   {_retrospective_section(retrospective, accumulated)}
-  {_potential_section(potential, entries, active_key)}
-  {_institutions_section(profile)}
-  {_recent_activity_section(profile)}
   {_shared_data_section(profile)}
   {_benefits_section(profile)}
   {_wallet_advice(wallet)}

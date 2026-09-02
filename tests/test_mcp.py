@@ -221,18 +221,19 @@ def test_demo_alex_renders_the_dashboard():
 
     # The six sections the user asked for, in order, plus the closing beat.
     # Headings are no longer numbered in the UI -- the numbers were a build-time
-    # ordering aid, not something a reader needed on screen.
+    # ordering aid, not something a reader needed on screen. Recent ChatGPT activity
+    # now sits at the top; institutions are merged into the shared-data section.
     headings = [
         "Potential savings over last year",
         "Potential future savings identified",
-        "Financial institutions &amp; accounts connected",
-        "Recent activity",
+        "What could you have saved?",
         "Here's all the information you've shared",
-        "Card benefits, rewards, offers &amp; terms",
+        "Financial institutions &amp; accounts connected",
+        "Your card benefits, rewards, offers &amp; terms",
         "And one more thing…",
     ]
     positions = [html.index(h) for h in headings]
-    assert positions == sorted(positions), "the six sections are out of the requested order"
+    assert positions == sorted(positions), "the sections are out of the requested order"
 
     # Potential savings over last year is computed from real transaction history, never asserted.
     assert "Alex Morgan" in html
@@ -240,26 +241,25 @@ def test_demo_alex_renders_the_dashboard():
         "payments Mastercard has already seen" in html
     )
 
-    # Section 3: bank logos are present and prominent (not the small topbar mark).
+    # Bank logos are present and prominent (not the small topbar mark).
     assert 'class="inst-logo"' in html
     assert "/static/logos/citi.svg" in html
     assert "/static/logos/chase.svg" in html
 
-    # Section 4/5: real transaction activity, not just SmartPay enquiries.
-    assert 'class="activity-row"' in html
+    # The shared-data section carries the full raw ledger, not just SmartPay enquiries.
     assert 'class="data-table"' in html
     assert "Every transaction shared" in html
-    # Section 5 shows the full raw ledger now, not just consumer spend -- a card
+    # It shows the full raw ledger now, not just consumer spend -- a card
     # payment or ATM withdrawal is real shared information too.
     assert "Card payment" in html
     assert "ATM withdrawal" in html
 
-    # The retrospective savings slider: expandable, right under the header, and
-    # built from the same guaranteed figure as the hero stat.
-    retro_pos = html.index("What could you have saved?")
-    assert positions[0] < retro_pos < positions[1], (
-        "the retrospective panel must sit just under the header, before section 2"
-    )
+    # Discounts and Priceless offers are framed as tied to recent ChatGPT research.
+    assert "researched through" in html and "ChatGPT" in html
+
+    # The retrospective savings slider: expandable and built from the same
+    # guaranteed figure as the hero stat.
+    assert "What could you have saved?" in html
     assert 'id="retro-slider"' in html
     assert 'id="retro-data"' in html
 
