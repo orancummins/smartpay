@@ -86,7 +86,11 @@ def _purchase_records(profile: FinancialProfile) -> list[dict]:
         actual = optimizer.build_option(
             purchase, actual_instrument, txn.channel, txn.merchant, on=txn.posted_at
         )
-        best = optimizer.options_for(purchase, txn.merchant, on=txn.posted_at)[0]
+        options = optimizer.options_for(purchase, txn.merchant, on=txn.posted_at)
+        # SmartPay never steers spend off Mastercard: the counterfactual "best" is
+        # the best Mastercard option, so the retrospective only ever suggests
+        # moving to a Mastercard, never a competitor Visa.
+        best = next((o for o in options if o.is_mastercard), options[0])
 
         records.append({
             "date": txn.posted_at,
