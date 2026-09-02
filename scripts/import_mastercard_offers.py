@@ -69,6 +69,31 @@ def _merchant_key(name: str) -> str:
     return slug or "unknown_merchant"
 
 
+#: One merchant's export field is corrupted -- UTF-8 bytes mis-decoded as
+#: Latin-1 upstream, before this script ever saw it -- so the generic mojibake
+#: fix below can't recover it. Fixed by hand since it's a single row.
+_MERCHANT_NAME_OVERRIDES = {
+    "Peppermint CAFÃ‰&POOL BAR": "Peppermint Café & Pool Bar",
+}
+
+
+def _clean_merchant_name(name: str) -> str:
+    """Display-only cleanup of the source export's merchant field.
+
+    Some rows are mojibake (UTF-8 text mis-decoded as Latin-1 somewhere
+    upstream) and some are SHOUTED IN ALL CAPS -- neither is how the offer
+    terms actually read, so this never touches merchant_key (the matching
+    slug, derived from the raw name before this runs).
+    """
+    if name in _MERCHANT_NAME_OVERRIDES:
+        return _MERCHANT_NAME_OVERRIDES[name]
+    try:
+        name = name.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        pass
+    return name.title() if name.isupper() else name
+
+
 def _redemptions(text: str) -> int:
     if re.search(r"unlimited", text, re.IGNORECASE):
         return UNLIMITED
@@ -178,11 +203,13 @@ def build(source: Path) -> list[dict]:
         if mech is None:
             continue
         merchant = str(merchant).strip()
+        merchant_key = _merchant_key(merchant)
+        merchant = _clean_merchant_name(merchant)
         redemptions = _redemptions(name)
         offers[offer_id] = {
             "offer_id": offer_id,
             "merchant_name": merchant,
-            "merchants": [_merchant_key(merchant)],
+            "merchants": [merchant_key],
             "minimum_spend": f"{mech['minimum_spend']:.2f}",
             "benefit_type": mech["benefit_type"],
             "value": f"{mech['value']:.2f}",

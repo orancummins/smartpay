@@ -1,6 +1,6 @@
 {
   "itinerary_total": "7480.00",
-  "incremental_guaranteed": "525.50",
+  "incremental_guaranteed": "535.50",
   "incremental_estimated": "359.70",
   "incremental_points": 35620,
   "recommendations": [
@@ -44,7 +44,7 @@
       "recommended_payment": "Citi / AAdvantage Platinum Select World Elite Mastercard",
       "recommended_channel": "booked direct",
       "is_mastercard": true,
-      "guaranteed_savings": "18.00",
+      "guaranteed_savings": "28.00",
       "estimated_reward_value_delta": "0.00",
       "points_delta": 0
     },

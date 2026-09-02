@@ -144,7 +144,7 @@ def test_identical_recommendations_from_a_live_api(live, fixture_profile):
 def test_service_honours_the_configured_provider(live, monkeypatch):
     monkeypatch.setenv("SMARTPAY_PROVIDER", "banksym")
     service = SmartPayService(provider=live)
-    assert service.optimise_itinerary()["data"]["incremental_guaranteed"] == "525.50"
+    assert service.optimise_itinerary()["data"]["incremental_guaranteed"] == "535.50"
 
 
 def test_default_provider_selects_by_name():

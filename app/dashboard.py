@@ -478,7 +478,7 @@ def _plan_rows(plan: dict) -> tuple[str, Decimal]:
         why = "".join(
             f'<li>{_t(b)}</li>' for b in r["benefits"]
         ) + "".join(
-            f'<li>{_t(o["label"])} — {_money(o["value"])}</li>' for o in r["offers"]
+            f'<li>{_t(o["label"])}: {_t(o["merchant"])} — {_money(o["value"])}</li>' for o in r["offers"]
         )
         risk_items = [
             note for note in (r.get("late_fee_warning"), r.get("payoff_recommendation")) if note
@@ -899,9 +899,19 @@ def _offers_and_terms(profile: FinancialProfile) -> str:
     from app.knowledge import offers as all_offers
 
     catalogue = all_offers()
-    #: The catalogue runs to dozens of merchants; a reference panel only needs a
-    #: representative slice, with an honest count of the full set.
-    shown = catalogue[:12]
+    #: The catalogue carries near-duplicate campaigns per merchant (an activation
+    #: vs a standing offer -- see app.engines.offers), which would otherwise show
+    #: the same merchant twice in a row with identical terms. One row per
+    #: merchant here, same "keep the most valuable" rule the engine itself uses.
+    by_merchant: dict[str, object] = {}
+    for o in catalogue:
+        current = by_merchant.get(o.merchant_name)
+        if current is None or o.value > current.value:
+            by_merchant[o.merchant_name] = o
+    merchants = sorted(by_merchant.values(), key=lambda o: o.merchant_name.lower())
+    #: A reference panel only needs a representative slice, with an honest count
+    #: of the full set.
+    shown = merchants[:12]
     offer_rows = "".join(f"""
       <li class="offer-row">
         <span class="offer-tag">{_t(o.provenance.label)}</span>
@@ -909,9 +919,9 @@ def _offers_and_terms(profile: FinancialProfile) -> str:
         <p>{_t(o.description)}</p>
       </li>""" for o in shown)
     offer_lede = (
-        f'<p class="sub-lede">{len(shown)} of {len(catalogue)} real Mastercard '
-        f"card-linked offers from the US catalogue.</p>"
-        if catalogue else ""
+        f'<p class="sub-lede">{len(shown)} of {len(merchants)} real Mastercard '
+        f"card-linked offer merchants from the US catalogue.</p>"
+        if merchants else ""
     )
 
     seen: dict[tuple[str, str], str] = {}
