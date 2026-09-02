@@ -355,16 +355,23 @@ def _priceless_section(offers: list[dict]) -> str:
         return ""
     cards = "".join(_priceless_card(o) for o in offers)
     return f"""
-    <section class="panel priceless-panel" aria-labelledby="priceless-h">
-      <header class="panel-head">
-        <div>
+    <section class="panel expandable priceless-panel" aria-labelledby="priceless-h">
+      <button class="expand-toggle" id="priceless-toggle" type="button" aria-expanded="false"
+              aria-controls="priceless-body">
+        <div class="expand-toggle-text">
           <h2 id="priceless-h">Priceless offers for you</h2>
           <p>Real Mastercard Priceless experiences, matched to what you've recently
-             researched through ChatGPT and your own spending — not a generic
-             catalogue browse.</p>
+             researched through ChatGPT and your own spending.</p>
         </div>
-      </header>
-      <div class="priceless-grid">{cards}</div>
+        <span class="expand-figure small">{_t(len(offers))} matched</span>
+        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="expand-body" id="priceless-body" hidden>
+        <div class="priceless-strip">{cards}</div>
+      </div>
     </section>"""
 
 
@@ -520,26 +527,27 @@ def _retrospective_section(history: dict, accumulated: dict, projected: dict) ->
           </div>
         </div>
 
-        <div class="retro-summary" id="retro-summary">
-          <div>
+        <div class="retro-grid">
+          <div class="retro-habits" id="retro-summary">
             <h3 class="sub-h" style="margin-top:0">Spending habits that would need to change</h3>
             <ul class="habit-list" id="habit-list"></ul>
           </div>
+          <div class="retro-tables">
+            <div class="retro-table-block" id="forecast-table" data-side="future">
+              <h3 class="sub-h" style="margin-top:0">CommerceGPT forecast — your projected spend
+                <span class="ai-mock">simulation</span></h3>
+              <p class="sub-lede">Your recent habits replayed forward and scored the same way
+                 SmartPay scores the past — a deterministic mock, not a live prediction.</p>
+              <ul class="retro-txn-list future-list" id="future-txn-list">{future_rows}</ul>
+            </div>
+            <div class="retro-table-block" id="history-table" data-side="past" hidden>
+              <h3 class="sub-h" style="margin-top:0">Your spending history</h3>
+              <p class="sub-lede">Every scored purchase and late fee. Highlighted rows spell out
+                 the specific change and what it would have been worth.</p>
+              <ul class="retro-txn-list" id="retro-txn-list">{past_rows}</ul>
+            </div>
+          </div>
         </div>
-
-        <h3 class="sub-h">CommerceGPT forecast — your projected spend
-          <span class="ai-mock">simulation</span></h3>
-        <p class="sub-lede">Your recent habits replayed forward and scored the same way SmartPay
-           scores the past. A deterministic mock, not a live prediction — the same "pay with a
-           better card, or book it differently" uplift, applied to what CommerceGPT expects
-           you to spend.</p>
-        <ul class="retro-txn-list future-list pending" id="future-txn-list">{future_rows}</ul>
-
-        <h3 class="sub-h">Your spending history</h3>
-        <p class="sub-lede">Every scored purchase and late fee. Each highlighted row spells out
-           the specific change — switch card, switch how you book, or turn on autopay — and what
-           it would have been worth. Dimmed rows sit outside the selected window.</p>
-        <ul class="retro-txn-list" id="retro-txn-list">{past_rows}</ul>
       </div>
     </section>
     <script type="application/json" id="retro-data">{payload}</script>"""
@@ -670,10 +678,19 @@ def _enquiry_item(entry: dict, index: int, is_active: bool) -> str:
     </li>"""
 
 
-def _potential_section(potential: dict, entries: list[dict], active_key: str) -> str:
+def _potential_section(
+    potential: dict,
+    entries: list[dict],
+    active_key: str,
+    flipper_list: list[dict] | None = None,
+    priceless_offers: list[dict] | None = None,
+) -> str:
     """Every distinct question SmartPay has been asked, most recent first, each
-    collapsed to a one-line summary that expands to the full per-item detail.
+    collapsed to a one-line summary that expands to the full per-item detail. The
+    Mastercard offers and the ChatGPT-research banner live here too, since they are
+    all forward-looking value tied to what the consumer has been researching.
     """
+    flipper_list = flipper_list or []
     items_html = "".join(
         _enquiry_item(e, i, e.get("key") == active_key) for i, e in enumerate(entries)
     )
@@ -693,6 +710,8 @@ def _potential_section(potential: dict, entries: list[dict], active_key: str) ->
         </svg>
       </button>
       <div class="expand-body" id="future-body" hidden>
+        {_research_banner(flipper_list, priceless_offers or [])}
+        {_flipper_section(flipper_list)}
         <div class="chips-row">
           <span class="kv"><b>{_money(potential['wallet_annual'])}</b>
             <small>Recurring wallet opportunity</small></span>
@@ -800,8 +819,10 @@ def _shared_data_section(profile: FinancialProfile) -> str:
         <p class="sub-lede">Read live over FDX, the US open banking standard.</p>
         {_institutions_grid(profile)}
 
-        <h3 class="sub-h">Where your money goes</h3>
-        <div class="chart-wrap" role="list">{_bar_chart(labelled)}</div>
+        <details class="mini-collapse">
+          <summary class="sub-h collapse-summary">Where your money goes</summary>
+          <div class="chart-wrap" role="list">{_bar_chart(labelled)}</div>
+        </details>
 
         <h3 class="sub-h">Every transaction shared ({_t(len(txns))})</h3>
         <p class="sub-lede">Every raw ledger entry Open Finance returned, nothing
@@ -816,6 +837,14 @@ def _shared_data_section(profile: FinancialProfile) -> str:
             <tbody>{txn_rows}</tbody>
           </table>
         </div>
+
+        <h3 class="sub-h">Your card benefits, rewards, offers &amp; terms</h3>
+        <p class="sub-lede">{_t(sum(1 for i in profile.instruments if i.is_card))} cards,
+           read live over FDX from
+           {_t(len({a.institution for a in profile.accounts}))} institutions.</p>
+        {_wallet_carousel(profile)}
+        {_card_detail_tables(profile)}
+        {_offers_and_terms(profile)}
       </div>
     </section>"""
 
@@ -1016,29 +1045,6 @@ def _offers_and_terms(profile: FinancialProfile) -> str:
         <thead><tr><th>Source</th><th>Verified</th><th></th></tr></thead>
         <tbody>{prov_rows}</tbody>
       </table>"""
-
-
-def _benefits_section(profile: FinancialProfile) -> str:
-    return f"""
-    <section class="panel expandable" aria-labelledby="benefits-h">
-      <button class="expand-toggle" id="benefits-toggle" type="button" aria-expanded="false"
-              aria-controls="benefits-body">
-        <div class="expand-toggle-text">
-          <h2 id="benefits-h">Your card benefits, rewards, offers &amp; terms</h2>
-          <p>{_t(sum(1 for i in profile.instruments if i.is_card))} cards, read live
-             over FDX from {_t(len({a.institution for a in profile.accounts}))} institutions.</p>
-        </div>
-        <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
-          <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <div class="expand-body" id="benefits-body" hidden>
-        {_wallet_carousel(profile)}
-        {_card_detail_tables(profile)}
-        {_offers_and_terms(profile)}
-      </div>
-    </section>"""
 
 
 # ---------------------------------------------------------------------------
@@ -1278,6 +1284,30 @@ input.timeline-slider{background:linear-gradient(90deg,
 .retro-txn.projected .rt-delta{color:var(--brand-ink);font-weight:640}
 .future-list .retro-txn.projected.improved{background:color-mix(in srgb,var(--brand) 6%,transparent)}
 @media (max-width:640px){.tl-figures{grid-template-columns:1fr}}
+
+/* retro two-column: habits on the left, the active table (history or forecast) on the right */
+.retro-grid{display:grid;grid-template-columns:minmax(240px,320px) 1fr;gap:24px;align-items:start}
+.retro-habits{position:sticky;top:16px}
+.retro-tables{min-width:0}
+.retro-table-block[hidden]{display:none}
+@media (max-width:820px){.retro-grid{grid-template-columns:1fr}.retro-habits{position:static}}
+
+/* native mini-collapse for the spend categorisation chart */
+.mini-collapse{border:1px solid var(--line);border-radius:12px;padding:0 14px;margin:8px 0 16px}
+.mini-collapse>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;
+  padding:12px 0}
+.mini-collapse>summary::-webkit-details-marker{display:none}
+.mini-collapse>summary::after{content:'▸';margin-left:auto;color:var(--ink-3);transition:transform .2s}
+.mini-collapse[open]>summary::after{transform:rotate(90deg)}
+.collapse-summary{margin:0!important}
+
+/* discrete single-row Priceless strip */
+.priceless-strip{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;
+  scroll-snap-type:x mandatory}
+.priceless-strip .priceless-card{flex:0 0 236px;scroll-snap-align:start}
+.priceless-strip .priceless-img{height:116px}
+.priceless-strip .priceless-body{padding:12px 13px 13px}
+.priceless-strip .priceless-body h4{font-size:14px}
 
 /* generic expandable panel -- retro, enquiries, institutions, shared data all
    use this same toggle/body pair so one delegated click handler covers all of
@@ -1703,10 +1733,16 @@ SCRIPT = """
     function update(v){
       var pastWindow = v < 0 ? -v : CFG.past_months;
       var futureWindow = v > 0 ? v : CFG.future_months;
+      var activeSide = v < 0 ? 'past' : 'future';
       timeline.classList.toggle('focus-past', v < 0);
       timeline.classList.toggle('focus-future', v > 0);
+      // The transaction table on the right follows the slider side.
+      var hist=document.getElementById('history-table'), fore=document.getElementById('forecast-table');
+      if(hist) hist.hidden = activeSide!=='past';
+      if(fore) fore.hidden = activeSide!=='future';
 
-      var pastTotal=0, pastCount=0, feeTotal=0, futureTotal=0, habits={};
+      var pastTotal=0, pastCount=0, feeTotal=0, futureTotal=0, futureCount=0;
+      var habitsBy={past:{}, future:{}};
       rows.forEach(function(row){
         var mi = parseInt(row.dataset.mi, 10);
         var side = row.dataset.side;
@@ -1716,16 +1752,15 @@ SCRIPT = """
         var g = parseFloat(row.dataset.guaranteed || 0);
         if(side==='past'){
           pastCount++;
-          if(row.dataset.kind==='fee'){ feeTotal += parseFloat(row.dataset.avoidable||0); }
-          else {
-            pastTotal += g;
-            if(row.dataset.improved==='1' && row.dataset.habit){
-              var h = habits[row.dataset.habit] || {count:0,total:0};
-              h.count++; h.total += g; habits[row.dataset.habit]=h;
-            }
-          }
+          if(row.dataset.kind==='fee'){ feeTotal += parseFloat(row.dataset.avoidable||0); return; }
+          pastTotal += g;
         } else {
-          futureTotal += g;
+          futureCount++; futureTotal += g;
+        }
+        if(row.dataset.improved==='1' && row.dataset.habit){
+          var bucket = habitsBy[side];
+          var h = bucket[row.dataset.habit] || {count:0,total:0};
+          h.count++; h.total += g; bucket[row.dataset.habit]=h;
         }
       });
 
@@ -1738,6 +1773,7 @@ SCRIPT = """
       // after that (or under reduced motion) the slider keeps it in sync.
       if(predicted || reduce) document.getElementById('forecast-total').textContent = money(futureTotal);
 
+      var habits = habitsBy[activeSide];
       var list=document.getElementById('habit-list');
       var ranked=Object.keys(habits).map(function(l){return {label:l,count:habits[l].count,total:habits[l].total};})
         .sort(function(a,b){return b.total-a.total;}).slice(0,8);
@@ -1877,13 +1913,10 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
 </header>
 <main class="wrap">
   {_header(full_name, accumulated, potential["total"])}
-  {_potential_section(potential, entries, active_key)}
-  {_research_banner(flipper_list, priceless_offers)}
-  {_flipper_section(flipper_list)}
-  {_priceless_section(priceless_offers)}
+  {_potential_section(potential, entries, active_key, flipper_list, priceless_offers)}
   {_retrospective_section(retrospective, accumulated, projected)}
+  {_priceless_section(priceless_offers)}
   {_shared_data_section(profile)}
-  {_benefits_section(profile)}
   {_wallet_advice(wallet)}
   <footer class="foot">
     <p>Alex Morgan is a synthetic demo consumer. Accounts, cards and transaction
