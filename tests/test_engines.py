@@ -9,6 +9,7 @@ from app.engines.baseline import MIN_SUPPORT, BaselineEngine
 from app.engines.benefits import BenefitsEngine
 from app.engines.offers import OffersEngine
 from app.engines.rewards import RewardsEngine, available_channels
+from app.engines.rewards_programs import RewardsProgramsEngine
 from app.models.common import Category, PurchaseChannel
 from app.models.planning import PurchaseIntent
 from app.providers.open_finance import SyntheticAlexProvider
@@ -17,8 +18,15 @@ PROFILE = SyntheticAlexProvider().get_profile("alex")
 INST = {i.instrument_id: i for i in PROFILE.instruments}
 REWARDS = RewardsEngine()
 OFFERS = OffersEngine()
+PROGRAMS = RewardsProgramsEngine()
 BENEFITS = BenefitsEngine()
 OCT = date(2026, 10, 12)
+
+
+def _as_issuer(instrument_id: str, issuer: str):
+    """Alex holds only Citi/Chase cards; borrow one and re-issue it so the
+    sourced issuer-rewards layer can be exercised for another issuer."""
+    return INST[instrument_id].model_copy(update={"issuer": issuer})
 
 
 def buy(merchant, category, amount, **meta):
@@ -116,6 +124,45 @@ def test_offer_does_not_leak_to_an_unrelated_merchant():
     """A Lyft offer must not pay out on a Marriott stay."""
     p = buy("marriott", Category.HOTEL, "2000")
     assert OFFERS.evaluate(p, INST["citi_strata_premier"]) == []
+
+
+def test_reward_program_applies_only_to_a_matching_issuer():
+    """A sourced issuer program augments a card ONLY when the card's issuer runs it.
+
+    Alex's Citi cards are never handed another issuer's program -- that would
+    fabricate a rate the card does not carry."""
+    p = buy("some_airline", Category.AIRFARE, "1000")
+    assert PROGRAMS.evaluate(p, INST["citi_strata_premier"]) == []
+
+    first_hawaiian = _as_issuer("citi_strata_premier", "first_hawaiian")
+    bonus = PROGRAMS.evaluate(p, first_hawaiian)
+    assert len(bonus) == 1
+    assert bonus[0].points > 0
+    assert bonus[0].label == "Mastercard issuer rewards program"
+
+
+def test_reward_program_is_category_gated():
+    """A travel/dining bonus must not fire on a category it does not name."""
+    first_hawaiian = _as_issuer("citi_strata_premier", "first_hawaiian")
+    p = buy("landlord", Category.HOUSING, "1000")
+    assert PROGRAMS.evaluate(p, first_hawaiian) == []
+
+
+def test_reward_program_takes_the_single_most_valuable():
+    """The catalogue carries several travel bonuses for one issuer; only the best
+    applies, never a stacked, fictitious sum."""
+    first_hawaiian = _as_issuer("citi_strata_premier", "first_hawaiian")
+    p = buy("some_airline", Category.AIRFARE, "1000")
+    bonus = PROGRAMS.evaluate(p, first_hawaiian)
+    assert len(bonus) == 1
+    assert bonus[0].points == 3000  # the 3 pts/USD travel bonus, not the 1x/1.5x ones
+
+
+def test_reward_program_respects_its_date_window():
+    first_hawaiian = _as_issuer("citi_strata_premier", "first_hawaiian")
+    p = buy("some_airline", Category.AIRFARE, "1000")
+    p.purchase_date = date(2050, 1, 1)
+    assert PROGRAMS.evaluate(p, first_hawaiian) == []
 
 
 def test_world_elite_benefit():

@@ -82,6 +82,15 @@ def test_offers_are_real_and_labelled(service):
         assert o["label"] == "Mastercard card-linked offer"
 
 
+def test_sourced_reward_programs_stay_off_alex_without_an_issuer_match(service):
+    """Alex banks with Citi and Chase; neither runs an earn program in the sourced US
+    rewards catalogue. The issuer-matched layer must therefore leave his plan
+    untouched -- it must never attach another issuer's program to his cards."""
+    data = service.optimise_itinerary()["data"]
+    programs = [rp for r in data["recommendations"] for rp in r["reward_programs"]]
+    assert programs == []
+
+
 def test_guaranteed_and_estimated_are_never_merged(service):
     """PLAN.MD section 16: no fake precision."""
     md = service.optimise_itinerary()["display_markdown"]

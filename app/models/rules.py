@@ -20,6 +20,7 @@ from app.models.common import (
     NetworkTier,
     Provenance,
     PurchaseChannel,
+    RewardCurrency,
 )
 from app.money import ZERO
 
@@ -130,6 +131,45 @@ class Offer(BaseModel):
     @property
     def is_synthetic(self) -> bool:
         return self.provenance.status is Confidence.SYNTHETIC_DEMO
+
+
+class RewardProgram(BaseModel):
+    """A real issuer loyalty rewards program, sourced from the Mastercard Rewards
+    platform. PLAN.MD section 17.
+
+    Applied as an ADDITIVE, issuer-matched category bonus: it only ever augments a
+    card whose issuer actually runs the program, and is never restated as that
+    card's own published base earn rate.
+    """
+
+    program_id: str
+    issuer_key: str
+    issuer_name: str = ""
+    display_name: str
+    description: str = ""
+    categories: list[Category] = Field(default_factory=list)
+    reward_currency: RewardCurrency = RewardCurrency.LOYALTY_POINTS
+    #: Points per dollar, or -- for USD_CASHBACK -- a percentage (2 == 2%).
+    rate: Decimal = ZERO
+    valid_from: date | None = None
+    valid_to: date | None = None
+    provenance: Provenance = Provenance()
+    evidence: Evidence
+
+    def is_active(self, on: date) -> bool:
+        if self.valid_from and on < self.valid_from:
+            return False
+        if self.valid_to and on > self.valid_to:
+            return False
+        return True
+
+    def applies_to(self, issuer_key: str, category: Category) -> bool:
+        """A targeted bonus: the card's issuer must run it, and the purchase must
+        fall in one of its categories. An empty category list never matches, so a
+        base-rate program can never silently double-count a card's own base."""
+        if self.issuer_key != issuer_key:
+            return False
+        return bool(self.categories) and category in self.categories
 
 
 class PricelessExperience(BaseModel):

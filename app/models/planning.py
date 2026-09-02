@@ -120,6 +120,19 @@ class BenefitEvaluation(BaseModel):
     evidence: list[Evidence] = Field(default_factory=list)
 
 
+class RewardProgramBonus(BaseModel):
+    """An additive, issuer-matched bonus from a sourced issuer rewards program."""
+
+    program_id: str
+    issuer_name: str = ""
+    display_name: str
+    points: int = 0
+    estimated_value: Decimal = ZERO
+    label: str = ""
+    explanation: str = ""
+    evidence: list[Evidence] = Field(default_factory=list)
+
+
 class PaymentOption(BaseModel):
     """One way to pay for one item: an instrument used through a channel."""
 
@@ -131,6 +144,9 @@ class PaymentOption(BaseModel):
     reward: RewardEvaluation = RewardEvaluation()
     offers: list[OfferEvaluation] = Field(default_factory=list)
     benefits: list[BenefitEvaluation] = Field(default_factory=list)
+    #: Additive bonuses from sourced issuer rewards programs, matched to this
+    #: option's card by issuer. Their points/value are already folded into `value`.
+    reward_programs: list[RewardProgramBonus] = Field(default_factory=list)
     evidence: list[Evidence] = Field(default_factory=list)
     #: Set when this option only won because of the network tiebreak. Disclosed in
     #: the output rather than applied silently.

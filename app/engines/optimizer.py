@@ -27,6 +27,7 @@ from app.engines.categorizer import categorise
 from app.engines.counterfactual import CounterfactualEngine
 from app.engines.offers import OffersEngine
 from app.engines.rewards import RewardsEngine, available_channels
+from app.engines.rewards_programs import RewardsProgramsEngine
 from app.engines import risk
 from app.knowledge import benefits as all_benefits
 from app.models.common import Confidence, Evidence, EvidenceType, PurchaseChannel, ValueBreakdown
@@ -72,6 +73,7 @@ class PurchaseOptimizer:
         self.profile = profile
         self.rewards = RewardsEngine()
         self.offers = OffersEngine()
+        self.reward_programs = RewardsProgramsEngine()
         self.benefits = BenefitsEngine()
         self.counterfactual = CounterfactualEngine(profile)
 
@@ -91,6 +93,7 @@ class PurchaseOptimizer:
             o for o in self.offers.evaluate(purchase, instrument, merchant_key, on)
             if o.offer_id not in blocked
         ]
+        reward_programs = self.reward_programs.evaluate(purchase, instrument, on)
         benefits = [
             b for b in self.benefits.evaluate_purchase(purchase, instrument, channel, merchant_key, on)
             if b.benefit_id not in blocked
@@ -114,19 +117,26 @@ class PurchaseOptimizer:
         if product:
             soft.extend(product.soft_benefits)
 
+        #: Sourced issuer rewards programs add points/value on top of the card's own
+        #: earn -- an additive bonus, folded into the estimated (never guaranteed) side.
+        program_points = sum(p.points for p in reward_programs)
+        program_value = sum((p.estimated_value for p in reward_programs), ZERO)
+
         value = ValueBreakdown(
             hard_savings=quantize(hard),
             statement_credits=quantize(credits),
             fees_avoided=quantize(fees),
-            points_earned=reward.points,
+            points_earned=reward.points + program_points,
             points_currency=reward.currency,
-            estimated_reward_value=reward.estimated_value,
+            estimated_reward_value=reward.estimated_value + program_value,
             soft_benefits=soft,
         )
 
         evidence: list[Evidence] = list(reward.evidence)
         for o in offers:
             evidence.extend(o.evidence)
+        for p in reward_programs:
+            evidence.extend(p.evidence)
         for b in benefits:
             evidence.extend(b.evidence)
 
@@ -139,6 +149,7 @@ class PurchaseOptimizer:
             reward=reward,
             offers=offers,
             benefits=benefits,
+            reward_programs=reward_programs,
             evidence=evidence,
             late_fee_warning=risk.late_fee_warning(instrument, self.profile),
             payoff_recommendation=risk.payoff_recommendation(

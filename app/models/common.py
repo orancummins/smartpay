@@ -68,6 +68,9 @@ class RewardCurrency(StrEnum):
     CHASE_ULTIMATE_REWARDS = "chase_ultimate_rewards"
     AA_MILES = "american_airlines_miles"
     USD_CASHBACK = "usd_cashback"
+    #: Generic issuer loyalty points, used by sourced issuer rewards programs whose
+    #: specific currency the catalogue does not name.
+    LOYALTY_POINTS = "loyalty_points"
 
 
 class Network(StrEnum):
@@ -105,6 +108,7 @@ class EvidenceType(StrEnum):
     NETWORK_BENEFIT = "mastercard_network_benefit"
     SYNTHETIC_OFFER = "synthetic_demo_offer"
     MASTERCARD_OFFER = "mastercard_card_linked_offer"
+    MASTERCARD_REWARD = "mastercard_issuer_reward_program"
     PRICELESS = "priceless_experience"
     TRANSACTION_HISTORY = "open_finance_transaction_history"
     FORECAST = "commercegpt_prediction"
