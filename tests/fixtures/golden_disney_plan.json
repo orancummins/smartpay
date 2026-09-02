@@ -1,8 +1,8 @@
 {
-  "itinerary_total": "7628.00",
+  "itinerary_total": "7848.00",
   "incremental_guaranteed": "542.90",
-  "incremental_estimated": "373.02",
-  "incremental_points": 36952,
+  "incremental_estimated": "379.62",
+  "incremental_points": 37612,
   "recommendations": [
     {
       "recommendation_id": "disney_october_2026:flights",
@@ -14,6 +14,17 @@
       "guaranteed_savings": "360.00",
       "estimated_reward_value_delta": "0.00",
       "points_delta": 0
+    },
+    {
+      "recommendation_id": "disney_october_2026:grandparent_flight",
+      "amount": "220.00",
+      "baseline_payment": "Chase Sapphire Preferred",
+      "recommended_payment": "First Hawaiian Priority Destinations World Elite Mastercard",
+      "recommended_channel": "booked direct",
+      "is_mastercard": true,
+      "guaranteed_savings": "0.00",
+      "estimated_reward_value_delta": "6.60",
+      "points_delta": 660
     },
     {
       "recommendation_id": "disney_october_2026:hotel",
@@ -83,6 +94,6 @@
     }
   ],
   "wallet_action": "drop",
-  "wallet_net_incremental": "89.99",
-  "wallet_current_value": "3586.87"
+  "wallet_net_incremental": "99.00",
+  "wallet_current_value": "3498.87"
 }

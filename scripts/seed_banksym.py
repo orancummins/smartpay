@@ -42,6 +42,17 @@ INSTITUTIONS = {
         "primary_color": "#117ACA",
         "logo_url": "/logos/chase.svg",
     },
+    "first hawaiian": {
+        "display_name": "First Hawaiian Bank",
+        # From FHB's own published logo SVG (fhb.com/sites/default/files/images/
+        # Logo_Color_Horizontal.svg) -- no single declared "primary" brand color
+        # exists, so this is the accent red used in that mark, not a wordmark.
+        "primary_color": "#A1252C",
+        # No BankSym logo asset shipped for this tenant -- logo_url is optional
+        # (see banksym.tenancy.bank.Bank), so this stays unset rather than
+        # hotlinking or fabricating one.
+        "logo_url": None,
+    },
 }
 
 ACCOUNT_TYPE = {"checking": "current", "credit_card": "credit_card"}

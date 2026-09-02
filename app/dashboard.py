@@ -381,6 +381,24 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
     # Nth entry in the JS array -- the slider toggles visibility by index alone.
     txns = sorted(history["transactions"], key=lambda t: t["date"], reverse=True)
 
+    def _mc_chips(t: dict) -> str:
+        """What actually fired on the Mastercard Alex actually used here --
+        shown even when this row is already on its best option, so a
+        Mastercard purchase that earned something real never reads as if
+        nothing happened just because no card switch was needed."""
+        if not t.get("actual_is_mastercard"):
+            return ""
+        items = (
+            [f'{_t(b["label"])} — {_money(b["value"])}' for b in t.get("actual_benefits", [])]
+            + [f'{_t(o["label"])}: {_t(o["merchant"])} — {_money(o["value"])}'
+               for o in t.get("actual_offers", [])]
+            + [f'{_t(rp["program"])} ({_t(rp["issuer"].title())}) — +{int(rp["points"]):,} pts '
+               f'(~{_money(rp["value"])})' for rp in t.get("actual_reward_programs", [])]
+        )
+        if not items:
+            return ""
+        return f'<ul class="rt-mc">{"".join(f"<li>{i}</li>" for i in items)}</ul>'
+
     def _row(t: dict) -> str:
         is_fee = t["kind"] == "fee"
         flagged = is_fee or t["improved"]
@@ -390,7 +408,11 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
             f'<span class="rt-change">{_t(t["habit_label"])}</span>'
             if t["habit_label"] else ""
         )
-        classes = "retro-txn" + (" fee" if is_fee else "") + (" improved" if flagged else "")
+        mc_chips = _mc_chips(t)
+        classes = (
+            "retro-txn" + (" fee" if is_fee else "") + (" improved" if flagged else "")
+            + (" mc-lit" if mc_chips else "")
+        )
         return f"""
       <li class="{classes}" data-month="{_t(t['month'])}" data-guaranteed="{t['guaranteed_delta']}">
         <span class="rt-date">{_t(t['date'][5:])}</span>
@@ -399,6 +421,7 @@ def _retrospective_section(history: dict, accumulated: dict) -> str:
         <span class="rt-card">{_t(t['actual_card'])}</span>
         <span class="rt-delta">{_money(display_amount) if flagged else '—'}{' avoidable' if is_fee else ''}</span>
         {change_line}
+        {mc_chips}
       </li>"""
 
     txn_rows = "".join(_row(t) for t in txns)
@@ -504,6 +527,10 @@ def _plan_rows(plan: dict) -> tuple[str, Decimal]:
             f'<li>{_t(b)}</li>' for b in r["benefits"]
         ) + "".join(
             f'<li>{_t(o["label"])}: {_t(o["merchant"])} — {_money(o["value"])}</li>' for o in r["offers"]
+        ) + "".join(
+            f'<li>{_t(rp["program"])} ({_t(rp["issuer"].title())}) — '
+            f'+{int(rp["points"]):,} pts (~{_money(rp["value"])})</li>'
+            for rp in r.get("reward_programs", [])
         )
         risk_items = [
             note for note in (r.get("late_fee_warning"), r.get("payoff_recommendation")) if note
@@ -903,15 +930,23 @@ def _wallet_carousel(profile: FinancialProfile) -> str:
             f"<li>{_t(b.display_name)}</li>" for b in _card_benefits(inst)[:3]
         )
         fee = product.annual_fee
+        issuer_name = ISSUER_NAME.get(product.issuer, product.issuer.replace("_", " ").title())
+        art_html = (
+            f'<img src="{_t(art)}" alt="{_t(product.display_name)}" loading="lazy" '
+            f'width="300" height="190">' if art
+            # No product shot on file for this card -- a plain plate naming the
+            # issuer beats an empty <img src=""> (a broken-image icon on the
+            # dashboard's own wallet, which reads as this session's own bug).
+            else f'<div class="card-art-placeholder">{_t(issuer_name)}</div>'
+        )
         cards.append(f"""
         <article class="wallet-card art-{i}">
           <div class="card-art">
-            <img src="{_t(art)}" alt="{_t(product.display_name)}" loading="lazy"
-                 width="300" height="190">
+            {art_html}
           </div>
           <div class="card-body">
             <header>
-              {f'<img class="issuer" src="{_t(logo)}" alt="{_t(product.issuer.title())}" '
+              {f'<img class="issuer" src="{_t(logo)}" alt="{_t(issuer_name)}" '
                f'width="52" height="18">' if logo else ''}
               <h3>{_t(product.display_name)}</h3>
               <p class="card-meta">
@@ -1029,7 +1064,7 @@ def _benefits_section(profile: FinancialProfile) -> str:
         <div class="expand-toggle-text">
           <h2 id="benefits-h">Card benefits, rewards, offers &amp; terms</h2>
           <p>{_t(sum(1 for i in profile.instruments if i.is_card))} cards, read live
-             over FDX from two institutions.</p>
+             over FDX from {_t(len({a.institution for a in profile.accounts}))} institutions.</p>
         </div>
         <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
           <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -1298,6 +1333,12 @@ a{color:inherit}
 .retro-txn .rt-change{grid-column:1/-1;font-size:12px;color:var(--ink-2);padding-top:2px}
 .retro-txn.out-of-window{opacity:.32}
 .retro-txn.out-of-window.improved{background:transparent}
+.retro-txn.mc-lit:not(.improved){background:color-mix(in srgb,var(--brand) 6%,transparent)}
+.retro-txn .rt-mc{grid-column:1/-1;list-style:none;margin:2px 0 0;padding:0;
+  display:flex;gap:6px;flex-wrap:wrap}
+.retro-txn .rt-mc li{font-size:11px;color:var(--brand-ink);
+  background:color-mix(in srgb,var(--brand) 10%,var(--surface));
+  padding:3px 8px;border-radius:999px}
 
 /* stat chip row (section 2) */
 .chips-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px}
@@ -1437,6 +1478,9 @@ a{color:inherit}
   display:grid;place-items:center;padding:16px}
 .card-art img{width:100%;height:100%;object-fit:contain;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.22))}
+.card-art-placeholder{display:flex;align-items:center;justify-content:center;
+  width:100%;height:100%;font-size:15px;font-weight:650;color:var(--ink-2);
+  text-align:center;padding:0 12px}
 .card-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:9px}
 .issuer{height:17px;width:auto;object-fit:contain;object-position:left;display:block;
   margin-bottom:6px}
@@ -1750,7 +1794,10 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
         Decimal(wallet["recommendation"]["net_annual_incremental_value"])
     )
 
-    institutions = ", ".join(sorted({a.institution.title() for a in profile.accounts}))
+    institutions = ", ".join(
+        sorted({ISSUER_NAME.get(a.institution, a.institution.replace("_", " ").title())
+                for a in profile.accounts})
+    )
     # FinancialProfile carries a customer_id, not a human name -- Open Finance does
     # not model "full name" as a first-class field. DEMO_CUSTOMER_NAME is
     # presentation-layer knowledge for this one demo persona, same as the name

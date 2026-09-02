@@ -3,7 +3,8 @@ display_name: First Hawaiian Priority Destinations World Elite Mastercard
 issuer: first_hawaiian
 network: mastercard
 network_tier: world_elite
-annual_fee: "0"
+annual_fee: "99.00"
+annual_fee_waived_first_year: true
 foreign_transaction_fee_pct: "0"
 base_currency: loyalty_points
 base_multiplier: "1"
@@ -12,29 +13,41 @@ soft_benefits:
   - "World Elite Mastercard travel and lifestyle benefits"
   - "Bonus categories earned through First Hawaiian rewards programs"
 
-# The card earns a 1 point per dollar base here; its category bonuses (travel,
-# dining, everyday spend) are supplied by the real First Hawaiian rewards
-# programs in data/mastercard/rewards_catalog.json, applied by the issuer-matched
-# rewards-programs engine. Modelling them there rather than duplicating them as
-# reward_rules is what keeps the sourced bonus from double-counting a base rate.
-reward_rules: []
+# The card earns a 1 point per dollar base here; most of its category bonuses
+# (dining, everyday spend) are supplied entirely by the real First Hawaiian
+# rewards programs in data/mastercard/rewards_catalog.json, applied by the
+# issuer-matched rewards-programs engine -- modelling them there rather than
+# duplicating them as reward_rules is what keeps the sourced bonus from
+# double-counting a base rate. Travel is the one exception: fhb.com publishes
+# 5x on travel as this card's own total rate, and the catalogue's own "PD WE
+# Travel Bonus Spend" program only supplies an additional 3x on top of
+# whatever base the card already carries -- so travel needs its own 2x rule
+# here for base + bonus to reconstruct the real, published 5x rather than
+# silently undercounting it as 1x + 3x = 4x.
+reward_rules:
+  - rule_id: FHB_PD_WE_TRAVEL_2X
+    categories: [airfare, hotel, attraction, car_rental]
+    multiplier: "2"
+    reward_currency: loyalty_points
+    description: "2 Priority Miles per $1 on travel (base rate; the sourced First Hawaiian bonus program adds the rest of the published 5x)"
+    evidence: &fhb_ev
+      evidence_type: issuer_reward_rule
+      source_name: First Hawaiian Bank
+      source_url: "https://www.fhb.com/en/personal/credit-cards/priority-destinations-world-elite"
+      verified_at: 2026-09-02
+      confidence: authoritative
+      note: >-
+        First Hawaiian Bank Priority Destinations World Elite published earn
+        rates (5x travel, 2x dining, 1x base), annual fee ($0 intro year one,
+        then $99) and network tier, verified against fhb.com directly.
 
 late_payment_fee: "40.00"
 late_payment_fee_evidence:
   evidence_type: issuer_reward_rule
   source_name: First Hawaiian Bank
-  source_url: "https://www.fhb.com/en/personal/credit-cards"
-  verified_at: 2026-09-01
+  source_url: "https://www.fhb.com/sites/default/files/2020-10/PriorityDestinationsCreditCardCombinedRatesDisclosures.pdf"
+  verified_at: 2026-09-02
   confidence: authoritative
-  note: "First Hawaiian Bank consumer credit card late payment penalty fee, from the published cardmember agreement pricing schedule."
+  note: "Late payment penalty fee of up to $40, disclosed on First Hawaiian Bank's published Priority Destinations combined rates and disclosures PDF."
 
-evidence:
-  evidence_type: issuer_reward_rule
-  source_name: First Hawaiian Bank
-  source_url: "https://www.fhb.com/en/personal/credit-cards/priority-destinations-world-elite-mastercard"
-  confidence: demo_approximation
-  note: >-
-    First Hawaiian Priority Destinations World Elite Mastercard, modelled for the
-    demo. Base earn is 1 point per dollar; the card's bonus categories are supplied
-    by the real First Hawaiian rewards programs sourced from the Mastercard Rewards
-    platform, not restated here.
+evidence: *fhb_ev

@@ -338,7 +338,7 @@ def test_wallet_annual_fee_deduction():
     wallet = [i for i in PROFILE.instruments if i.is_card]
 
     fees = optimizer._annual_fees(wallet)
-    assert fees == Decimal("289.00")  # 95 Strata + 99 AAdvantage + 95 CSP
+    assert fees == Decimal("388.00")  # 95 Strata + 99 AAdvantage + 95 CSP + 99 First Hawaiian
 
     net, rewards, credits, _ = optimizer._value_of(wallet, forecast)
     assert net == rewards + credits - fees, "annual fees are not deducted"
@@ -349,8 +349,12 @@ def test_wallet_annual_fee_deduction():
     trimmed = [i for i in wallet if i is not csp]
     assert optimizer._annual_fees(trimmed) == fees - Decimal("95.00")
 
+    # First Hawaiian earns nothing unique in Alex's wallet -- Strata Premier's own
+    # portal-routed 10x and direct 3x already beat its real 5x/2x bonus program on
+    # every category the wallet optimiser assumes SmartPay's own advice is
+    # followed for -- so dropping it recovers its full $99 fee with nothing lost.
     rec = optimizer.optimise(forecast, itinerary)
-    assert Decimal("0") < rec.net_annual_incremental_value <= Decimal("95.00")
+    assert rec.net_annual_incremental_value == Decimal("99.00")
 
 
 def test_a_genuinely_better_visa_still_wins():

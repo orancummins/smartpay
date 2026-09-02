@@ -99,7 +99,9 @@ class SmartPayService:
 
         dates = [t.posted_at for t in profile.transactions]
         summary = {
-            "institutions": ", ".join(sorted({a.institution.title() for a in profile.accounts})),
+            "institutions": ", ".join(
+                sorted({a.institution.replace("_", " ").title() for a in profile.accounts})
+            ),
             "account_count": len(profile.accounts),
             "transaction_count": len(profile.transactions),
             "spend_count": len(profile.spend_transactions),

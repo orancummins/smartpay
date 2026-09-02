@@ -1,0 +1,26 @@
+* Update UI so the recent ChatGPT activity is at the top
+* Update UI wording     so that discounts and Priceless offers are related to what you've recently researched through ChatGPT etc. Have the label span the width of the screen
+* In UI, remove 'Recent Activity Section'
+* In UI, ensure a Mastercard logo favicon
+* In UI, remove the pill 'demo' from beside Alex Morgans name
+* Update 'Card Benefits, Rewards etc.' section to be 'Your Card benefits, rewards etc.)
+* Merge 'Here's all the info you've shared' section with FIs and accounts connected
+* Rewards and Offers data now in repo and in UI, wire up so that these are presented in the ChatGPT interface
+* In admin UI, update the competitor interface so you can search for any card portfolio and add it to the campaign. The UI should show logos for the top 10 US banks. Only needs to be suggestive, doesn't need to be properly functional
+* Update Alex's transaction history so it can better take advantage of the added Priceless Offers, Card Link Offers & Rewards offered by Mastercard
+* In UI, add a 'New Card' offer from a Mastercard bank with a link to apply where the Visa option wins
+* Make sure card benefits are really real, make sure all highlighted rewards, offers, benefits etc are real
+* 'The right card. Every time.' is the consumer tagline
+*  From accepted everywhere to chosen every time - Priceless
+* Update 'Offers' section to be 'Merchant Offers for you on your Mastercard' and have more whitespace between Cards and Offers
+
+IDEAS for future:
+- SME version, huge amount reuable and can use things like 'Easy Savings'
+- CommerceGPT to use Open Finance data (not just card data) for spend prediction
+- You should be able to get immediate prod access to a whole bunch of APIs for free...
+    * Card Linked Offers
+    * Card Benefits
+    * Loyalty Rewards
+    * Priceless experiences
+    * Card Art (* maybe at a cost)
+- - Expand beyond US, support every Gen AI client (Gemini, Groq etc.)   

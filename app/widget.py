@@ -205,6 +205,8 @@ const money = (v) => {
 };
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g,
   (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const titleCase = (s) => String(s || '').toLowerCase()
+  .replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 
 function applyHostContext() {
   const api = oai();
@@ -253,6 +255,13 @@ function renderRows(plan) {
         `12 months of spend, it would have earned an extra ${money(o.historic_savings)}. ` +
         `<a href="${esc(o.url)}" target="_blank" rel="noopener noreferrer">Apply here</a></div>`;
     }
+    // A sourced issuer rewards program is estimated value, same as the "+est."
+    // figure already in this row -- never shown as if it were guaranteed, and
+    // never folded into the guaranteed-value bars in the detail view below.
+    const programNote = (r.reward_programs || []).map((p) =>
+      `<div class="apply-note">${esc(p.program)} (${esc(titleCase(p.issuer))}): a real ` +
+      `sourced issuer rewards program, adding an estimated ${money(p.value)} here.</div>`
+    ).join('');
     return `
       <div class="row${gain > 0 ? ' win' : ''}">
         <div>
@@ -262,6 +271,7 @@ function renderRows(plan) {
           ${tieBanner}
           ${riskNotes}
           ${applyNote}
+          ${programNote}
         </div>
         <div class="val">
           <span class="gain">${money(gain)}</span>
