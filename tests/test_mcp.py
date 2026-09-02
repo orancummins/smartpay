@@ -237,7 +237,7 @@ def test_demo_alex_renders_the_dashboard():
     # now sits at the top; institutions are merged into the shared-data section.
     headings = [
         "Potential savings over last year",
-        "Potential future savings identified",
+        "Your AI Chats",
         "What could you have saved?",
         "Here's all the information you've shared",
         "Financial institutions &amp; accounts connected",

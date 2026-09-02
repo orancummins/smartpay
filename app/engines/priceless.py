@@ -149,18 +149,35 @@ def historic_matches(
     return out
 
 
+def _catalogue_cities() -> set[str]:
+    return {e.city for e in all_priceless() if e.city}
+
+
 def _itinerary_cities(itinerary: Itinerary) -> set[str]:
     """Where this trip is actually GOING, not where it starts. Alex's home
     airport shows up as "origin" on the flight home too, and offers "relevant
     to this trip's destination, Boston" would be a wrong label for a trip
     that starts, not ends, there.
+
+    Not every itinerary carries a flight item with a destination airport code
+    -- "a golf trip to Orlando" can arrive as a single purchase with no
+    metadata at all, the city named only in its own label or merchant text.
+    Falling back to historic-spend matches for a trip that plainly says where
+    it is going would silently ignore the one signal that actually mattered,
+    so this also checks each item's own text against the real cities the
+    Priceless catalogue actually covers -- a deterministic substring match on
+    real place names, never a guess.
     """
     cities: set[str] = set()
     for item in itinerary.items:
         code = str((item.metadata or {}).get("destination", "")).upper()
         if code in AIRPORT_TO_CITY:
             cities.add(AIRPORT_TO_CITY[code])
-    return cities
+    if cities:
+        return cities
+
+    text = " ".join(f"{item.label} {item.merchant}" for item in itinerary.items).lower()
+    return {city for city in _catalogue_cities() if city.lower() in text}
 
 
 def itinerary_matches(

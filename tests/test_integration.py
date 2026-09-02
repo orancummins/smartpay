@@ -138,6 +138,24 @@ def test_priceless_never_pads_a_known_destination_with_other_cities(service):
     assert all(p["city"] == "Orlando" for p in priceless)
 
 
+def test_priceless_targets_a_destination_named_only_in_prose(service):
+    """A golf trip described as a single purchase, with no flight item and so
+    no destination airport code anywhere, must still resolve to Orlando from
+    the item's own label -- otherwise it silently falls back to Alex's
+    unrelated Boston/LA/NYC historic picks despite the trip plainly saying
+    where it is going."""
+    result = service.optimise_itinerary(itinerary={
+        "title": "Orlando golf trip",
+        "items": [
+            {"label": "Round of golf at Arnold Palmer Bay Hill, Orlando",
+             "merchant": "arnold_palmer_bay_hill", "category": "golf", "amount": "350.00"},
+        ],
+    }, record=False)
+    priceless = result["data"]["priceless"]
+    assert priceless
+    assert all(p["city"] == "Orlando" for p in priceless)
+
+
 def test_wallet_optimisation_matches_golden(service):
     rec = service.optimise_wallet()["data"]["recommendation"]
     assert rec["action"] == GOLDEN["wallet_action"]

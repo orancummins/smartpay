@@ -107,7 +107,7 @@ def test_the_dashboard_leads_with_the_most_recent_question(store):
     assert "Five nights in Ireland" in html
     assert "Hotel in Dublin" in html, "the most recent enquiry's own detail must be present"
     # The earlier question is still listed, just further down.
-    assert "Every distinct enquiry counted toward this total" in html
+    assert "Every distinct enquiry" in html
     assert "Walt Disney World" in html
     assert '<span class="q-tag">Latest</span>' in html
     assert html.index("Five nights in Ireland") < html.index("Walt Disney World"), (

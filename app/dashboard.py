@@ -72,6 +72,28 @@ _OPT_TYPE = {
     ),
 }
 
+#: AI assistants SmartPay connects to. A monogram badge, not a sourced logo
+#: mark, the same convention app.admin_dashboard already uses for this exact
+#: row of names -- avoids the trademark-sourcing question entirely while
+#: staying instantly readable. Every real enquiry recorded so far came
+#: through ChatGPT (the one live MCP integration this demo has); the other
+#: three are shown at the section level as "SmartPay works from here too",
+#: never attributed to a specific enquiry that did not happen there.
+_AI_PLATFORM = {
+    "chatgpt": ("ChatGPT", "C", "#111111"),
+    "gemini": ("Gemini", "G", "linear-gradient(135deg,#4285f4,#a142f4)"),
+    "grok": ("Grok", "X", "#050505"),
+    "claude": ("Claude", "A", "#c96846"),
+}
+
+
+def _ai_badge(platform: str, *, small: bool = False) -> str:
+    name, letter, bg = _AI_PLATFORM[platform]
+    cls = "ai-chip" + (" small" if small else "")
+    return (
+        f'<span class="{cls}"><i style="background:{bg}">{_t(letter)}</i>{_t(name)}</span>'
+    )
+
 
 @lru_cache(maxsize=None)
 def _card_art_uri(product_id: str) -> str:
@@ -265,7 +287,7 @@ def _ring(pct: float, label: str) -> str:
 # Section 1 -- header: name, potential savings over last year, further potential savings
 # ---------------------------------------------------------------------------
 
-def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
+def _header(full_name: str, accumulated: dict, wallet_annual: Decimal) -> str:
     return f"""
     <section class="hero" aria-labelledby="hero-h">
       <p class="eyebrow">SmartPay · Open Finance profile</p>
@@ -280,10 +302,10 @@ def _header(full_name: str, accumulated: dict, potential_total: Decimal) -> str:
              {_t(accumulated['transaction_count'])} transactions.</p>
         </div>
         <div class="stat accent2">
-          <dt>Further potential savings</dt>
-          <dd class="figure" data-count="{potential_total}">{_money(potential_total)}</dd>
-          <p>Identified from upcoming trips and purchases you've asked SmartPay
-             about, plus a recurring wallet opportunity. See the breakdown below.</p>
+          <dt>Recurring wallet opportunity</dt>
+          <dd class="figure" data-count="{wallet_annual}">{_money(wallet_annual)}</dd>
+          <p>Identified from reviewing your current cards against your predicted
+             spend — see the wallet advice below.</p>
         </div>
       </div>
     </section>"""
@@ -536,9 +558,9 @@ def _retrospective_section(history: dict, accumulated: dict, projected: dict) ->
               aria-controls="retro-body">
         <div class="expand-toggle-text">
           <h2 id="retro-h">What could you have saved?</h2>
-          <p>Rewind through your history on the left, or let Mastercard CommerceGPT
-             project the next {_t(n_future)} months on the right — and see the uplift
-             from paying smarter, either way.</p>
+          <p>We've modelled how you could have benefited, or how you can benefit
+             into the future — rewind through your history on the left, or let
+             Mastercard CommerceGPT project the next {_t(n_future)} months on the right.</p>
         </div>
         <span class="expand-figure">{_money(accumulated['guaranteed'])}</span>
         <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
@@ -718,12 +740,15 @@ def _enquiry_item(entry: dict, index: int, is_active: bool) -> str:
       <button class="expand-toggle" id="enq-toggle-{index}" type="button" aria-expanded="false"
               aria-controls="{body_id}">
         <div class="expand-toggle-text">
-          <span class="q-when">{_t(_ago(entry.get("asked_at")))}</span>
+          <div class="q-meta-row">
+            <span class="q-when">{_t(_ago(entry.get("asked_at")))}</span>
+            {_ai_badge(entry.get("platform", "chatgpt"), small=True)}
+          </div>
           <h3>{_t(entry.get("title", "Untitled"))}</h3>
           <p class="q-meta">{_t(entry.get("items", 0))} items · {_money(entry.get("total", "0"))}</p>
         </div>
         {'<span class="q-tag">Latest</span>' if is_active else ''}
-        <span class="expand-figure small">{_money(guaranteed)}</span>
+        <span class="expand-figure">{_money(guaranteed)}</span>
         <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
           <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
                 stroke-linecap="round" stroke-linejoin="round"/>
@@ -737,36 +762,37 @@ def _potential_section(
     potential: dict,
     entries: list[dict],
     active_key: str,
-    priceless_offers: list[dict] | None = None,
 ) -> str:
-    """Every distinct question SmartPay has been asked, most recent first, each
-    collapsed to a one-line summary that expands to the full per-item detail. The
-    ChatGPT-research banner lives here too, since it is forward-looking value tied
-    to what the consumer has been researching. The Flipper offer does NOT: it is a
-    standing, general campaign the consumer should not have to expand a collapsed
-    panel to notice, so it renders as its own always-visible section instead --
-    see render_alex_dashboard.
+    """Every distinct question asked of SmartPay through a connected AI
+    assistant, most recent first, each collapsed to a one-line summary that
+    expands to the full per-item detail.
+
+    No single aggregate figure heads this section: mixing a recurring wallet
+    opportunity with however many distinct trips happen to have been asked
+    about reads as one number when it is really several unrelated ones (see
+    app.analytics.potential_future_savings) -- each enquiry's own guaranteed
+    figure is the number that means something, so that is what is prominent.
     """
     items_html = "".join(
         _enquiry_item(e, i, e.get("key") == active_key) for i, e in enumerate(entries)
     )
+    platform_row = "".join(_ai_badge(p, small=True) for p in _AI_PLATFORM)
     return f"""
     <section class="panel expandable" aria-labelledby="future-h">
       <button class="expand-toggle" id="future-toggle" type="button" aria-expanded="false"
               aria-controls="future-body">
         <div class="expand-toggle-text">
-          <h2 id="future-h">Potential future savings identified</h2>
-          <p>Calculated from upcoming suggestions, and added to every time you ask
-             SmartPay a new, distinct question.</p>
+          <h2 id="future-h">Your AI Chats</h2>
+          <p>Every distinct question you've asked SmartPay, from any connected AI
+             assistant, added here automatically.</p>
+          <div class="ai-chip-row">{platform_row}</div>
         </div>
-        <span class="expand-figure">{_money(potential['total'])}</span>
         <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true">
           <path d="M5 7l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2.2"
                 stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <div class="expand-body" id="future-body" hidden>
-        {_research_banner(priceless_offers or [])}
         <div class="chips-row">
           <span class="kv"><b>{_money(potential['wallet_annual'])}</b>
             <small>Recurring wallet opportunity</small></span>
@@ -778,7 +804,7 @@ def _potential_section(
             <small>Estimated rewards, across all enquiries</small></span>
         </div>
 
-        <h3 class="sub-h">Every distinct enquiry counted toward this total</h3>
+        <h3 class="sub-h">Every distinct enquiry</h3>
         <p class="sub-lede">Baseline is inferred from 12 months of your own
            transactions, not assumed. Expand any enquiry to see the full
            breakdown.</p>
@@ -1324,13 +1350,6 @@ a{color:inherit}
 .priceless-foot a{color:var(--brand-ink);font-weight:600;text-decoration:none}
 .priceless-foot a:hover{text-decoration:underline}
 
-/* full-width label framing the offers as tied to recent ChatGPT research */
-.research-banner{width:100%;text-align:center;font-size:14px;font-weight:640;
-  letter-spacing:.01em;color:var(--brand-ink);
-  background:color-mix(in srgb,var(--brand) 7%,transparent);
-  border:1px solid color-mix(in srgb,var(--brand) 18%,transparent);
-  border-radius:14px;padding:14px 20px;margin:6px 0}
-
 /* history <-> mocked CommerceGPT forecast timeline */
 .timeline{position:relative;margin:4px 0 20px}
 .timeline-head{display:flex;justify-content:space-between;align-items:center;gap:8px;
@@ -1472,6 +1491,17 @@ input.timeline-slider{background:linear-gradient(90deg,
 .rt-mc-text{color:var(--ink-2)}
 .rt-mc-text b{color:var(--type-color);font-weight:700;margin-right:2px}
 
+/* AI assistant badges -- a monogram plate, the same convention the admin
+   dashboard uses for this exact row of names, not a sourced logo mark */
+.ai-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ai-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:620;
+  color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);
+  border-radius:999px;padding:4px 10px 4px 4px}
+.ai-chip i{width:18px;height:18px;border-radius:6px;flex:none;color:#fff;font-style:normal;
+  font-weight:800;font-size:9.5px;display:grid;place-items:center}
+.ai-chip.small{font-size:11px;padding:3px 9px 3px 3px}
+.ai-chip.small i{width:15px;height:15px;font-size:8.5px;border-radius:5px}
+
 /* stat chip row (section 2) */
 .chips-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:6px}
 .kv{border:1px solid var(--line);border-radius:14px;padding:12px 16px;background:var(--surface-2);
@@ -1531,6 +1561,7 @@ input.timeline-slider{background:linear-gradient(90deg,
   var(--surface-2))}
 .q .expand-toggle{padding:14px 16px;gap:14px}
 .q .expand-toggle-text{display:flex;flex-direction:column;gap:2px}
+.q-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .q-when{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
   font-weight:600}
 .q .expand-toggle-text h3{font-size:16px;font-weight:620;margin:0}
@@ -1940,16 +1971,6 @@ SCRIPT = """
 """
 
 
-def _research_banner(priceless_offers: list[dict]) -> str:
-    """Full-width label framing the Priceless offers below as tied to recent
-    ChatGPT research. Only shown when there is at least one to frame."""
-    if not priceless_offers:
-        return ""
-    return """
-    <div class="research-banner">
-      Priceless experiences, matched to what you've recently researched through ChatGPT
-    </div>"""
-
 
 def render_alex_dashboard(profile: FinancialProfile) -> str:
     """Render the full dashboard for the demo consumer."""
@@ -2030,9 +2051,9 @@ def render_alex_dashboard(profile: FinancialProfile) -> str:
   </div>
 </header>
 <main class="wrap">
-  {_header(full_name, accumulated, potential["total"])}
+  {_header(full_name, accumulated, potential["wallet_annual"])}
   {_flipper_section(flipper_list)}
-  {_potential_section(potential, entries, active_key, priceless_offers)}
+  {_potential_section(potential, entries, active_key)}
   {_retrospective_section(retrospective, accumulated, projected)}
   {_priceless_section(priceless_offers)}
   {_shared_data_section(profile)}
