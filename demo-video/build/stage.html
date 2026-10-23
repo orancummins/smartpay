@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SmartPay — demo film stage</title>
+<style>
+@font-face{font-family:"InterV";src:url("fonts/inter/InterVariable.ttf") format("truetype");font-weight:100 900;font-style:normal}
+*{box-sizing:border-box}
+html,body{margin:0;background:#000;overflow:hidden}
+body{font-family:"InterV",Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#f3f1ec}
+:root{
+  --red:#EB001B; --orange:#F79E1B; --ink:#0b0b0d; --ink2:#141417; --line:#26262b;
+  --t1:#f5f3ee; --t2:#b8b4ab; --t3:#7d7a73; --navy:#132b48;
+  --grad:linear-gradient(96deg,#EB001B,#F79E1B);
+}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--ink)}
+.scene{position:absolute;inset:0;display:none;opacity:0}
+.bgfx{position:absolute;inset:0;pointer-events:none}
+.glow{position:absolute;width:1800px;height:1800px;border-radius:50%;opacity:.5}
+.glow.r{background:radial-gradient(circle,rgba(235,0,27,.42) 0%,rgba(235,0,27,.3) 12%,rgba(235,0,27,.17) 26%,rgba(235,0,27,.07) 42%,rgba(235,0,27,0) 60%)}
+.glow.o{background:radial-gradient(circle,rgba(247,158,27,.36) 0%,rgba(247,158,27,.25) 12%,rgba(247,158,27,.14) 26%,rgba(247,158,27,.06) 42%,rgba(247,158,27,0) 60%)}
+.grain{position:absolute;inset:0;opacity:.035;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='.9'/></svg>");mix-blend-mode:overlay}
+.el{position:absolute;opacity:0;will-change:auto}
+.el.flow{position:relative}
+.eyebrow{font-size:18px;font-weight:650;letter-spacing:.22em;text-transform:uppercase;color:var(--t3)}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.num{font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;border:1px solid var(--line);border-radius:999px;background:#17171b;color:var(--t2);font-size:20px;font-weight:550}
+.card3{position:absolute;width:330px;height:206px;border-radius:18px;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.55),0 2px 0 rgba(255,255,255,.08) inset;transform-origin:50% 120%}
+.card3 img{width:100%;height:100%;object-fit:cover;display:block}
+.callout{position:absolute;padding:12px 18px;border-radius:14px;background:#1b1b1f;border:1px solid #33333a;font-size:20px;font-weight:600;color:var(--t1);box-shadow:0 20px 40px rgba(0,0,0,.5)}
+.callout small{display:block;font-weight:500;font-size:15px;color:var(--t3);margin-top:2px}
+
+/* ---- how it works ---- */
+.step{position:absolute;top:400px;width:300px;height:260px;border-radius:22px;background:#141418;border:1px solid #26262b;padding:26px 26px}
+.step .n{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#222227;font-size:15px;font-weight:700;color:#d6d3cc}
+.step .lab{display:inline-block;margin-left:12px;font-size:14px;font-weight:700;letter-spacing:.16em;color:#8d8a83}
+.step h3{margin:22px 0 10px;font-size:27px;font-weight:700;letter-spacing:-.02em;color:#f5f3ee}
+.step p{margin:0;font-size:17px;line-height:1.45;color:#aaa69d}
+.step.on{border-color:transparent;background:linear-gradient(#141418,#141418) padding-box,var(--grad) border-box;box-shadow:0 24px 60px rgba(235,0,27,.18)}
+.step.engine{background:linear-gradient(135deg,#132b48,#1d4267);border-color:#2b4c73}
+.step.engine .n{background:rgba(255,255,255,.14);color:#fff}.step.engine .lab{color:#b9d0e5}.step.engine p{color:#e0eaf3}
+.step .chip{position:absolute;left:26px;bottom:22px;padding:5px 12px;border-radius:999px;background:#202025;font-size:13.5px;font-weight:600;color:#bdb9b0}
+.step.engine .chip{background:rgba(255,255,255,.13);color:#fff}
+.arrow{position:absolute;top:525px;width:40px;height:3px;background:#3a3a41}
+.arrow:after{content:"";position:absolute;right:-2px;top:-5px;border:6px solid transparent;border-left:9px solid #3a3a41}
+.tool{display:inline-block;margin-right:12px;padding:8px 14px;border-radius:10px;background:#111115;border:1px solid #2a2a30;font:600 16px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#cfcbc2}
+.tool b{color:var(--orange);font-weight:600}
+
+/* ---- ChatGPT window ---- */
+.cam{position:absolute;inset:0;transform-origin:0 0}
+.win{position:absolute;left:80px;top:45px;width:1760px;height:990px;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 40px 120px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08);color:#0d0d0d;font-family:"InterV",Inter,system-ui,sans-serif}
+.gpt{display:grid;grid-template-columns:260px 1fr;height:100%}
+.sb{background:#f9f9f9;border-right:1px solid #ececec;padding:16px 10px;font-size:14px;color:#0d0d0d}
+.lights{display:flex;gap:8px;padding:2px 8px 18px}
+.lights i{width:12px;height:12px;border-radius:50%;display:block}
+.sb .it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;color:#0d0d0d;font-weight:500}
+.sb .it svg{width:18px;height:18px;stroke:#0d0d0d;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sb .it.on{background:#ececec}
+.sb .sec{font-size:12px;color:#8f8f8f;padding:18px 10px 6px;font-weight:500}
+.sb .chat{padding:7px 10px;border-radius:10px;color:#0d0d0d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.sb .chat.on{background:#ececec}
+.mc{width:28px;height:18px;display:inline-block;vertical-align:middle}
+.main{position:relative;display:flex;flex-direction:column;height:100%;background:#fff}
+.top{display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 18px;font-size:17px;font-weight:600;color:#0d0d0d}
+.top .model{display:flex;align-items:center;gap:8px;color:#5d5d5d;font-weight:500}
+.top .model b{color:#0d0d0d;font-weight:600}
+.top .right{display:flex;align-items:center;gap:12px}
+.top .share{padding:6px 12px;border:1px solid #e3e3e3;border-radius:999px;font-size:14px;font-weight:500;color:#0d0d0d}
+.top .avatar{width:32px;height:32px;border-radius:50%;background:#0d0d0d;color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.thread{position:absolute;left:0;right:0;top:52px;bottom:0;overflow:hidden}
+.thread:after{content:"";position:absolute;left:0;right:0;bottom:0;height:150px;background:linear-gradient(transparent,#fff 55%);pointer-events:none;z-index:1}
+.composer{z-index:2}.fsmodal{z-index:3}
+.col{position:relative;width:768px;margin:0 auto;padding:18px 0 160px;font-size:16px;line-height:1.6;color:#0d0d0d}
+.umsg{display:flex;justify-content:flex-end;margin:10px 0 26px}
+.umsg div{max-width:70%;background:#f4f4f4;border-radius:22px;padding:12px 20px}
+.amsg{margin:0 0 20px}
+.amsg p{margin:0 0 12px}
+.amsg ul{margin:0 0 12px;padding-left:22px}
+.amsg li{margin:3px 0}
+.amsg table{border-collapse:collapse;width:100%;margin:6px 0 14px;font-size:15.5px}
+.amsg th{text-align:left;font-weight:600;border-bottom:1px solid #e3e3e3;padding:6px 8px;color:#5d5d5d;font-size:13px}
+.amsg td{padding:7px 8px;border-bottom:1px solid #f0f0f0}
+.amsg td:last-child,.amsg th:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.toolpill{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border:1px solid #e3e3e3;border-radius:999px;font-size:14px;font-weight:500;color:#0d0d0d;background:#fff;margin:4px 0 16px}
+.toolpill .spin{width:14px;height:14px;border:2px solid #d0d0d0;border-top-color:#0d0d0d;border-radius:50%}
+.toolpill .ok{width:16px;height:16px;border-radius:50%;background:#0d0d0d;color:#fff;font-size:10px;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+.wbox{border:1px solid #e3e3e3;border-radius:16px;overflow:hidden;background:#fff;margin:4px 0 18px}
+.wbox iframe{display:block;width:100%;border:0;background:#fff}
+.greet{position:absolute;left:0;right:0;top:300px;text-align:center;font-size:30px;font-weight:500;color:#0d0d0d}
+.composer{position:absolute;left:366px;width:768px;background:#fff;border:1px solid #e3e3e3;border-radius:28px;box-shadow:0 8px 30px rgba(0,0,0,.07);padding:14px 16px 12px;color:#0d0d0d}
+.composer .txt{min-height:28px;font-size:16px;line-height:1.5;color:#0d0d0d;white-space:pre-wrap}
+.composer .txt.ph{color:#8f8f8f}
+.composer .bar{display:flex;align-items:center;gap:10px;margin-top:10px}
+.composer .ic{width:34px;height:34px;border-radius:50%;border:1px solid #e3e3e3;display:flex;align-items:center;justify-content:center;font-size:20px;color:#0d0d0d}
+.composer .app{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#f1f1f1;font-size:13.5px;font-weight:600;color:#0d0d0d}
+.composer .send{margin-left:auto;width:34px;height:34px;border-radius:50%;background:#0d0d0d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.composer .mic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.caret{display:inline-block;width:2px;height:20px;background:#0d0d0d;vertical-align:-4px;margin-left:1px}
+.fsmodal{position:absolute;inset:0;background:#fff;display:none}
+.fsmodal .hd{height:48px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid #ececec;font-size:15px;font-weight:600;color:#0d0d0d}
+.fsmodal .hd .x{margin-left:auto;font-size:20px;color:#5d5d5d}
+.fsmodal iframe{position:absolute;left:0;right:0;top:48px;bottom:0;width:100%;height:calc(100% - 48px);border:0;background:#fff}
+.cursor{position:absolute;width:26px;height:36px;z-index:50;filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))}
+.ripple{position:absolute;width:44px;height:44px;border-radius:50%;border:3px solid #EB001B;z-index:49}
+
+/* ---- honesty ---- */
+.rule{position:absolute;width:540px;height:230px;border-radius:22px;background:#141418;border:1px solid #26262b;padding:26px 28px}
+.rule .k{font-size:14px;font-weight:700;letter-spacing:.16em;color:#8d8a83;text-transform:uppercase}
+.rule h3{margin:12px 0 10px;font-size:27px;font-weight:700;letter-spacing:-.02em;color:#f5f3ee}
+.rule p{margin:0;font-size:17px;line-height:1.45;color:#aaa69d}
+.rule .src{margin-top:12px;font:500 14px/1.4 ui-monospace,Menlo,monospace;color:#cfcbc2;background:#0f0f12;border:1px solid #2a2a30;border-radius:10px;padding:8px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rule .src b{color:#5fd0a4;font-weight:600}
+.rule img{position:absolute;right:0;top:0;height:100%;width:200px;object-fit:cover;border-radius:0 22px 22px 0;opacity:.9;mask-image:linear-gradient(90deg,transparent,#000 40%)}
+
+/* ---- browser window ---- */
+.bwin{position:absolute;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 40px 120px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.08)}
+.bwin .bar{height:52px;background:#f3f3f3;border-bottom:1px solid #e2e2e2;display:flex;align-items:center;padding:0 16px;gap:14px}
+.bwin .url{flex:1;max-width:620px;margin:0 auto;height:30px;border-radius:8px;background:#e7e7e7;color:#3b3b3b;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;font-family:"InterV",system-ui,sans-serif}
+.bwin .view{position:absolute;left:0;right:0;top:52px;bottom:0;overflow:hidden;background:#fafaf8}
+.bwin .view img{position:absolute;left:0;top:0;width:100%;display:block}
+.lower{display:inline-block;left:50%!important;right:auto!important;transform:translateX(-50%);padding:10px 22px;border-radius:999px;background:rgba(11,11,13,.78);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(8px)}
+.spot{position:absolute;border-radius:18px;box-shadow:0 0 0 4px #EB001B,0 0 0 4000px rgba(10,10,12,.42);pointer-events:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="bgfx"><div class="glow r el" id="g1"></div><div class="glow o el" id="g2"></div><div class="grain"></div></div>
+
+  <!-- ================= S1 TITLE ================= -->
+  <section class="scene" id="s1">
+    <img class="el" id="s1mc" src="assets/logos/mastercard.svg" style="left:865px;top:430px;width:190px">
+    <div class="el eyebrow" id="s1eb" style="left:730px;top:398px">Payment intelligence · by Mastercard</div>
+    <div class="el" id="s1wm" style="left:730px;top:420px;font-size:172px;font-weight:720;letter-spacing:-.05em;line-height:1">SmartPay</div>
+    <div class="el" id="s1l1" style="left:0;right:0;top:720px;text-align:center;font-size:46px;font-weight:500;color:#cfcbc2;letter-spacing:-.01em">Your AI knows what you want.</div>
+    <div class="el" id="s1l2" style="left:0;right:0;top:786px;text-align:center;font-size:46px;font-weight:650;letter-spacing:-.015em"><span class="grad">SmartPay knows how you should pay.</span></div>
+  </section>
+
+  <!-- ================= S2 ALEX ================= -->
+  <section class="scene" id="s2">
+    <div class="el eyebrow" id="s2eb" style="left:120px;top:250px">Open Finance profile</div>
+    <div class="el" id="s2name" style="left:114px;top:282px;font-size:118px;font-weight:720;letter-spacing:-.045em;line-height:1">Alex Morgan</div>
+    <div class="el" id="s2st" style="left:120px;top:450px;display:flex;gap:46px">
+      <div><div class="num" id="c1" style="font-size:64px;font-weight:680;letter-spacing:-.04em">0</div><div style="font-size:18px;color:var(--t3);font-weight:550">banks</div></div>
+      <div><div class="num" id="c2" style="font-size:64px;font-weight:680;letter-spacing:-.04em">0</div><div style="font-size:18px;color:var(--t3);font-weight:550">accounts</div></div>
+      <div><div class="num" id="c3" style="font-size:64px;font-weight:680;letter-spacing:-.04em">0</div><div style="font-size:18px;color:var(--t3);font-weight:550">cards</div></div>
+      <div><div class="num" id="c4" style="font-size:64px;font-weight:680;letter-spacing:-.04em">0</div><div style="font-size:18px;color:var(--t3);font-weight:550">transactions · 12 months</div></div>
+    </div>
+    <div class="el" id="s2banks" style="left:120px;top:600px;display:flex;gap:14px;align-items:center">
+      <span class="pill"><img src="assets/logos/citi.svg" style="width:26px;height:26px;border-radius:6px">Citi</span>
+      <span class="pill"><img src="assets/logos/chase.svg" style="width:26px;height:26px;border-radius:6px;background:#005EB8;padding:4px">Chase</span>
+      <span class="pill"><span style="width:26px;height:26px;border-radius:6px;background:#1b5a4e;display:inline-block"></span>First Hawaiian</span>
+      <span style="margin-left:10px;font-size:18px;color:var(--t3);font-weight:550">connected via Open Finance · FDX</span>
+    </div>
+    <div class="el" id="s2h1" style="left:120px;top:730px;font-size:44px;font-weight:600;letter-spacing:-.02em;color:#d9d6cf">Alex pays by habit.</div>
+    <div class="el" id="s2h2" style="left:120px;top:800px;font-size:44px;font-weight:650;letter-spacing:-.02em"><span class="grad">Habit is rarely the best way to pay.</span></div>
+    <!-- cards fan -->
+    <div class="el card3" id="k1" style="left:1230px;top:330px"><img src="assets/cards/citi_double_cash.webp"></div>
+    <div class="el card3" id="k2" style="left:1230px;top:330px"><img src="assets/cards/citi_strata_premier.webp"></div>
+    <div class="el card3" id="k3" style="left:1230px;top:330px"><img src="assets/cards/chase_freedom_unlimited.png"></div>
+    <div class="el card3" id="k4" style="left:1230px;top:330px"><img src="assets/cards/chase_sapphire_preferred.png"></div>
+    <div class="el card3" id="k5" style="left:1230px;top:330px"><img src="assets/cards/citi_aa_platinum_select.webp"></div>
+    <div class="el card3" id="k6" style="left:1230px;top:330px"><img src="assets/cards/chase_marriott_bonvoy_boundless.png"></div>
+    <div class="el card3" id="k7" style="left:1230px;top:330px"><img src="assets/cards/first_hawaiian_priority_destinations.webp"></div>
+    <div class="el callout" id="co1" style="left:1250px;top:170px">Chase Sapphire Preferred <small>63% of restaurant spend · 46% of airfare</small></div>
+    <div class="el callout" id="co2" style="left:1000px;top:560px">Citi Double Cash <small>44% of supermarket spend</small></div>
+  </section>
+
+  <!-- ================= S3 HOW IT WORKS ================= -->
+  <section class="scene" id="s3">
+    <div class="el eyebrow" id="s3eb" style="left:120px;top:150px">How it works</div>
+    <div class="el" id="s3h" style="left:118px;top:186px;font-size:66px;font-weight:700;letter-spacing:-.035em;line-height:1.1">From connected data<br>to a better way to pay.</div>
+    <div class="el" id="s3sub" style="left:1040px;top:214px;width:760px;font-size:22px;line-height:1.5;color:var(--t2)">A deterministic decision service, exposed to real ChatGPT over MCP. Every recommendation is personal, explainable and traceable to a source.</div>
+
+    <div class="el step" id="st1" style="left:120px"><span class="n">1</span><span class="lab">ASK</span><h3>ChatGPT</h3><p>Understands the request: a purchase, a trip or a wallet review.</p><span class="chip">Natural-language intent</span></div>
+    <div class="el arrow" id="ar1" style="left:426px"></div>
+    <div class="el step" id="st2" style="left:472px"><span class="n">2</span><span class="lab">CONNECT</span><h3>MCP interface</h3><p>Six read-only tools carry the request to SmartPay through an outbound tunnel.</p><span class="chip">No payment execution</span></div>
+    <div class="el arrow" id="ar2" style="left:778px"></div>
+    <div class="el step engine" id="st3" style="left:824px;width:360px"><span class="n">3</span><span class="lab">DECIDE</span><h3>SmartPay engine</h3><p>Python rules infer payment habits, test eligible benefits, offers and rewards, then compare cards and channels.</p><span class="chip">Calculations are not done by AI</span></div>
+    <div class="el arrow" id="ar3" style="left:1190px"></div>
+    <div class="el step" id="st4" style="left:1236px;width:270px"><span class="n">4</span><span class="lab">EXPLAIN</span><h3>Evidence-backed</h3><p>Itemised value, sources and caveats — estimates kept distinct.</p><span class="chip">Markdown + data + evidence</span></div>
+    <div class="el arrow" id="ar4" style="left:1512px"></div>
+    <div class="el step" id="st5" style="left:1558px;width:242px"><span class="n">5</span><span class="lab">ACT</span><h3>Consumer</h3><p>Sees what to use, why it wins, and where to book it.</p><span class="chip">Clear next step</span></div>
+
+    <div class="el" id="s3in" style="left:120px;top:712px;width:1680px;height:96px;border-radius:18px;background:#111115;border:1px solid #26262b;display:flex;align-items:center;padding:0 30px;gap:40px">
+      <span style="font-size:14px;font-weight:700;letter-spacing:.16em;color:#8d8a83;white-space:nowrap">DECISION INPUTS</span>
+      <span style="font-size:20px;color:#f5f3ee;font-weight:650">Open Finance data <span style="color:#8d8a83;font-weight:500;font-size:17px;margin-left:8px">transactions · accounts · card wallet · observed habits</span></span>
+      <span style="width:1px;height:46px;background:#2a2a30"></span>
+      <span style="font-size:20px;color:#f5f3ee;font-weight:650">Curated product knowledge <span style="color:#8d8a83;font-weight:500;font-size:17px;margin-left:8px">issuer benefits · earn rules · card-linked offers · Priceless · source evidence</span></span>
+    </div>
+    <div class="el" id="s3tools" style="left:120px;top:840px;white-space:nowrap">
+      <span class="tool"><b>get</b>_financial_profile</span><span class="tool"><b>get</b>_wallet</span><span class="tool"><b>optimise</b>_purchase</span><span class="tool"><b>optimise</b>_itinerary</span><span class="tool"><b>optimise</b>_wallet</span><span class="tool"><b>get</b>_recommendation_evidence</span>
+      <span style="margin-left:14px;font-size:16px;color:#7d7a73;font-weight:550">read-only · streamable HTTP</span>
+    </div>
+    <div class="el" id="s3nollm" style="left:120px;top:920px;font-size:30px;font-weight:650;letter-spacing:-.02em"><span class="grad">No language model calculates a single figure.</span></div>
+  </section>
+
+  <!-- ================= S4 CHATGPT (Disney) ================= -->
+  <section class="scene" id="s4">
+    <div class="cam el" id="cam4" style="opacity:1">
+    <div class="win"><div class="gpt">
+      <div class="sb">
+        <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+        <div class="it"><svg viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M12 6l4 4"/></svg>New chat</div>
+        <div class="it"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search chats</div>
+        <div class="it"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Library</div>
+        <div class="sec">Apps</div>
+        <div class="it on"><img class="mc" src="assets/logos/mastercard.svg">SmartPay</div>
+        <div class="sec">Chats</div>
+        <div class="chat on">Disney World trip for Alex</div>
+        <div class="chat">Best card for Instacart this month</div>
+        <div class="chat">Weekend in Boston — how to pay</div>
+        <div class="chat">Wallet review</div>
+        <div class="chat">Orlando golf package</div>
+      </div>
+      <div class="main">
+        <div class="top"><div class="model"><b>ChatGPT</b><span>5</span><span style="font-size:12px">▾</span></div><div class="right"><span class="share">Share</span><span class="avatar">AM</span></div></div>
+        <div class="thread" id="th4">
+          <div class="col el" id="col4" style="opacity:1;position:relative">
+            <div class="umsg el flow" id="u4" style="opacity:0"><div>Plan Alex a five-night Disney World trip for a family of four in October. Include flights, hotel, Disney tickets, airport transport and dining. Then use SmartPay to optimise how Alex pays for it.</div></div>
+            <div class="amsg el flow" id="a4" style="opacity:0">
+              <p id="a4p1">Here's a five-night Walt Disney World plan for Alex's family of four, October 2026:</p>
+              <table id="a4t"><tr><th>Item</th><th>Amount</th></tr>
+                <tr><td>Round-trip flights, BOS → MCO, family of four (American Airlines)</td><td>$1,420.00</td></tr>
+                <tr><td>One-way flight, grandparent joining for the second half</td><td>$220.00</td></tr>
+                <tr><td>Disney's Art of Animation Resort, 5 nights</td><td>$2,450.00</td></tr>
+                <tr><td>Walt Disney World 5-day park tickets</td><td>$1,780.00</td></tr>
+                <tr><td>ICON Park: Orlando Eye observation wheel</td><td>$148.00</td></tr>
+                <tr><td>Airport transport, scheduled Lyft both ways</td><td>$180.00</td></tr>
+                <tr><td>Restaurants and character dining</td><td>$950.00</td></tr>
+                <tr><td>Souvenirs, snacks and incidentals</td><td>$700.00</td></tr>
+                <tr><td><b>Itinerary total</b></td><td><b>$7,848.00</b></td></tr>
+              </table>
+              <p id="a4p2">Now I'll ask SmartPay how Alex should pay for each part.</p>
+            </div>
+            <div class="toolpill el flow" id="tp4" style="opacity:0"><img class="mc" src="assets/logos/mastercard.svg"><span id="tp4s" class="spin"></span><span id="tp4t">SmartPay · Optimise an itinerary</span></div>
+            <div class="wbox el flow" id="wb4" style="opacity:0"><iframe id="wf4" src="real/widget_raw.html" style="height:1400px"></iframe></div>
+            <div class="amsg el flow" id="a4b" style="opacity:0"><p>SmartPay found <b>$542.90 of guaranteed value</b> on this trip compared with how Alex normally pays, plus an estimated $379.62 in extra rewards (37,612 points). The biggest wins: paying for the American Airlines flights with the AAdvantage World Elite Mastercard (first checked bag free, $360), and booking the hotel through Citi Travel on the Strata Premier ($100 off, 10x points).</p></div>
+          </div>
+          <div class="greet el" id="greet4" style="opacity:1">Ready when you are.</div>
+          <div class="composer el" id="cmp4" style="opacity:1;top:360px">
+            <div class="txt ph" id="cmp4t">Ask anything</div>
+            <div class="bar"><span class="ic">+</span><span class="app"><img class="mc" src="assets/logos/mastercard.svg">SmartPay</span><span class="mic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d0d0d" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></span><span class="send">↑</span></div>
+          </div>
+          <div class="fsmodal el" id="fs4" style="opacity:1"><div class="hd"><img class="mc" src="assets/logos/mastercard.svg">SmartPay<span style="color:#8f8f8f;font-weight:500">· Walt Disney World — 5 nights, family of four</span><span class="x">✕</span></div><iframe id="wf4f" src="real/widget_raw.html"></iframe></div>
+        </div>
+      </div>
+    </div></div>
+    </div>
+    <svg class="cursor el" id="cur4" viewBox="0 0 26 36"><path d="M2 2l20 15-9 1 5 11-4 2-5-11-7 7z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <div class="ripple el" id="rip4"></div>
+  </section>
+
+  <!-- ================= S5 HONESTY ================= -->
+  <section class="scene" id="s5">
+    <div class="el eyebrow" id="s5eb" style="left:120px;top:120px">Honesty rules · enforced by tests, not convention</div>
+    <div class="el" id="s5h" style="left:118px;top:156px;font-size:66px;font-weight:700;letter-spacing:-.035em;line-height:1.1">Every figure is traceable.</div>
+    <div class="el" id="s5split" style="left:120px;top:290px;display:flex;align-items:flex-end;gap:54px">
+      <div><div class="num grad" style="font-size:96px;font-weight:720;letter-spacing:-.05em;line-height:1">$542.90</div><div style="font-size:19px;color:var(--t2);font-weight:600;margin-top:8px;letter-spacing:.12em">GUARANTEED</div></div>
+      <div id="s5bar" style="width:2px;height:120px;background:#33333a"></div>
+      <div><div class="num" style="font-size:76px;font-weight:650;letter-spacing:-.045em;line-height:1;color:#d9d6cf">$379.62</div><div style="font-size:19px;color:var(--t3);font-weight:600;margin-top:8px;letter-spacing:.12em">ESTIMATED REWARDS</div></div>
+      <div><div class="num" style="font-size:76px;font-weight:650;letter-spacing:-.045em;line-height:1;color:#d9d6cf">37,612</div><div style="font-size:19px;color:var(--t3);font-weight:600;margin-top:8px;letter-spacing:.12em">EXTRA POINTS</div></div>
+      <div class="el" id="s5never" style="position:relative;left:40px;bottom:30px;font-size:34px;font-weight:650;letter-spacing:-.02em;color:#f5f3ee">Never merged.</div>
+    </div>
+    <div class="el rule" id="r1" style="left:120px;top:500px"><div class="k">Provenance</div><h3>Every rule carries its source and date.</h3><p>Marked <i>authoritative</i> only when read off a live issuer page.</p><div class="src"><b>authoritative</b> · verified 2026-09-01 · citi.com · news.aa.com</div></div>
+    <div class="el rule" id="r2" style="left:690px;top:500px"><div class="k">Channel rules</div><h3>Portal rates never pay out on direct bookings.</h3><p>A 10x Citi Travel rate can't be awarded to a purchase made with the merchant — and a domestic-only benefit stays domestic.</p></div>
+    <div class="el rule" id="r3" style="left:1260px;top:500px"><div class="k">Disclosed tiebreak</div><h3>Exact ties only — and it says so.</h3><p>Mastercard is preferred only when two options are worth exactly the same, and the preference is printed on the line and in the disclaimers.</p></div>
+    <div class="el rule" id="r4" style="left:120px;top:760px"><div class="k">Read-only</div><h3>Never moves money. Never applies.</h3><p>Six read-only MCP tools. No state changes, no payments, no applications.</p></div>
+    <div class="el rule" id="r5" style="left:690px;top:760px"><div class="k">Every inference is planted</div><h3>16 rounds of golf → one golf experience.</h3><p>The Bay Hill package appears because Alex's own ledger shows 16 golf transactions totalling $2,880.</p><img src="assets/priceless/golf-course-widget.jpg"></div>
+    <div class="el rule" id="r6" style="left:1260px;top:760px"><div class="k">Determinism</div><h3>A frozen dataset and a golden plan.</h3><p>184 tests. The rehearsed run is snapshotted line by line, so any figure that drifts fails the build.</p></div>
+  </section>
+
+  <!-- ================= S6 DASHBOARD ================= -->
+  <section class="scene" id="s6">
+    <div class="cam el" id="cam6" style="opacity:1">
+      <div class="bwin" style="left:110px;top:40px;width:1700px;height:930px">
+        <div class="bar"><div class="lights" style="padding:0"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div><div class="url">🔒 127.0.0.1:9023/demo/alex</div><div style="width:60px"></div></div>
+        <div class="view"><img id="dashimg" src="real/dashboard_v2.png" style="width:1700px"></div>
+      </div>
+      <div class="el spot" id="spot6"></div>
+    </div>
+    <div class="el" id="s6cap" style="left:0;right:0;bottom:40px;text-align:center;font-size:21px;color:var(--t1);font-weight:550"><span style="display:inline-block;padding:10px 24px;border-radius:999px;background:rgba(11,11,13,.8);border:1px solid rgba(255,255,255,.1)">Alex's Open Finance dashboard · computed from 645 real transactions across Citi, Chase and First Hawaiian</span></div>
+  </section>
+
+  <!-- ================= S7 WALLET + ADMIN ================= -->
+  <section class="scene" id="s7">
+    <div class="el" id="s7big" style="left:0;right:0;top:470px;text-align:center;font-size:96px;font-weight:720;letter-spacing:-.045em">And one more thing…</div>
+    <div class="cam el" id="cam7">
+    <div class="win"><div class="gpt">
+      <div class="sb">
+        <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+        <div class="it"><svg viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M12 6l4 4"/></svg>New chat</div>
+        <div class="it"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search chats</div>
+        <div class="it"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Library</div>
+        <div class="sec">Apps</div>
+        <div class="it on"><img class="mc" src="assets/logos/mastercard.svg">SmartPay</div>
+        <div class="sec">Chats</div>
+        <div class="chat on">Disney World trip for Alex</div>
+        <div class="chat">Best card for Instacart this month</div>
+        <div class="chat">Weekend in Boston — how to pay</div>
+        <div class="chat">Wallet review</div>
+        <div class="chat">Orlando golf package</div>
+      </div>
+      <div class="main">
+        <div class="top"><div class="model"><b>ChatGPT</b><span>5</span><span style="font-size:12px">▾</span></div><div class="right"><span class="share">Share</span><span class="avatar">AM</span></div></div>
+        <div class="thread">
+          <div class="col el" id="col7" style="opacity:1;position:relative">
+            <div class="amsg" style="color:#8f8f8f">…the biggest wins: paying for the American Airlines flights with the AAdvantage World Elite Mastercard (first checked bag free, $360), and booking the hotel through Citi Travel on the Strata Premier ($100 off, 10x points).</div>
+            <div class="umsg el flow" id="u7" style="opacity:0"><div>Now review Alex's wallet.</div></div>
+            <div class="toolpill el flow" id="tp7" style="opacity:0"><img class="mc" src="assets/logos/mastercard.svg"><span id="tp7s" class="spin"></span><span id="tp7t">SmartPay · Optimise the wallet</span></div>
+            <div class="amsg el flow" id="a7" style="opacity:0">
+              <p style="font-size:20px;font-weight:650;margin-bottom:10px">SmartPay wallet review</p>
+              <p id="a7h"><b>Drop the First Hawaiian Priority Destinations World Elite Mastercard. Its $99 annual fee is no longer earning its keep against Alex's predicted spend.</b></p>
+              <ul>
+                <li>Current wallet, projected annual value: $3,403.87</li>
+                <li>Recommended wallet, projected annual value: $3,502.87</li>
+                <li><b>Net annual incremental value: $99.00</b></li>
+              </ul>
+              <p style="font-weight:650;margin-bottom:6px">Mastercard offers for you</p>
+              <p id="a7o" style="padding:12px 16px;border-radius:14px;background:linear-gradient(96deg,#fff3f1,#fff8ec);border:1px solid #f3d9d2"><b>Use this Mastercard more, and we'll give you a whopping cashback!</b><br><b>Get Started Cashback</b> — $500.00 cash back on the First Hawaiian Priority Destinations World Elite Mastercard. 0 of 10 purchases and $0.00 of $750.00 spent in the last 90 days — 10 more purchases and $750.00 more spend to unlock.</p>
+              <p style="font-weight:650;margin:12px 0 6px">What is driving this</p>
+              <ul><li>$12,477 predicted restaurant · $11,624 predicted supermarket · $9,335 predicted shopping · $8,914 predicted hotel</li><li>$100 off a hotel stay booked on cititravel.com: $100.00/yr · Instacart+ $10 monthly credit: $120.00/yr</li><li>$543 of guaranteed value on the upcoming trip</li></ul>
+            </div>
+          </div>
+          <div class="composer" style="bottom:28px;top:auto"><div class="txt ph">Ask anything</div><div class="bar"><span class="ic">+</span><span class="app"><img class="mc" src="assets/logos/mastercard.svg">SmartPay</span><span class="mic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d0d0d" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></span><span class="send">↑</span></div></div>
+        </div>
+      </div>
+    </div></div>
+    </div>
+    <div class="cam el" id="cam7b">
+      <div class="bwin" style="left:110px;top:40px;width:1700px;height:930px">
+        <div class="bar"><div class="lights" style="padding:0"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div><div class="url">🔒 127.0.0.1:9023/admin</div><div style="width:60px"></div></div>
+        <div class="view"><img id="adm1" class="el" src="real/admin_dashboard.png" style="width:1700px;opacity:1"><img id="adm2" class="el" src="real/admin_campaigns.png" style="width:1700px;opacity:0"></div>
+      </div>
+    </div>
+    <div class="el" id="s7cap" style="left:0;right:0;bottom:40px;text-align:center;font-size:21px;color:var(--t1);font-weight:550"><span style="display:inline-block;padding:10px 24px;border-radius:999px;background:rgba(11,11,13,.8);border:1px solid rgba(255,255,255,.1)">SmartPay Admin · Mastercard-internal portfolio analytics and the Flipper campaign studio</span></div>
+  </section>
+
+  <!-- ================= S8 CLOSE ================= -->
+  <section class="scene" id="s8">
+    <img class="el" id="s8mc" src="assets/logos/mastercard.svg" style="left:865px;top:380px;width:190px">
+    <div class="el" id="s8wm" style="left:0;right:0;top:520px;text-align:center;font-size:120px;font-weight:720;letter-spacing:-.05em;line-height:1">SmartPay</div>
+    <div class="el" id="s8l1" style="left:0;right:0;top:690px;text-align:center;font-size:52px;font-weight:650;letter-spacing:-.02em;color:#f5f3ee">The right card. Every time.</div>
+    <div class="el" id="s8l2" style="left:0;right:0;top:770px;text-align:center;font-size:34px;font-weight:500;color:#b8b4ab">From accepted everywhere — to <span class="grad" style="font-weight:650">chosen every time.</span></div>
+    <div class="el" id="s8l3" style="left:0;right:0;top:960px;text-align:center;font-size:17px;font-weight:600;letter-spacing:.22em;color:#5e5b55">PRICELESS · SMARTPAY BY MASTERCARD · DEMO WITH SYNTHETIC CONSUMER DATA · ADVISORY ONLY</div>
+  </section>
+  <div id="fade" style="position:absolute;inset:0;background:#000;opacity:0;pointer-events:none"></div>
+</div>
+
+<script>
+/* ============== tiny deterministic timeline engine ============== */
+const E = {
+  linear: p => p,
+  out: p => 1 - Math.pow(1 - p, 3),
+  inout: p => p < .5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2,
+  expo: p => p >= 1 ? 1 : 1 - Math.pow(2, -10 * p),
+  back: p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3*Math.pow(p-1,3) + c1*Math.pow(p-1,2); },
+};
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const lerp = (a,b,p) => a + (b-a)*p;
+const $ = id => document.getElementById(id);
+const DEF = {x:0,y:0,s:1,r:0,o:0,b:0};
+const defaults = new Map(), tweens = [], fns = [];
+function init(el, props){ el = typeof el==='string'?$(el):el; defaults.set(el, Object.assign({}, DEF, props||{})); }
+function tw(el, t0, t1, to, ease, from){ el = typeof el==='string'?$(el):el; if(!defaults.has(el)) init(el, {}); tweens.push({el,t0,t1,to,from,ease:E[ease||'out']}); }
+function fn(t0, t1, cb){ fns.push({t0,t1,cb}); }
+function show(el, t0, dur, extra){ // fade/slide in
+  el = typeof el==='string'?$(el):el; dur = dur||.6; extra = extra||{};
+  const from = Object.assign({o:0, y:(extra.y0!=null?extra.y0:28), x:extra.x0||0, s:extra.s0!=null?extra.s0:1, b:extra.b0||0}, {});
+  const to = {o:1, y:extra.y!=null?extra.y:0, x:extra.x||0, s:extra.s!=null?extra.s:1, b:0};
+  tw(el, t0, t0+dur, to, extra.ease||'out', from);
+}
+function hide(el, t0, dur, extra){ el=typeof el==='string'?$(el):el; dur=dur||.4; extra=extra||{}; tw(el, t0, t0+dur, {o:0, y:extra.y!=null?extra.y:-20}, 'inout'); }
+function count(el, t0, t1, a, b, fmt){ el=typeof el==='string'?$(el):el; fn(t0, t1, (p)=>{ if(p<0) return; const v = lerp(a,b,E.out(clamp(p,0,1))); el.textContent = fmt? fmt(v) : Math.round(v).toLocaleString('en-US'); }); }
+function type(el, t0, t1, text, cls){ el=typeof el==='string'?$(el):el; fn(t0, t1, (p)=>{ if(p<0){ el.textContent='Ask anything'; el.classList.add('ph'); return; } el.classList.remove('ph'); const n = Math.floor(clamp(p,0,1)*text.length); el.innerHTML = text.slice(0,n).replace(/&/g,'&amp;').replace(/</g,'&lt;') + (p<1.2?'<span class="caret"></span>':''); }); }
+const scenes = [];
+function scene(id, t0, t1){ scenes.push({el:$(id), t0, t1}); }
+
+function seek(t){
+  // scenes visibility
+  for(const s of scenes){ const on = t >= s.t0-0.05 && t < s.t1+0.05; s.el.style.display = on?'block':'none'; }
+  // element states
+  const st = new Map();
+  for(const [el,d] of defaults) st.set(el, Object.assign({}, d));
+  for(const tn of tweens){
+    if(t < tn.t0) continue;
+    const p = tn.ease(clamp((t - tn.t0)/(tn.t1 - tn.t0), 0, 1));
+    const cur = st.get(tn.el);
+    for(const k in tn.to){ const from = (tn.from && tn.from[k]!=null) ? tn.from[k] : cur[k]; cur[k] = lerp(from, tn.to[k], p); }
+    if(tn.from) for(const k in tn.from){ if(!(k in tn.to)) cur[k] = tn.from[k]; }
+  }
+  for(const [el,v] of st){
+    el.style.opacity = v.o;
+    el.style.transform = `translate(${v.x}px,${v.y}px) rotate(${v.r}deg) scale(${v.s})`;
+    el.style.filter = v.b>0.05 ? `blur(${v.b}px)` : '';
+  }
+  for(const f of fns){ f.cb((t - f.t0)/(f.t1 - f.t0), t); }
+}
+window.seek = seek;
+
+/* ============== choreography ============== */
+let TL, PLAN, W4, D4, W4F, D4F;
+const HL_CSS = `.row.hl{box-shadow:0 0 0 3px #EB001B,0 14px 40px rgba(235,0,27,.18)!important;background:#fff8f5!important;position:relative;z-index:2}
+.rows.dim .row:not(.hl){opacity:.38}.hero .figure{display:inline-block}
+.hero.pop .figure{transform-origin:0 80%}`;
+function injectCss(D){ const s=D.createElement('style'); s.textContent=HL_CSS; D.head.appendChild(s); }
+function hydrate(W, D, mode){
+  W.openai = {toolOutput: PLAN, theme:'light', displayMode: mode, requestDisplayMode:()=>{}, notifyIntrinsicHeight:()=>{}, sendFollowUpMessage:()=>{}};
+  W.dispatchEvent(new Event('openai:set_globals'));
+  D.documentElement.dataset.mode = mode;
+  injectCss(D);
+}
+async function build(){
+  TL = await (await fetch('timeline.json')).json();
+  PLAN = await (await fetch('real/optimise_itinerary.json')).json();
+  const S = {}; for(const s of TL.scenes) S[s.id] = s;
+  const wf4 = $('wf4'), wf4f = $('wf4f');
+  await Promise.all([wf4, wf4f].map(f => new Promise(r => { if(f.contentDocument && f.contentDocument.readyState==='complete' && f.contentDocument.getElementById('root')) r(); else f.addEventListener('load', r); })));
+  W4 = wf4.contentWindow; D4 = wf4.contentDocument; hydrate(W4, D4, 'inline');
+  W4F = wf4f.contentWindow; D4F = wf4f.contentDocument; hydrate(W4F, D4F, 'fullscreen');
+  // true inline height
+  $('s4').style.display='block';
+  await new Promise(r=>setTimeout(r,50));
+  wf4.style.height = (D4.documentElement.scrollHeight + 2) + 'px';
+  const rows4 = [...D4.querySelectorAll('.row')], rowsF = [...D4F.querySelectorAll('.row')];
+  const figure4 = D4.querySelector('.hero .figure');
+
+  // background glows drift for whole film
+  init('g1', {x:-820, y:-900, o:1}); init('g2', {x:1000, y:220, o:1});
+  tw('g1', 0, TL.total, {x:-700, y:-760}, 'linear'); tw('g2', 0, TL.total, {x:900, y:120}, 'linear');
+
+  /* ---------- S1 ---------- */
+  { const s=S.s1_title, c=s.cues; scene('s1', s.start, s.end);
+    init('s1', {o:1}); tw('s1', s.end-.6, s.end, {o:0}, 'inout');
+    init('s1mc', {o:0, s:.6, y:0}); tw('s1mc', s.start+.2, s.start+1.2, {o:1, s:1}, 'back', {o:0,s:.5});
+    // move circles left & reveal wordmark at "meet"
+    tw('s1mc', c.meet, c.meet+.9, {x:-385, y:-10}, 'inout');
+    init('s1wm', {o:0, x:40, b:14}); tw('s1wm', c.meet+.35, c.meet+1.25, {o:1, x:0, b:0}, 'expo');
+    init('s1eb', {o:0, y:10}); tw('s1eb', c.payment, c.payment+.7, {o:1, y:0});
+    show('s1l1', c.yourai, .7); show('s1l2', c.smartpay, .7);
+  }
+  /* ---------- S2 ---------- */
+  { const s=S.s2_alex, c=s.cues; scene('s2', s.start, s.end);
+    init('s2', {o:0}); tw('s2', s.start, s.start+.5, {o:1}); tw('s2', s.end-.5, s.end, {o:0}, 'inout');
+    show('s2eb', c.alex-.2, .6); show('s2name', c.alex, .8, {y0:40});
+    show('s2st', c.three-.1, .6);
+    count('c1', c.three, c.three+.8, 0, 3); count('c2', c.nine, c.nine+.8, 0, 9); count('c3', c.seven, c.seven+.8, 0, 7); count('c4', c.twelve, c.twelve+1.1, 0, 645);
+    show('s2banks', c.connected, .7);
+    // card fan
+    const ids=['k1','k2','k3','k4','k5','k6','k7'];
+    ids.forEach((id,i)=>{ const rot = -18 + i*6, x = (i-3)*92, y = Math.abs(i-3)*12;
+      init(id, {o:0, x:x, y:y+120, r:rot, s:.9});
+      tw(id, c.seven+.1+i*.12, c.seven+.8+i*.12, {o:1, y:y, s:1}, 'back');
+    });
+    // habit: dim others, lift Sapphire (k4) and Double Cash (k1)
+    show('s2h1', c.habit, .6);
+    ['k2','k3','k5','k6','k7'].forEach(id=> tw(id, c.sapphire, c.sapphire+.6, {o:.22}));
+    tw('k4', c.sapphire, c.sapphire+.7, {y:-70, s:1.1}, 'back'); show('co1', c.sapphire+.3, .5, {y0:16});
+    tw('k1', c.double, c.double+.7, {y:-46, s:1.08, x:-330}, 'back'); show('co2', c.double+.3, .5, {y0:16});
+    show('s2h2', c.rarely, .7);
+    tw('k4', c.rarely+.2, c.rarely+.8, {o:.35}); tw('k1', c.rarely+.2, c.rarely+.8, {o:.35});
+    tw('co1', c.rarely+.2, c.rarely+.6, {o:.35}); tw('co2', c.rarely+.2, c.rarely+.6, {o:.35});
+  }
+  /* ---------- S3 ---------- */
+  { const s=S.s3_how, c=s.cues; scene('s3', s.start, s.end);
+    init('s3', {o:0}); tw('s3', s.start, s.start+.5, {o:1}); tw('s3', s.end-.5, s.end, {o:0}, 'inout');
+    show('s3eb', s.start+.2, .6); show('s3h', s.start+.35, .8, {y0:36}); show('s3sub', s.start+.7, .8);
+    const steps=['st1','st2','st3','st4','st5'], arrows=['ar1','ar2','ar3','ar4'];
+    steps.forEach((id,i)=> show(id, s.start+.9+i*.12, .6, {y0:30}));
+    arrows.forEach((id,i)=> show(id, s.start+1.1+i*.12, .4, {y0:0}));
+    const lit = (id, t)=> fn(t, t+.01, (p)=>{ $(id).classList.toggle('on', p>=0); });
+    lit('st2', c.mcp); lit('st1', c.chatgpt);
+    show('s3tools', c.tools, .7);
+    lit('st3', c.engine); tw('st3', c.engine, c.engine+.6, {s:1.04}, 'back'); tw('st3', c.evidence, c.evidence+.5, {s:1});
+    show('s3in', c.infers, .7);
+    show('s3nollm', c.nollm, .7);
+    lit('st4', c.evidence); lit('st5', c.evidence+1.2);
+  }
+  /* ---------- S4 (ChatGPT) ---------- */
+  { const a=S.s4a_ask, b=S.s4b_widget, d=S.s4c_detail, ca=a.cues, cb=b.cues, cd=d.cues;
+    scene('s4', a.start, d.end);
+    init('s4', {o:0}); tw('s4', a.start, a.start+.6, {o:1}); tw('s4', d.end-.5, d.end, {o:0}, 'inout');
+    init('cam4', {o:1, s:1, x:0, y:0});
+    // camera helper: zoom so that stage point (tx,ty) sits at (cx,cy)
+    const camTo = (t0,t1,sc,tx,ty,cx,cy,ease)=> tw('cam4', t0, t1, {s:sc, x:(cx!=null?cx:960)-tx*sc, y:(cy!=null?cy:540)-ty*sc}, ease||'inout');
+    // intro camera: slight push in
+    tw('cam4', a.start, a.start+1.2, {s:1.0}, 'out', {s:.96, x:38, y:22});
+    // typing
+    const PROMPT = "Plan Alex a five-night Disney World trip for a family of four in October. Include flights, hotel, Disney tickets, airport transport and dining. Then use SmartPay to optimise how Alex pays for it.";
+    init('greet4', {o:1}); init('cmp4', {o:1});
+    type('cmp4t', ca.asks-.2, ca.plans-.9, PROMPT);
+    // send: greeting fades, composer drops to bottom (thread height 938 => bottom ~ 938-120)
+    hide('greet4', ca.plans-.9, .3);
+    tw('cmp4', ca.plans-.85, ca.plans-.25, {y:470}, 'inout');
+    fn(ca.plans-.85, ca.plans-.84, (p)=>{ if(p>=0){ $('cmp4t').textContent='Ask anything'; $('cmp4t').classList.add('ph'); } });
+    show('u4', ca.plans-.75, .4, {y0:14});
+    // assistant streams: reveal paragraphs/rows progressively
+    init('a4', {o:0, y:0});
+    const rows = [...$('a4t').querySelectorAll('tr')];
+    fn(ca.plans-.2, ca.total+.6, (p)=>{
+      const el=$('a4'); if(p<0){ el.style.opacity=0; return; } el.style.opacity=1;
+      const q=clamp(p,0,1); $('a4p1').style.opacity = q>0.02?1:0;
+      rows.forEach((r,i)=> r.style.visibility = q > 0.08 + i*0.085 ? 'visible' : 'collapse');
+      $('a4p2').style.opacity = q>0.97?1:0;
+    });
+    // tool call pill at "hands"
+    show('tp4', ca.hands, .35, {y0:8});
+    fn(ca.hands+1.6, ca.hands+1.61, (p)=>{ const sp=$('tp4s'); if(p>=0){ sp.className='ok'; sp.textContent='✓'; $('tp4t').textContent='Used SmartPay · Optimise an itinerary'; } else { sp.className='spin'; sp.textContent=''; $('tp4t').textContent='SmartPay · Optimise an itinerary'; } });
+    fn(ca.hands, ca.hands+1.6, (p)=>{ if(p>=0&&p<=1) $('tp4s').style.transform=`rotate(${p*1440}deg)`; });
+    // thread scrolling is driven by measured offsets (the col translates up)
+    init('col4', {o:1, y:0});
+    const wbTop = $('wb4').offsetTop;                      // widget box top within col
+    const rowsTop = D4.querySelector('.rows').offsetTop;   // rows top within widget
+    const btn = D4.getElementById('expand');
+    const bi = btn.getBoundingClientRect();                // button within widget (iframe coords)
+    const yHero = -(wbTop - 30), yRows = -(wbTop + rowsTop - 110), yBtn = -(wbTop + bi.top - 640);
+    // widget appears
+    show('wb4', b.start+.1, .7, {y0:30, s0:.985});
+    tw('col4', b.start, b.start+.9, {y:yHero}, 'inout');
+    // count-up on the hero figure inside the real widget
+    fn(b.start+.5, b.start+2.0, (p)=>{ if(p<0){ figure4.textContent='$0.00'; return; } const v = lerp(0, 542.90, E.out(clamp(p,0,1))); figure4.textContent = '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); });
+    fn(cb.five, cb.five+.7, (p)=>{ figure4.style.transform = p<0?'':`scale(${1+0.08*Math.sin(clamp(p,0,1)*Math.PI)})`; figure4.style.display='inline-block'; figure4.style.transformOrigin='0 70%'; });
+    // camera: zoom onto the widget hero. Chat col spans stage x 706..1474; hero sits ~90px below the widget top (thread y=30+90)
+    camTo(cb.live, cb.live+1.4, 1.5, 1090, 97+30+120, 960, 330);
+    const hlRow = (rowsArr, idx, t0, t1)=> fn(t0, t1, (p)=>{ const on = p>=0 && p<=1; rowsArr[idx].classList.toggle('hl', on); const rr = rowsArr[0].parentElement; rr.classList.toggle('dim', rowsArr.some(r=>r.classList.contains('hl'))); });
+    camTo(cb.every, cb.every+1.4, 1.42, 1090, 97+110+260, 960, 480);
+    tw('col4', cb.every, cb.every+1.2, {y:yRows}, 'inout');
+    hlRow(rows4, 0, cb.reached, cb.recommends); hlRow(rows4, 2, cb.recommends, cb.channel); hlRow(rows4, 5, cb.channel, b.end);
+    // ---- s4c: scroll to the "See full breakdown" button, click -> fullscreen modal
+    const colTop = 45+52+18;
+    const btnStageX = 80+260+366 + bi.left + bi.width/2 + 1, btnStageY = colTop + wbTop + 1 + bi.top + bi.height/2 + yBtn;
+    const t_click = d.start+0.15;
+    camTo(d.start-1.7, d.start-.4, 1.0, 0, 0, 0, 0);
+    tw('col4', d.start-1.7, d.start-.6, {y:yBtn}, 'inout');
+    init('cur4', {o:0, x:1500, y:900});
+    tw('cur4', d.start-1.3, d.start-.9, {o:1}, 'out');
+    tw('cur4', d.start-1.2, t_click-.1, {x:btnStageX-4, y:btnStageY-2}, 'inout');
+    init('rip4', {o:0, x:btnStageX-22, y:btnStageY-22, s:.3});
+    tw('rip4', t_click, t_click+.5, {o:0, s:1.6}, 'out', {o:.9, s:.3});
+    tw('cur4', t_click, t_click+.08, {s:.88}, 'out'); tw('cur4', t_click+.08, t_click+.2, {s:1}, 'out');
+    hide('cur4', t_click+.5, .3, {y:0});
+    init('fs4', {o:0, s:.97}); fn(t_click+.1, t_click+.11, (p)=>{ $('fs4').style.display = p>=0 ? 'block' : 'none'; });
+    tw('fs4', t_click+.1, t_click+.6, {o:1, s:1}, 'out');
+    // fullscreen iframe scroll + highlights synced with VO
+    const scrollF = (t0,t1,y0,y1)=> fn(t0,t1,(p)=>{ if(p<0) return; W4F.scrollTo(0, lerp(y0,y1,E.inout(clamp(p,0,1)))); });
+    const rowTop = (i)=> rowsF[i].getBoundingClientRect().top + W4F.scrollY;
+    // initial: show top; then rows
+    scrollF(t_click+.1, t_click+.11, 0, 0);
+    hlRow(rowsF, 0, cd.bags, cd.hotel); scrollF(cd.bags, cd.bags+.9, 0, 0);
+    camTo(cd.bags+.2, cd.bags+1.4, 1.35, 1080, 330, 960, 420);
+    hlRow(rowsF, 2, cd.hotel, cd.offers); scrollF(cd.hotel, cd.hotel+.8, 0, 120);
+    hlRow(rowsF, 4, cd.offers, cd.eye); hlRow(rowsF, 5, cd.eye, cd.tie); scrollF(cd.offers, cd.offers+.8, 120, 330);
+    hlRow(rowsF, 6, cd.tie, d.end-.6); scrollF(cd.tie, cd.tie+.9, 330, 470);
+    camTo(cd.funds, cd.funds+1.2, 1.55, 1000, 560, 960, 560);
+    // release at end
+    tw('cam4', d.end-.9, d.end-.1, {s:1, x:0, y:0}, 'inout');
+    // store for later reference
+    window._dbg = {btnStageX, btnStageY, bi, wbTop, rowsTop, yHero, yRows, yBtn}; window._rowsF = rowsF; window._rows4 = rows4;
+    $('s4').style.display='none';
+  }
+  /* ---------- S5 ---------- */
+  { const s=S.s5_honesty, c=s.cues; scene('s5', s.start, s.end);
+    init('s5', {o:0}); tw('s5', s.start, s.start+.5, {o:1}); tw('s5', s.end-.5, s.end, {o:0}, 'inout');
+    show('s5eb', s.start+.2, .6); show('s5h', c.traceable, .8, {y0:36});
+    show('s5split', c.guaranteed, .8, {y0:30}); show('s5never', c.never, .6, {y0:14});
+    show('r1', c.source, .6, {y0:30}); show('r2', c.channel, .6, {y0:30}); show('r3', c.channel+1.6, .6, {y0:30});
+    show('r4', c.readonly, .6, {y0:30}); show('r6', c.never_moves+1.2, .6, {y0:30}); show('r5', c.golf, .6, {y0:30});
+    const pop = (id,t)=>{ tw(id, t, t+.5, {s:1.03}, 'back'); tw(id, t+2.2, t+2.8, {s:1}, 'inout'); };
+    pop('r1', c.source+.6); pop('r2', c.channel+.6); pop('r4', c.readonly+.6); pop('r5', c.sixteen);
+  }
+  /* ---------- S6 ---------- */
+  { const s=S.s6_dashboard, c=s.cues; scene('s6', s.start, s.end);
+    init('s6', {o:0}); tw('s6', s.start, s.start+.6, {o:1}); tw('s6', s.end-.5, s.end, {o:0}, 'inout');
+    init('cam6', {o:1, s:1}); tw('cam6', s.start, s.start+1.4, {s:1}, 'out', {s:.95, x:48, y:27});
+    show('s6cap', s.start+.8, .6);
+    const img=$('dashimg'); init(img, {o:1, y:0});
+    const SC = 1700/1600; // image scale
+    const scrollTo = (t0,t1,y)=> tw(img, t0, t1, {y:-y*SC}, 'inout');
+    // "$1,477.44" tile: in 1600px image at ~ (233..790, 250..490) -> scaled; spotlight on it
+    const camTo = (t0,t1,sc,tx,ty,cx,cy)=> tw('cam6', t0, t1, {s:sc, x:(cx||960)-tx*sc, y:(cy||540)-ty*sc}, 'inout');
+    // tile centre in stage coords: left 110 + 233*SC .. ; top 60+52 + 250*SC
+    const tileX = 110 + 495*SC, tileY = 92 + 370*SC;
+    camTo(c.amount, c.amount+1.3, 1.45, tileX, tileY, 760, 480);
+    init('spot6', {o:0}); const sp=$('spot6'); sp.style.left=(110+203*SC)+'px'; sp.style.top=(92+252*SC)+'px'; sp.style.width=(590*SC)+'px'; sp.style.height=(240*SC)+'px';
+    tw('spot6', c.amount+.4, c.amount+1.0, {o:1}); tw('spot6', c.computed+3.2, c.computed+3.8, {o:0});
+    // spot follows the camera: it is outside cam, so re-position by fn (simpler: hide when camera moves)
+    camTo(c.computed+3.4, c.computed+4.6, 1.0, 0, 0, 0, 0);
+    scrollTo(c.every-.6, c.every+1.0, 980);   // Your AI chats
+    camTo(c.lands, c.lands+1.2, 1.2, 110+800*SC, 92+(1270-980)*SC, 960, 480);
+    camTo(c.priceless-.3, c.priceless+1.0, 1.0, 0, 0, 0, 0);
+    scrollTo(c.priceless-.3, c.priceless+1.2, 1800);  // Priceless offers
+    camTo(c.priceless+1.3, c.priceless+2.8, 1.22, 110+800*SC, 92+(2080-1800)*SC, 960, 480);
+    tw('cam6', s.end-1.2, s.end-.2, {s:1.0, x:0, y:0}, 'inout');
+  }
+  /* ---------- S7 ---------- */
+  { const s=S.s7_wallet, c=s.cues; scene('s7', s.start, s.end);
+    init('s7', {o:0}); tw('s7', s.start, s.start+.5, {o:1}); tw('s7', s.end-.5, s.end, {o:0}, 'inout');
+    show('s7big', c.onemore-.2, .8, {y0:30, s0:.96}); hide('s7big', c.ask-.3, .4);
+    init('cam7', {o:0, s:.97, x:29, y:16}); tw('cam7', c.ask-.2, c.ask+.6, {o:1, s:1, x:0, y:0}, 'out');
+    show('u7', c.ask+.2, .4, {y0:12});
+    show('tp7', c.ask+1.0, .35, {y0:8});
+    fn(c.ask+1.0, c.forecasts+.2, (p)=>{ if(p>=0&&p<=1) $('tp7s').style.transform=`rotate(${p*1800}deg)`; });
+    fn(c.forecasts+.2, c.forecasts+.21, (p)=>{ const sp=$('tp7s'); if(p>=0){ sp.className='ok'; sp.textContent='✓'; $('tp7t').textContent='Used SmartPay · Optimise the wallet'; } else { sp.className='spin'; sp.textContent=''; $('tp7t').textContent='SmartPay · Optimise the wallet'; } });
+    init('a7', {o:0, y:0}); const kids=[...$('a7').children];
+    fn(c.forecasts+.3, c.flags+1.0, (p)=>{ const el=$('a7'); if(p<0){ el.style.opacity=0; return; } el.style.opacity=1; const q=clamp(p,0,1); kids.forEach((k,i)=> k.style.opacity = q > i/kids.length ? 1 : 0); });
+    init('col7', {o:1, y:0}); tw('col7', c.forecasts+.4, c.flags+.4, {y:-230}, 'inout');
+    const camTo7 = (el,t0,t1,sc,tx,ty,cx,cy)=> tw(el, t0, t1, {s:sc, x:(cx||960)-tx*sc, y:(cy||540)-ty*sc}, 'inout');
+    camTo7('cam7', c.flags, c.flags+1.2, 1.4, 1090, 300, 960, 330);
+    fn(c.flags+.3, c.funded, (p)=>{ const on=p>=0&&p<=1; $('a7h').style.background = on?'linear-gradient(96deg,#fff3f1,#fff8ec)':''; $('a7h').style.boxShadow = on?'0 0 0 3px #EB001B':''; $('a7h').style.borderRadius='12px'; $('a7h').style.padding = on?'8px 12px':''; });
+    fn(c.funded, c.mastercard, (p)=>{ const on=p>=0&&p<=1; $('a7o').style.boxShadow = on?'0 0 0 3px #EB001B':''; });
+    camTo7('cam7', c.funded, c.funded+1.0, 1.4, 1090, 560, 960, 540);
+    // switch to admin
+    tw('cam7', c.mastercard-.1, c.mastercard+.5, {o:0, s:1.36}, 'inout');
+    init('cam7b', {o:0, s:.96, x:38, y:22}); tw('cam7b', c.mastercard+.1, c.mastercard+.9, {o:1, s:1, x:0, y:0}, 'out');
+    show('s7cap', c.mastercard+.6, .6);
+    init('adm1', {o:1}); init('adm2', {o:0});
+    camTo7('cam7b', c.portfolio, c.portfolio+1.3, 1.25, 110+1250*(1700/1600), 92+620*(1700/1600), 1100, 560);
+    tw('cam7b', c.flipper-.2, c.flipper+.5, {s:1, x:0, y:0}, 'inout');
+    tw('adm1', c.flipper, c.flipper+.5, {o:0}); tw('adm2', c.flipper, c.flipper+.5, {o:1});
+    camTo7('cam7b', c.funds, c.funds+1.4, 1.25, 110+1100*(1700/1600), 92+450*(1700/1600), 1000, 540);
+  }
+  /* ---------- S8 ---------- */
+  { const s=S.s8_close, c=s.cues; scene('s8', s.start, s.end+1);
+    init('s8', {o:0}); tw('s8', s.start, s.start+.6, {o:1});
+    init('s8mc', {o:0, s:.6}); tw('s8mc', s.start+.2, s.start+1.1, {o:1, s:1}, 'back', {o:0, s:.5});
+    show('s8wm', c.smartpay, .8, {y0:24, b0:10});
+    show('s8l1', c.right, .7, {y0:20}); show('s8l2', c.accepted, .7, {y0:16}); show('s8l3', c.chosen+1.2, .8, {y0:0});
+    const f=$('fade'); init(f, {o:0}); tw(f, s.end-1.6, s.end-.1, {o:1}, 'inout');
+  }
+  tweens.sort((a,b)=>a.t0-b.t0);
+  seek(0);
+  window.TOTAL = TL.total;
+  window.READY = true;
+}
+build();
+</script>
+</body>
+</html>

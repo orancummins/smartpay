@@ -1,0 +1,120 @@
+{
+ "display_markdown": "## Financial profile \u2014 alex\n\n- Connected institutions: Chase, Citi, First Hawaiian\n- Accounts: 9\n- Transactions analysed: 645 (573 consumer payments)\n- Period: 2025-09-01 to 2026-08-31\n\n### Annual spend by category\n\n| Category | Observed 12-month spend |\n|---|---:|\n| housing | $36,000.00 |\n| supermarket | $11,285.48 |\n| restaurant | $11,084.02 |\n| shopping | $8,465.40 |\n| airfare | $6,050.00 |\n| hotel | $5,985.00 |\n| utilities | $5,520.00 |\n| gas | $5,370.02 |\n| entertainment | $3,655.93 |\n| golf | $2,880.47 |\n| grocery_online | $1,937.16 |\n| rideshare | $1,242.24 |\n| other | $1,232.94 |\n| attraction | $1,150.00 |\n| transport | $935.39 |\n| drugstore | $565.52 |\n| streaming | $491.64 |\n| car_rental | $445.00 |\n\n### How Alex currently pays\n\n| Category | Most-used card | Share |\n|---|---|---:|\n| restaurant | Chase Sapphire Preferred | 63% |\n| supermarket | Citi Double Cash Card | 44% |\n| airfare | Chase Sapphire Preferred | 46% |\n| hotel | Chase Sapphire Preferred | 38% |\n| gas | Chase Freedom Unlimited | 57% |\n| rideshare | Chase Sapphire Preferred | 39% |\n\n[See your past SmartPay activity](http://127.0.0.1:9023/demo/alex#future-h)",
+ "data": {
+  "institutions": "Chase, Citi, First Hawaiian",
+  "account_count": 9,
+  "transaction_count": 645,
+  "spend_count": 573,
+  "period_start": "2025-09-01",
+  "period_end": "2026-08-31",
+  "by_category": [
+   [
+    "housing",
+    "$36,000.00"
+   ],
+   [
+    "supermarket",
+    "$11,285.48"
+   ],
+   [
+    "restaurant",
+    "$11,084.02"
+   ],
+   [
+    "shopping",
+    "$8,465.40"
+   ],
+   [
+    "airfare",
+    "$6,050.00"
+   ],
+   [
+    "hotel",
+    "$5,985.00"
+   ],
+   [
+    "utilities",
+    "$5,520.00"
+   ],
+   [
+    "gas",
+    "$5,370.02"
+   ],
+   [
+    "entertainment",
+    "$3,655.93"
+   ],
+   [
+    "golf",
+    "$2,880.47"
+   ],
+   [
+    "grocery_online",
+    "$1,937.16"
+   ],
+   [
+    "rideshare",
+    "$1,242.24"
+   ],
+   [
+    "other",
+    "$1,232.94"
+   ],
+   [
+    "attraction",
+    "$1,150.00"
+   ],
+   [
+    "transport",
+    "$935.39"
+   ],
+   [
+    "drugstore",
+    "$565.52"
+   ],
+   [
+    "streaming",
+    "$491.64"
+   ],
+   [
+    "car_rental",
+    "$445.00"
+   ]
+  ],
+  "habits": [
+   [
+    "restaurant",
+    "Chase Sapphire Preferred",
+    "63%"
+   ],
+   [
+    "supermarket",
+    "Citi Double Cash Card",
+    "44%"
+   ],
+   [
+    "airfare",
+    "Chase Sapphire Preferred",
+    "46%"
+   ],
+   [
+    "hotel",
+    "Chase Sapphire Preferred",
+    "38%"
+   ],
+   [
+    "gas",
+    "Chase Freedom Unlimited",
+    "57%"
+   ],
+   [
+    "rideshare",
+    "Chase Sapphire Preferred",
+    "39%"
+   ]
+  ]
+ },
+ "disclaimers": [
+  "Alex is a synthetic demo consumer. Transaction history is generated, not real."
+ ]
+}

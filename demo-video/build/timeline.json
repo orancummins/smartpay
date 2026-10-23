@@ -1,0 +1,172 @@
+{
+ "scenes": [
+  {
+   "id": "s1_title",
+   "start": 0.0,
+   "vo_start": 1.4,
+   "vo_dur": 11.819,
+   "end": 14.619,
+   "cues": {
+    "meet": 1.4,
+    "payment": 2.413,
+    "built": 4.979,
+    "yourai": 8.964,
+    "smartpay": 10.923
+   }
+  },
+  {
+   "id": "s2_alex",
+   "start": 14.619,
+   "vo_start": 15.219,
+   "vo_dur": 17.771,
+   "end": 33.89,
+   "cues": {
+    "alex": 15.219,
+    "three": 16.098,
+    "nine": 16.914,
+    "seven": 17.856,
+    "twelve": 18.924,
+    "connected": 20.619,
+    "habit": 22.88,
+    "sapphire": 25.203,
+    "double": 28.218,
+    "rarely": 30.478
+   }
+  },
+  {
+   "id": "s3_how",
+   "start": 33.89,
+   "vo_start": 34.49,
+   "vo_dur": 25.323,
+   "end": 60.713,
+   "cues": {
+    "mcp": 34.49,
+    "chatgpt": 37.737,
+    "tools": 40.074,
+    "engine": 42.282,
+    "infers": 45.528,
+    "tests": 47.736,
+    "compares": 51.177,
+    "nollm": 53.839,
+    "evidence": 56.826
+   }
+  },
+  {
+   "id": "s4a_ask",
+   "start": 60.713,
+   "vo_start": 61.513,
+   "vo_dur": 20.395,
+   "end": 82.308,
+   "cues": {
+    "inside": 61.513,
+    "asks": 64.368,
+    "plans": 69.671,
+    "flights": 70.895,
+    "total": 74.974,
+    "hands": 79.189
+   }
+  },
+  {
+   "id": "s4b_widget",
+   "start": 82.308,
+   "vo_start": 82.608,
+   "vo_dur": 19.371,
+   "end": 102.479,
+   "cues": {
+    "arrives": 82.608,
+    "live": 84.065,
+    "five": 87.466,
+    "compared": 91.899,
+    "every": 94.51,
+    "reached": 95.724,
+    "recommends": 98.032,
+    "channel": 99.854
+   }
+  },
+  {
+   "id": "s4c_detail",
+   "start": 102.479,
+   "vo_start": 102.779,
+   "vo_dur": 26.123,
+   "end": 129.902,
+   "cues": {
+    "bags": 102.779,
+    "aadv": 108.724,
+    "hotel": 111.239,
+    "tenx": 115.983,
+    "offers": 118.156,
+    "eye": 121.299,
+    "tie": 122.5,
+    "funds": 125.244,
+    "says": 127.13
+   }
+  },
+  {
+   "id": "s5_honesty",
+   "start": 129.902,
+   "vo_start": 130.502,
+   "vo_dur": 27.371,
+   "end": 158.773,
+   "cues": {
+    "traceable": 130.502,
+    "guaranteed": 132.148,
+    "never": 135.44,
+    "source": 137.878,
+    "channel": 141.536,
+    "readonly": 146.473,
+    "never_moves": 147.876,
+    "golf": 151.106,
+    "sixteen": 156.471
+   }
+  },
+  {
+   "id": "s6_dashboard",
+   "start": 158.773,
+   "vo_start": 159.373,
+   "vo_dur": 26.603,
+   "end": 186.876,
+   "cues": {
+    "behind": 159.373,
+    "amount": 163.017,
+    "computed": 168.241,
+    "every": 175.347,
+    "lands": 178.566,
+    "priceless": 180.145
+   }
+  },
+  {
+   "id": "s7_wallet",
+   "start": 186.876,
+   "vo_start": 187.476,
+   "vo_dur": 25.856,
+   "end": 214.232,
+   "cues": {
+    "onemore": 187.476,
+    "ask": 188.67,
+    "forecasts": 190.999,
+    "tests": 193.686,
+    "flags": 195.657,
+    "funded": 199.24,
+    "mastercard": 201.807,
+    "portfolio": 205.211,
+    "flipper": 208.077,
+    "funds": 209.928
+   }
+  },
+  {
+   "id": "s8_close",
+   "start": 214.232,
+   "vo_start": 215.032,
+   "vo_dur": 5.568,
+   "end": 225.1,
+   "cues": {
+    "smartpay": 215.032,
+    "right": 215.687,
+    "accepted": 217.521,
+    "chosen": 219.224
+   }
+  }
+ ],
+ "fps": 30,
+ "total": 225.1
+}

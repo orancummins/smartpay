@@ -1,0 +1,170 @@
+{
+ "display_markdown": "## SmartPay wallet review\n\n**Drop First Hawaiian Priority Destinations World Elite Mastercard. Its $99 annual fee is no longer earning its keep against Alex's predicted spend.**\n\n- Current wallet, projected annual value: $3,403.87\n- Recommended wallet, projected annual value: $3,502.87\n- **Net annual incremental value: $99.00**\n\n### Mastercard offers for you\n\n**Use this Mastercard more, and we'll give you a whopping cashback!**\n\n- **Get Started Cashback** \u2014 $500.00 cash back on First Hawaiian Priority Destinations World Elite Mastercard. 0 of 10 purchases and $0.00 of $750.00 spent on First Hawaiian Priority Destinations World Elite Mastercard in the last 90 days -- 10 more purchases and $750.00 more spend to unlock.\n\n### What is driving this\n\n- $12,477 predicted restaurant\n- $11,624 predicted supermarket\n- $9,335 predicted shopping\n- $8,914 predicted hotel\n- Lyft: take 3 rides, get $5: $60.00/yr (observed behaviour)\n- Instacart+ $10 monthly credit: $120.00/yr\n- Peacock $3 monthly statement credit: $36.00/yr\n- $100 off a hotel stay booked on cititravel.com: $100.00/yr\n- $543 of guaranteed value on the upcoming trip\n\n### Every option considered\n\n| Change | Projected annual wallet value |\n|---|---:|\n| Drop First Hawaiian Priority Destinations World Elite Mastercard | $3,502.87 |\n| Drop Marriott Bonvoy Boundless Credit Card | $3,498.87 |\n| Drop Chase Sapphire Preferred | $3,493.86 |\n| Drop Chase Freedom Unlimited | $3,398.11 |\n| Drop Citi Double Cash Card | $3,334.83 |\n| Drop Citi / AAdvantage Platinum Select World Elite Mastercard | $3,142.87 |\n| Drop Citi Strata Premier Card | $2,756.48 |\n\n---\n\n_Alex is a synthetic demo consumer. Transaction history is generated, not real._\n_Future spend is produced by a demo CommerceGPT adapter from observed history, not a live CommerceGPT prediction._\n_Offers marked 'Mastercard Flipper campaign' are demo growth campaigns configured through SmartPay's own Flipper admin tool, modelled on real card-issuer spend-threshold cash back mechanics. They are not live Mastercard offers, and are never tied to any one transaction -- they count every purchase on the named card toward one combined threshold._\n\n[See your past SmartPay activity](http://127.0.0.1:9023/demo/alex#future-h)",
+ "data": {
+  "recommendation": {
+   "customer_id": "alex",
+   "action": "drop",
+   "headline": "Drop First Hawaiian Priority Destinations World Elite Mastercard. Its $99 annual fee is no longer earning its keep against Alex's predicted spend.",
+   "current_wallet_value": "3403.87",
+   "recommended_wallet_value": "3502.87",
+   "net_annual_incremental_value": "99.00",
+   "candidates": [
+    {
+     "product_id": "first_hawaiian_priority_destinations",
+     "display_name": "Drop First Hawaiian Priority Destinations World Elite Mastercard",
+     "annual_fee": "99.00",
+     "projected_reward_value": "3027.97",
+     "credits_likely_used": "316.00",
+     "net_annual_value": "3502.87"
+    },
+    {
+     "product_id": "chase_marriott_bonvoy_boundless",
+     "display_name": "Drop Marriott Bonvoy Boundless Credit Card",
+     "annual_fee": "95.00",
+     "projected_reward_value": "3027.97",
+     "credits_likely_used": "316.00",
+     "net_annual_value": "3498.87"
+    },
+    {
+     "product_id": "chase_sapphire_preferred",
+     "display_name": "Drop Chase Sapphire Preferred",
+     "annual_fee": "95.00",
+     "projected_reward_value": "3022.96",
+     "credits_likely_used": "316.00",
+     "net_annual_value": "3493.86"
+    },
+    {
+     "product_id": "chase_freedom_unlimited",
+     "display_name": "Drop Chase Freedom Unlimited",
+     "annual_fee": "0.00",
+     "projected_reward_value": "3022.21",
+     "credits_likely_used": "316.00",
+     "net_annual_value": "3398.11"
+    },
+    {
+     "product_id": "citi_double_cash",
+     "display_name": "Drop Citi Double Cash Card",
+     "annual_fee": "0.00",
+     "projected_reward_value": "2958.93",
+     "credits_likely_used": "316.00",
+     "net_annual_value": "3334.83"
+    },
+    {
+     "product_id": "citi_aa_platinum_select",
+     "display_name": "Drop Citi / AAdvantage Platinum Select World Elite Mastercard",
+     "annual_fee": "99.00",
+     "projected_reward_value": "3027.97",
+     "credits_likely_used": "316.00",
+     "net_annual_value": "3142.87"
+    },
+    {
+     "product_id": "citi_strata_premier",
+     "display_name": "Drop Citi Strata Premier Card",
+     "annual_fee": "95.00",
+     "projected_reward_value": "2333.08",
+     "credits_likely_used": "316.00",
+     "net_annual_value": "2756.48"
+    }
+   ],
+   "drivers": [
+    "$12,477 predicted restaurant",
+    "$11,624 predicted supermarket",
+    "$9,335 predicted shopping",
+    "$8,914 predicted hotel",
+    "Lyft: take 3 rides, get $5: $60.00/yr (observed behaviour)",
+    "Instacart+ $10 monthly credit: $120.00/yr",
+    "Peacock $3 monthly statement credit: $36.00/yr",
+    "$100 off a hotel stay booked on cititravel.com: $100.00/yr",
+    "$543 of guaranteed value on the upcoming trip"
+   ],
+   "evidence": [
+    {
+     "evidence_type": "smartpay_deterministic_calculation",
+     "source_name": "SmartPay deterministic calculation",
+     "source_url": null,
+     "verified_at": null,
+     "confidence": "authoritative",
+     "note": "Wallet values computed by applying each card's published earn rules to the forecast category mix, net of annual fees."
+    },
+    {
+     "evidence_type": "commercegpt_prediction",
+     "source_name": "Demo CommerceGPT adapter",
+     "source_url": null,
+     "verified_at": "2026-09-01",
+     "confidence": "demo_approximation",
+     "note": "Forecast produced by a deterministic demo adapter from observed history. Not a live CommerceGPT prediction."
+    }
+   ],
+   "disclaimers": [
+    "Alex is a synthetic demo consumer. Transaction history is generated, not real.",
+    "Future spend is produced by a demo CommerceGPT adapter from observed history, not a live CommerceGPT prediction.",
+    "Offers marked 'Mastercard Flipper campaign' are demo growth campaigns configured through SmartPay's own Flipper admin tool, modelled on real card-issuer spend-threshold cash back mechanics. They are not live Mastercard offers, and are never tied to any one transaction -- they count every purchase on the named card toward one combined threshold."
+   ]
+  },
+  "forecast": {
+   "customer_id": "alex",
+   "horizon_months": 12,
+   "by_category": {
+    "housing": "36720.00",
+    "restaurant": "12477.38",
+    "supermarket": "11624.04",
+    "shopping": "9334.71",
+    "hotel": "8913.80",
+    "airfare": "8174.00",
+    "utilities": "5630.40",
+    "gas": "5370.02",
+    "entertainment": "3729.05",
+    "attraction": "3135.50",
+    "golf": "2938.08",
+    "grocery_online": "1975.90",
+    "rideshare": "1447.08",
+    "other": "1257.60",
+    "transport": "954.10",
+    "drugstore": "576.83",
+    "streaming": "501.47",
+    "car_rental": "453.90"
+   },
+   "method": "Demo CommerceGPT adapter",
+   "drivers": [
+    "12 months of observed Open Finance transaction history",
+    "Category run rate projected over 12 months",
+    "Category-level growth assumptions applied (travel +8%, dining +4%)",
+    "Known upcoming itinerary: Walt Disney World \u2014 5 nights, family of four, October 2026"
+   ],
+   "evidence": [
+    {
+     "evidence_type": "commercegpt_prediction",
+     "source_name": "Demo CommerceGPT adapter",
+     "source_url": null,
+     "verified_at": "2026-09-01",
+     "confidence": "demo_approximation",
+     "note": "Forecast produced by a deterministic demo adapter from observed history. Not a live CommerceGPT prediction."
+    }
+   ]
+  },
+  "flipper_offers": [
+   {
+    "offer_id": "FLIPPER_FIRST_HAWAIIAN_KICKSTART",
+    "display_name": "Get Started Cashback",
+    "headline": "Use this Mastercard more, and we'll give you a whopping cashback!",
+    "card": "First Hawaiian Priority Destinations World Elite Mastercard",
+    "card_product_id": "first_hawaiian_priority_destinations",
+    "cashback_value": "500.00",
+    "required_transaction_count": 10,
+    "required_spend_amount": "750.00",
+    "window_days": 90,
+    "progress_transaction_count": 0,
+    "progress_spend_amount": "0.00",
+    "complete": false,
+    "why": "0 of 10 purchases and $0.00 of $750.00 spent on First Hawaiian Priority Destinations World Elite Mastercard in the last 90 days -- 10 more purchases and $750.00 more spend to unlock.",
+    "provenance_label": "Mastercard Flipper campaign",
+    "evidence_note": "A demo Mastercard growth campaign configured through SmartPay's own Flipper admin tool, modelled on real card-issuer spend-threshold cash back mechanics, targeted at a specific underused card to stimulate usage. Not a live Mastercard offer."
+   }
+  ]
+ },
+ "disclaimers": [
+  "Alex is a synthetic demo consumer. Transaction history is generated, not real.",
+  "Future spend is produced by a demo CommerceGPT adapter from observed history, not a live CommerceGPT prediction.",
+  "Offers marked 'Mastercard Flipper campaign' are demo growth campaigns configured through SmartPay's own Flipper admin tool, modelled on real card-issuer spend-threshold cash back mechanics. They are not live Mastercard offers, and are never tied to any one transaction -- they count every purchase on the named card toward one combined threshold."
+ ]
+}

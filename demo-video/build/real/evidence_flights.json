@@ -1,0 +1,29 @@
+{
+ "display_markdown": "## Why SmartPay recommended this \u2014 Round-trip flights, BOS to MCO, family of four\n\n**Recommended:** Citi / AAdvantage Platinum Select World Elite Mastercard (booked direct)\n\n**Baseline:** Based on 6 historical airfare purchases, Alex used Chase Sapphire Preferred 46% of the time.\n\n**Reasoning:** Citi / AAdvantage Platinum Select World Elite Mastercard: 2x \u2014 2 AAdvantage miles per $1 on eligible American Airlines purchases First checked bag free on American Airlines: 8 checked bags waived at $45.00 each.\n\n### Evidence\n\n| Source | Type | Confidence | Verified | Reference |\n|---|---|---|---|---|\n| Citi | issuer_reward_rule | authoritative | 2026-09-01 | https://www.citi.com/credit-cards/citi-aadvantage-platinum-select-world-elite-mastercard |\n| Citi / American Airlines | issuer_reward_rule | authoritative | 2026-09-01 | https://news.aa.com/news/news-details/2026/American-Airlines-updates-bag-fees-and-Basic-Economy-fares-OPS-POL-04/default.aspx |\n\n[See your past SmartPay activity](http://127.0.0.1:9023/demo/alex#future-h)",
+ "data": {
+  "item": "Round-trip flights, BOS to MCO, family of four",
+  "recommended": "Citi / AAdvantage Platinum Select World Elite Mastercard",
+  "channel": "booked direct",
+  "rationale": "Citi / AAdvantage Platinum Select World Elite Mastercard: 2x \u2014 2 AAdvantage miles per $1 on eligible American Airlines purchases First checked bag free on American Airlines: 8 checked bags waived at $45.00 each.",
+  "baseline_rationale": "Based on 6 historical airfare purchases, Alex used Chase Sapphire Preferred 46% of the time.",
+  "evidence": [
+   {
+    "evidence_type": "issuer_reward_rule",
+    "source_name": "Citi",
+    "source_url": "https://www.citi.com/credit-cards/citi-aadvantage-platinum-select-world-elite-mastercard",
+    "verified_at": "2026-09-01",
+    "confidence": "authoritative",
+    "note": "Citi/AAdvantage Platinum Select published earn rates, annual fee and checked bag benefit"
+   },
+   {
+    "evidence_type": "issuer_reward_rule",
+    "source_name": "Citi / American Airlines",
+    "source_url": "https://news.aa.com/news/news-details/2026/American-Airlines-updates-bag-fees-and-Basic-Economy-fares-OPS-POL-04/default.aspx",
+    "verified_at": "2026-09-01",
+    "confidence": "authoritative",
+    "note": "Benefit and companion count from the Citi AAdvantage Platinum Select page; $45 prepaid domestic first-bag fee from American's newsroom, effective 2026-04-09."
+   }
+  ]
+ },
+ "disclaimers": []
+}
